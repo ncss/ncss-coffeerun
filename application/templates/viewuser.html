@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% import "tables.html" as tables %}
+
+{% block subcontent %}
+<h1>{{ user.name }}</h1>
+<h2>Runs</h2>
+{{ tables.runtable(user.runs, False) }}
+<h2>Coffees</h2>
+{{ tables.coffeetable(user.coffees, False) }}
+{% endblock %}

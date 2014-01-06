@@ -1,0 +1,19 @@
+<div class="navbar navbar-inverse navbar-static-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#collapsible">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">NCSS CoffeeRun</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-responsive-collapse" id="collapsible">
+            <ul class="nav navbar-nav">
+                <li><a href="/about/">About</a></li>
+            </ul>
+            {% if loggedin_user %}<p class="navbar-text navbar-right">User: <a href="/user/{{ loggedin_user.id }}/">{{ loggedin_user.name }}</a> <a href="/logout/">Logout</a></p>{% endif %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+{% macro coffeetable(coffeeset) -%}
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Addict</th>
+            <th>Type</th>
+            <th>Sugar</th>
+            <th>Size</th>
+            <th>Run</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for coffee in coffeeset %}
+        <tr>
+            <td><a href="/coffee/{{ coffee.id }}/">{{ coffee.id }}</a></td>
+            <td><a href="/user/{{ coffee.addict.id }}">{{ coffee.addict.name }}</a></td>
+            <td>{{ coffee.coffeetype }}</td>
+            <td>{{ coffee.size }}</td>
+            <td>{{ coffee.sugar }}</td>
+            <td><a href="/run/{{ coffee.runobj.id }}/">{{ coffee.runobj.time }}</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{%- endmacro %}
+
+{% macro runtable(runset) -%}
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fetcher</th>
+            <th>Time</th>
+            <th>Deadline</th>
+            <th>Cafe</th>
+            <th>Pickup</th>
+            <th>Status</th>
+            <th>Coffees</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for run in runs %}
+        <tr>
+            <td><a href="/run/{{ run.id }}/">{{ run.id }}</a></td>
+            <td><a href="/user/{{ run.fetcher.id }}">{{ run.fetcher.name }}</a></td>
+            <td>{{ run.time }}</td>
+            <td>{{ run.deadline }}</td>
+            <td>{{ run.cafe }}</td>
+            <td>{{ run.pickup }}</td>
+            <td>{{ run.statusobj.description }}</td>
+            <td>{{ run.coffees|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{%- endmacro %}

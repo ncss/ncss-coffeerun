@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>All Coffee Orders</h1>
+
+{% from "tables.html" import coffeetable as table %}
+{{ table(coffees) }}
+
+{% endblock %}
