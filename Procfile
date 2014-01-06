@@ -1,1 +1,1 @@
-web: gunicorn -b 127.0.0.1:5000 run:app
+web: gunicorn run-heroku:app
