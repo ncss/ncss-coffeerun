@@ -381,7 +381,7 @@ def mobile_addregid():
 
 def notify_newrun(run):
     # Notify all users of the new run
-    headers = {"Content-Type": "application/json", "Authorization":"key=%s" % API_KEY}
+    headers = {"Content-Type": "application/json", "Authorization":"key=%s" % app.config["API_KEY"]}
     regids = [r.regid for r in RegistrationID.query.all()]
     notifydata = {"msg": "New run added"}
     data = {"registration_ids": regids, "data": notifydata}
