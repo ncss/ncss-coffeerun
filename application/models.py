@@ -127,7 +127,7 @@ class Status(db.Model):
 class RegistrationID(db.Model):
     __tablename__ = "RegistrationIDs"
     userid = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
-    regid = db.Column(db.String)
+    regid = db.Column(db.String, primary_key=True)
     
     user = db.relationship("User", backref=db.backref("regids", order_by="RegistrationID.regid"))
 

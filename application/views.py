@@ -358,15 +358,22 @@ def mobile_addregid():
         regjson = request.get_json()
     else:
         return redirect(url_for("home"))
+    print regjson
     if "name" not in regjson:
         return jsonify(msg="error")
     user = User.query.filter_by(name=regjson["name"]).first()
+    if not user:
+        print "Adding new user"
+        user = User(regjson["name"])
+        db.session.add(user)
+        db.session.commit()
     if "regid" not in regjson:
         return jsonify(msg="error")
     reg = RegistrationID(user.id, regjson["regid"])
     reg.user = user
     db.session.add(reg)
     db.session.commit()
+    print "Regid %s for user %d added" % reg.regid, reg.user.name
     return jsonify(msg="success")
 
 ## Notifications
