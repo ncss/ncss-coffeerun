@@ -4,7 +4,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_required, login_user, current_user, logout_user
 from datetime import datetime
 from application import app, db, lm
-from models import User, Run, Coffee, Status
+from models import User, Run, Coffee, Status, RegistrationID
 from forms import LoginForm, CoffeeForm, RunForm
 
 
@@ -351,6 +351,35 @@ def mobile_deletecoffee():
     db.session.delete(coffee)
     db.session.commit()
     return jsonify(msg="success", id=coffeejson["id"])
+
+@app.route("/m/regid/add", methods=["POST"])
+def mobile_addregid():
+    if request.headers["Content-Type"] == "application/json":
+        regjson = request.get_json()
+    else:
+        return redirect(url_for("home"))
+    if "name" not in regjson:
+        return jsonify(msg="error")
+    user = User.query.filter_by(name=regjson["name"]).first()
+    if "regid" not in regjson:
+        return jsonify(msg="error")
+    reg = RegistrationID(user.id, regjson["regid"])
+    reg.user = user
+    db.session.add(reg)
+    db.session.commit()
+    return jsonify(msg="success")
+
+## Notifications
+
+def notify_newrun():
+    # Notify all users of the new run
+    pass
+
+def notify_newcoffee():
+    # Get the run
+    # Send notification to the person doing the run
+    pass
+
 
 ## Error handlers
 # Handle 404 errors

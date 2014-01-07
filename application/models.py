@@ -123,3 +123,17 @@ class Status(db.Model):
 
     def __repr__(self):
         return "<Status(%d,'%s')>" % (self.id, self.description)
+
+class RegistrationID(db.Model):
+    __tablename__ = "RegistrationIDs"
+    userid = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
+    regid = db.Column(db.String)
+    
+    user = db.relationship("User", backref=db.backref("regids", order_by="RegistrationID.regid"))
+
+    def __init__(self, userid, regid):
+        self.userid = userid
+        self.regid = regid
+
+    def __repr__(self):
+        return "<RegistrationID(%d,'%s')>" % (self.userid, self.regid)
