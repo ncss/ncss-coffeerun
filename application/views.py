@@ -354,6 +354,7 @@ def mobile_deletecoffee():
 
 @app.route("/m/regid/add", methods=["POST"])
 def mobile_addregid():
+    print "Adding regid to here"
     if request.headers["Content-Type"] == "application/json":
         regjson = request.get_json()
     else:
