@@ -2,11 +2,12 @@
 
 from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
 from flask.ext.login import login_required, login_user, current_user, logout_user
+import requests
+import json
 from datetime import datetime
 from application import app, db, lm
 from models import User, Run, Coffee, Status, RegistrationID
 from forms import LoginForm, CoffeeForm, RunForm
-
 
 @lm.user_loader
 def load_user(userid):
@@ -149,6 +150,7 @@ def add_run():
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
+        notify_newrun(run)
         return redirect(url_for("view_run", runid=run.id))
     else:
         flash("It broke...", "danger")
@@ -293,6 +295,7 @@ def mobile_syncrun():
         if "id" not in runjson:
             db.session.add(run)
         db.session.commit()
+        notify_newrun(run)
         return jsonify(msg="success", id=run.id, modified=run.jsondatetime("modified"))
     except:
         return jsonify(msg="error")
@@ -352,14 +355,12 @@ def mobile_deletecoffee():
     db.session.commit()
     return jsonify(msg="success", id=coffeejson["id"])
 
-@app.route("/m/regid/add", methods=["POST"])
+@app.route("/m/regid/add/", methods=["POST"])
 def mobile_addregid():
-    print "Adding regid to here"
     if request.headers["Content-Type"] == "application/json":
         regjson = request.get_json()
     else:
         return redirect(url_for("home"))
-    print regjson
     if "name" not in regjson:
         return jsonify(msg="error")
     user = User.query.filter_by(name=regjson["name"]).first()
@@ -374,14 +375,18 @@ def mobile_addregid():
     reg.user = user
     db.session.add(reg)
     db.session.commit()
-    print "Regid %s for user %d added" % reg.regid, reg.user.name
     return jsonify(msg="success")
 
 ## Notifications
 
-def notify_newrun():
+def notify_newrun(run):
     # Notify all users of the new run
-    pass
+    headers = {"Content-Type": "application/json", "Authorization":"key=%s" % API_KEY}
+    regids = [r.regid for r in RegistrationID.query.all()]
+    notifydata = {"msg": "New run added"}
+    data = {"registration_ids": regids, "data": notifydata}
+    url = "https://android.googleapis.com/gcm/send"
+    r = requests.post(url, data=json.dumps(data))
 
 def notify_newcoffee():
     # Get the run
