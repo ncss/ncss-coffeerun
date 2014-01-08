@@ -387,6 +387,9 @@ def notify_newrun(run):
     data = {"registration_ids": regids, "data": notifydata}
     url = "https://android.googleapis.com/gcm/send"
     r = requests.post(url, data=json.dumps(data))
+    print "Text", r.text
+    print "Status", r.status_code
+    print "Headers", r.headers
 
 def notify_newcoffee():
     # Get the run
