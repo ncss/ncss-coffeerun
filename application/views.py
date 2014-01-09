@@ -78,6 +78,7 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         form.populate_obj(run)
+        run.modified = datetime.now()
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
@@ -104,6 +105,7 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
+        coffee.modified=datetime.now()
         db.session.commit()
         flash("Coffee edited", "success")
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
@@ -147,6 +149,7 @@ def add_run():
         run.pickup = form.data["pickup"]
         run.status = form.data["status"]
         run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
+        run.modified = datetime.now()
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
@@ -196,6 +199,7 @@ def add_coffee(runid=None):
         coffee.addict = current_user
         coffee.run = form.data["run"]
         coffee.runobj = Run.query.filter(Run.id == form.data["run"]).first()
+        coffee.modified = datetime.now()
         db.session.add(coffee)
         db.session.commit()
         flash("Coffee order added", "success")
@@ -385,6 +389,7 @@ def notify_newrun(run):
     regids = [r.regid for r in RegistrationID.query.all()]
     notifydata = {"msg": "New run added"}
     data = {"registration_ids": regids, "data": notifydata}
+    print "Data", data
     url = "https://android.googleapis.com/gcm/send"
     r = requests.post(url, data=json.dumps(data))
     print "Text", r.text

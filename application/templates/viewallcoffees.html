@@ -4,6 +4,7 @@
 <h1>All Coffee Orders</h1>
 
 {% from "tables.html" import coffeetable as table %}
+<a href="/coffee/add/" class="btn btn-primary">Add Coffee</a>
 {{ table(coffees) }}
 
 {% endblock %}
