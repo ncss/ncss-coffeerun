@@ -5,6 +5,7 @@ from flask.ext.login import login_required, login_user, current_user, logout_use
 import requests
 import json
 from datetime import datetime
+import pytz
 from application import app, db, lm
 from models import User, Run, Coffee, Status, RegistrationID
 from forms import LoginForm, CoffeeForm, RunForm
@@ -46,7 +47,6 @@ def logout():
     return redirect(url_for("login"))
 
 @app.route("/about/")
-@login_required
 def about():
     return render_template("about.html")
 
@@ -61,11 +61,13 @@ def view_all_coffees():
     return render_template("viewallcoffees.html", coffees=coffees, current_user=current_user)
 
 @app.route("/run/<int:runid>/")
+@login_required
 def view_run(runid):
     run = Run.query.filter(Run.id==runid).first_or_404()
     return render_template("viewrun.html", run=run, current_user=current_user)
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
+@login_required
 def edit_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     form = RunForm(request.form, obj=run)
@@ -78,7 +80,7 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         form.populate_obj(run)
-        run.modified = datetime.now()
+        run.modified = datetime.now(pytz.utc)
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
@@ -88,15 +90,17 @@ def edit_run(runid):
 
 
 @app.route("/coffee/<int:coffeeid>/")
+@login_required
 def view_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     return render_template("viewcoffee.html", coffee=coffee, current_user=current_user)
 
 @app.route("/coffee/<int:coffeeid>/edit/", methods=["GET", "POST"])
+@login_required
 def edit_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     form = CoffeeForm(request.form, obj=coffee)
-    runs = Run.query.filter(Run.time >= datetime.now()).all()
+    runs = Run.query.filter(Run.time >= datetime.now(pytz.utc)).all()
     form.run.choices = [(r.id, r.time) for r in runs]
     form.run.data = coffee.run
     users = User.query.all()
@@ -105,7 +109,7 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        coffee.modified=datetime.now()
+        coffee.modified=datetime.now(pytz.utc)
         db.session.commit()
         flash("Coffee edited", "success")
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
@@ -118,10 +122,29 @@ def get_all_users():
     people = User.query.all()
     return render_template("viewallusers.html", people=people, current_user=current_user)
 
-@app.route("/user/<int:userid>/")
+@app.route("/user/<int:userid>/", methods=["GET"])
+@login_required
 def view_user(userid):
     user = User.query.filter(User.id==userid).first_or_404()
     return render_template("viewuser.html", user=user, current_user=current_user)
+
+@app.route("/user/<int:userid>/edit/", methods=["GET", "POST"])
+@login_required
+def edit_user(userid):
+    if userid != current_user.id:
+        flash("You cannot edit a different user!", "danger")
+        return redirect(url_for("view_user", userid=userid))
+    form = UserForm(request.form, obj=current_user)
+    if request.method == "GET":
+        return render_template("userform.html", form=form, current_user=current_user)
+    if request.method == "POST" and form.validate_on_submit():
+        form.populate_obj(current_user)
+        db.session.commit()
+        flash("User edited", "success")
+        return redirect(url_for("view_user", userid=userid))
+    else:
+        flash("User edit failed", "danger")
+        return redirect(url_for("view_user", userid=userid))
 
 @app.route("/run/add/", methods=["GET", "POST"])
 @login_required
@@ -134,8 +157,8 @@ def add_run():
     statuses = Status.query.all()
     form.status.choices = [(s.id, s.description) for s in statuses]
     if request.method == "GET":
-        form.time.data = datetime.now()#.strftime("%Y/%m/%d %H:%M:%S")
-        form.deadline.data = datetime.now()
+        form.time.data = datetime.now(pytz.utc)#.strftime("%Y/%m/%d %H:%M:%S")
+        form.deadline.data = datetime.now(pytz.utc)
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         # Add run
@@ -149,7 +172,7 @@ def add_run():
         run.pickup = form.data["pickup"]
         run.status = form.data["status"]
         run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
-        run.modified = datetime.now()
+        run.modified = datetime.now(pytz.utc)
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
@@ -162,6 +185,7 @@ def add_run():
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
 
 @app.route("/run/<int:runid>/delete/", methods=["GET"])
+@login_required
 def delete_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     db.session.delete(run)
@@ -173,7 +197,7 @@ def delete_run(runid):
 @app.route("/coffee/add/", methods=["GET", "POST"])
 @login_required
 def add_coffee(runid=None):
-    runs = Run.query.filter(Run.time >= datetime.now()).filter(Run.status==1).all()
+    runs = Run.query.filter(Run.time >= datetime.now(pytz.utc)).filter(Run.status==1).all()
     if not runs:
         flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
         return redirect(url_for("home"))
@@ -199,7 +223,7 @@ def add_coffee(runid=None):
         coffee.addict = current_user
         coffee.run = form.data["run"]
         coffee.runobj = Run.query.filter(Run.id == form.data["run"]).first()
-        coffee.modified = datetime.now()
+        coffee.modified = datetime.now(pytz.utc)
         db.session.add(coffee)
         db.session.commit()
         flash("Coffee order added", "success")

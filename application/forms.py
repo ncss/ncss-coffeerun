@@ -29,3 +29,6 @@ class RunForm(Form):
     cafe = TextField("Cafe")
     pickup = TextField("Pickup Location")
     status = SelectField("Status", coerce=int)
+
+class UserForm(Form):
+    name = TextField("Name")
