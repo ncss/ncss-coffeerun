@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 import pytz
 from application import app, db, lm
-from models import User, Run, Coffee, Status, RegistrationID
+from models import User, Run, Coffee, Status, RegistrationID, sydney_timezone
 from forms import LoginForm, CoffeeForm, RunForm
 
 @lm.user_loader
@@ -253,10 +253,10 @@ def get_person(name):
         db.session.commit()
     return person
 
-def sydney_timezone(utcdt):
-    localtz = pytz.timezone("Australia/Sydney")
-    localdt = utc.replace(tzinfo=pytz.utc).astimezone(localtz)
-    return localdt
+#def sydney_timezone(utcdt):
+#    localtz = pytz.timezone("Australia/Sydney")
+#    localdt = utc.replace(tzinfo=pytz.utc).astimezone(localtz)
+#    return localdt
 
 # Mobile app parts
 

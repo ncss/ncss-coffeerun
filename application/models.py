@@ -5,6 +5,7 @@ models.py
 
 from application import db, app
 from datetime import datetime
+import pytz
 
 class User(db.Model):
     __tablename__ = "Users"
