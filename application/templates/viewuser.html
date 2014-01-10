@@ -3,6 +3,7 @@
 
 {% block subcontent %}
 <h1>{{ user.name }}</h1>
+<a href="/coffee/add/" class="btn btn-primary">Add Coffee</a>
 <h2>Registration IDs</h2>
 <ul>
     {% for regid in user.regids %}

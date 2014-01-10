@@ -8,7 +8,7 @@ from datetime import datetime
 import pytz
 from application import app, db, lm
 from models import User, Run, Coffee, Status, RegistrationID, sydney_timezone_now
-from forms import LoginForm, CoffeeForm, RunForm
+from forms import LoginForm, CoffeeForm, RunForm, UserForm
 
 @lm.user_loader
 def load_user(userid):
