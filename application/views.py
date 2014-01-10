@@ -78,9 +78,10 @@ def edit_run(runid):
     if request.method == "GET":
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
-        print form.data
+        #print form.data
         form.populate_obj(run)
         #run.modified = sydney_timezone_now()
+        print run.modified, datetime.utcnow()
         run.modified = datetime.utcnow()
         db.session.commit()
         flash("Run edited", "success")
