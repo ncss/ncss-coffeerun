@@ -47,7 +47,7 @@ class Run(db.Model):
     pickup = db.Column(db.String)
     status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
     statusobj = db.relationship("Status")
-    modified = db.Column(db.DateTime, default=sydney_timezone_now);
+    modified = db.Column(db.DateTime(True), default=sydney_timezone_now);
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
 
