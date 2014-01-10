@@ -40,7 +40,7 @@ class Run(db.Model):
     pickup = db.Column(db.String)
     status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
     statusobj = db.relationship("Status")
-    modified = db.Column(db.DateTime, default=datetime.utcnow());
+    modified = db.Column(db.DateTime, default=sydney_timezone(datetime.utcnow()));
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
 
@@ -87,7 +87,7 @@ class Coffee(db.Model):
     size = db.Column(db.String)
     sugar = db.Column(db.String)
     run = db.Column(db.Integer, db.ForeignKey("Runs.id"))
-    modified = db.Column(db.DateTime, default=datetime.utcnow())
+    modified = db.Column(db.DateTime, default=sydney_timezone(datetime.utcnow()));
     
     runobj = db.relationship("Run", backref=db.backref("coffees", order_by="Coffee.id"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
@@ -138,3 +138,10 @@ class RegistrationID(db.Model):
 
     def __repr__(self):
         return "<RegistrationID(%d,'%s')>" % (self.userid, self.regid)
+
+
+def sydney_timezone(utcdt):
+    localtz = pytz.timezone("Australia/Sydney")
+    localdt = utc.replace(tzinfo=pytz.utc).astimezone(localtz)
+    return localdt
+
