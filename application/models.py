@@ -115,8 +115,12 @@ class Coffee(db.Model):
     def __repr__(self):
         return "<Coffee(%d,%d,'%s %s %ds')>" % (self.id, self.person, self.size, self.coffeetype, self.sugar)
 
+    #def readmodified(self):
+    #    return self.modified.strftime("%I:%M %p %a %d %b")
+
     def readmodified(self):
-        return self.modified.strftime("%I:%M %p %a %d %b")
+        localtz = pytz.timezone("Australia/Sydney")
+        return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         if arg == "modified":

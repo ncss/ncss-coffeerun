@@ -81,7 +81,7 @@ def edit_run(runid):
         #print form.data
         form.populate_obj(run)
         run.modified = sydney_timezone_now()
-        print run.modified, datetime.utcnow()
+        #print run.modified, datetime.utcnow()
         #run.modified = datetime.utcnow()
         db.session.commit()
         flash("Run edited", "success")
