@@ -7,7 +7,7 @@ from application import db, app
 from datetime import datetime
 import pytz
 
-def sydney_timezone_now_now():
+def sydney_timezone_now():
     localtz = pytz.timezone("Australia/Sydney")
     localdt = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(localtz)
     return localdt
