@@ -31,7 +31,7 @@ def login():
             db.session.add(user)
             db.session.commit()
         else:
-            user = db.session.query(User).filter_by(id=form.users.data).first()
+            user = db.session.query(User).filter_by(id=formusers.data).first()
         if login_user(user):
             flash("You are now logged in.", "success")
             return redirect(request.args.get("next") or url_for("home"))
@@ -233,6 +233,10 @@ def add_coffee(runid=None):
         print form.data
         return render_template("coffeeform.html", form=form, current_user=current_user)
 
+@app.route("/cafe/", methods="GET")
+def view_all_cafes():
+    return redirect(url_for("home"))
+
 @app.route("/coffee/<int:coffeeid>/delete/", methods=["GET"])
 def delete_coffee(coffeeid):
     coffee = Coffee.query.filter_by(id=coffeeid).first_or_404()
@@ -252,11 +256,6 @@ def get_person(name):
         db.session.add(person)
         db.session.commit()
     return person
-
-#def sydney_timezone_now(utcdt):
-#    localtz = pytz.timezone("Australia/Sydney")
-#    localdt = utc.replace(tzinfo=pytz.utc).astimezone(localtz)
-#    return localdt
 
 # Mobile app parts
 
