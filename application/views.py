@@ -172,7 +172,7 @@ def add_run():
         run.pickup = form.data["pickup"]
         run.status = form.data["status"]
         run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
-        run.modified = sydney_timezone(datetime.utcnow())
+        #run.modified = sydney_timezone(datetime.utcnow())
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
@@ -223,7 +223,7 @@ def add_coffee(runid=None):
         coffee.addict = current_user
         coffee.run = form.data["run"]
         coffee.runobj = Run.query.filter(Run.id == form.data["run"]).first()
-        coffee.modified = sydney_timezone(datetime.utcnow())
+        #coffee.modified = sydney_timezone(datetime.utcnow())
         db.session.add(coffee)
         db.session.commit()
         flash("Coffee order added", "success")

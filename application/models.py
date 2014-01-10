@@ -7,6 +7,12 @@ from application import db, app
 from datetime import datetime
 import pytz
 
+def sydney_timezone():
+    localtz = pytz.timezone("Australia/Sydney")
+    localdt = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(localtz)
+    return localdt
+
+
 class User(db.Model):
     __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)
@@ -41,7 +47,7 @@ class Run(db.Model):
     pickup = db.Column(db.String)
     status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
     statusobj = db.relationship("Status")
-    modified = db.Column(db.DateTime, default=self.sydney_timezone(datetime.utcnow()));
+    modified = db.Column(db.DateTime, default=sydney_timezone);
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
 
@@ -70,10 +76,10 @@ class Run(db.Model):
         if arg == "modified":    
             return self.modified.strftime(tformat)
 
-    def sydney_timezone(self, utcdt):
-        localtz = pytz.timezone("Australia/Sydney")
-        localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
-        return localdt
+    #def sydney_timezone(self, utcdt):
+    #    localtz = pytz.timezone("Australia/Sydney")
+    #    localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
+    #    return localdt
 
     def toJSON(self):
         return {"id": self.id, 
@@ -93,7 +99,7 @@ class Coffee(db.Model):
     size = db.Column(db.String)
     sugar = db.Column(db.String)
     run = db.Column(db.Integer, db.ForeignKey("Runs.id"))
-    modified = db.Column(db.DateTime, default=self.sydney_timezone(datetime.utcnow()));
+    modified = db.Column(db.DateTime, default=sydney_timezone);
     
     runobj = db.relationship("Run", backref=db.backref("coffees", order_by="Coffee.id"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
@@ -111,10 +117,10 @@ class Coffee(db.Model):
         if arg == "modified":
             return self.modified.strftime("%Y-%m-%d %H:%M:%S")
 
-    def sydney_timezone(self, utcdt):
-        localtz = pytz.timezone("Australia/Sydney")
-        localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
-        return localdt
+    #def sydney_timezone(self, utcdt):
+    #    localtz = pytz.timezone("Australia/Sydney")
+    #    localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
+    #    return localdt
 
     def toJSON(self):
         return {"id": self.id, 
