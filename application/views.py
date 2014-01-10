@@ -80,7 +80,8 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         form.populate_obj(run)
-        run.modified = sydney_timezone_now()
+        #run.modified = sydney_timezone_now()
+        run.modified = datetime.utcnow()
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
@@ -109,7 +110,8 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        coffee.modified=sydney_timezone_now()
+        #coffee.modified=sydney_timezone_now()
+        coffee.modified = datetime.utcnow()
         db.session.commit()
         flash("Coffee edited", "success")
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
@@ -173,6 +175,7 @@ def add_run():
         run.status = form.data["status"]
         run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
         #run.modified = sydney_timezone_now(datetime.utcnow())
+        run.modified = datetime.utcnow()
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
@@ -205,6 +208,10 @@ def add_coffee(runid=None):
     form = CoffeeForm(request.form)
     form.run.choices = [(r.id, r.time) for r in runs]
     if runid:
+        run = Run.query.filter_by(id=runid).first()
+        if datetime.now() > run.deadline:
+            flash("You can't add coffees to this run", "danger")
+            return redirect(url_for("view_run", runid=runid))
         form.run.data = runid
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
@@ -233,7 +240,7 @@ def add_coffee(runid=None):
         print form.data
         return render_template("coffeeform.html", form=form, current_user=current_user)
 
-@app.route("/cafe/", methods="GET")
+@app.route("/cafe/", methods=["GET"])
 def view_all_cafes():
     return redirect(url_for("home"))
 

@@ -47,7 +47,7 @@ class Run(db.Model):
     pickup = db.Column(db.String)
     status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
     statusobj = db.relationship("Status")
-    modified = db.Column(db.DateTime(True), default=sydney_timezone_now);
+    modified = db.Column(db.DateTime, default=sydney_timezone_now);
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
 
@@ -59,14 +59,18 @@ class Run(db.Model):
         return "<Run('%s','%s')>" % (self.fetcher.name, self.time)
 
     def readtime(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        #return self.time.astimezone(localtz).strftime("%I:%M %p %a %d %b")
         return self.time.strftime("%I:%M %p %a %d %b")
 
     def readdeadline(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        #return self.deadline.astimezone(localtz).strftime("%I:%M %p %a %d %b")
         return self.deadline.strftime("%I:%M %p %a %d %b")
 
     def readmodified(self):
         localtz = pytz.timezone("Australia/Sydney")
-        return self.modified.astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         tformat = "%Y-%m-%d %H:%M:%S"
@@ -156,3 +160,30 @@ class RegistrationID(db.Model):
 
     def __repr__(self):
         return "<RegistrationID(%d,'%s')>" % (self.userid, self.regid)
+
+class Cafe(db.Model):
+    __tablename__ = "Cafes"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+
+    def __init__(self, name=""):
+        self.name = name
+
+    def __repr__(self):
+        return "<Cafe(%d,'%s')>" % (self.id, self.name)
+
+class Price(db.Model):
+    __tablename__ = "Prices"
+    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"), primary_key=True)
+    size = db.Column(db.String, primary_key=True)
+    price = db.Column(db.Float)
+
+    cafe = db.relationship("Cafe", backref=db.backref("prices"))
+
+    def __init__(self, cafeid, size=""):
+        self.cafeid = cafeid
+        self.size = size
+        self.price = 0
+
+    def __repr__(self):
+        return "<Price(%d,'%s','%f')>" % (self.cafeid, self.size, self.price)
