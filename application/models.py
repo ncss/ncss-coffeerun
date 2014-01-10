@@ -5,7 +5,6 @@ models.py
 
 from application import db, app
 from datetime import datetime
-import pytz
 
 class User(db.Model):
     __tablename__ = "Users"
@@ -41,7 +40,7 @@ class Run(db.Model):
     pickup = db.Column(db.String)
     status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
     statusobj = db.relationship("Status")
-    modified = db.Column(db.DateTime, default=datetime.now(pytz.utc));
+    modified = db.Column(db.DateTime, default=datetime.utcnow());
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
 
@@ -88,7 +87,7 @@ class Coffee(db.Model):
     size = db.Column(db.String)
     sugar = db.Column(db.String)
     run = db.Column(db.Integer, db.ForeignKey("Runs.id"))
-    modified = db.Column(db.DateTime, default=datetime.now(pytz.utc))
+    modified = db.Column(db.DateTime, default=datetime.utcnow())
     
     runobj = db.relationship("Run", backref=db.backref("coffees", order_by="Coffee.id"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))

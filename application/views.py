@@ -80,7 +80,7 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         form.populate_obj(run)
-        run.modified = datetime.now(pytz.utc)
+        run.modified = datetime.utcnow()
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
@@ -100,7 +100,7 @@ def view_coffee(coffeeid):
 def edit_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     form = CoffeeForm(request.form, obj=coffee)
-    runs = Run.query.filter(Run.time >= datetime.now(pytz.utc)).all()
+    runs = Run.query.filter(Run.time >= datetime.utcnow()).all()
     form.run.choices = [(r.id, r.time) for r in runs]
     form.run.data = coffee.run
     users = User.query.all()
@@ -109,7 +109,7 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        coffee.modified=datetime.now(pytz.utc)
+        coffee.modified=datetime.utcnow()
         db.session.commit()
         flash("Coffee edited", "success")
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
@@ -157,8 +157,8 @@ def add_run():
     statuses = Status.query.all()
     form.status.choices = [(s.id, s.description) for s in statuses]
     if request.method == "GET":
-        form.time.data = datetime.now(pytz.utc)#.strftime("%Y/%m/%d %H:%M:%S")
-        form.deadline.data = datetime.now(pytz.utc)
+        form.time.data = datetime.utcnow()#.strftime("%Y/%m/%d %H:%M:%S")
+        form.deadline.data = datetime.utcnow()
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         # Add run
@@ -172,7 +172,7 @@ def add_run():
         run.pickup = form.data["pickup"]
         run.status = form.data["status"]
         run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
-        run.modified = datetime.now(pytz.utc)
+        run.modified = datetime.utcnow()
         db.session.add(run)
         db.session.commit()
         flash("Run added", "info")
@@ -197,7 +197,7 @@ def delete_run(runid):
 @app.route("/coffee/add/", methods=["GET", "POST"])
 @login_required
 def add_coffee(runid=None):
-    runs = Run.query.filter(Run.time >= datetime.now(pytz.utc)).filter(Run.status==1).all()
+    runs = Run.query.filter(Run.deadline >= datetime.utcnow()).filter(Run.status==1).all()
     if not runs:
         flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
         return redirect(url_for("home"))
@@ -223,7 +223,7 @@ def add_coffee(runid=None):
         coffee.addict = current_user
         coffee.run = form.data["run"]
         coffee.runobj = Run.query.filter(Run.id == form.data["run"]).first()
-        coffee.modified = datetime.now(pytz.utc)
+        coffee.modified = datetime.utcnow()
         db.session.add(coffee)
         db.session.commit()
         flash("Coffee order added", "success")
@@ -252,6 +252,11 @@ def get_person(name):
         db.session.add(person)
         db.session.commit()
     return person
+
+def sydney_timezone(utcdt):
+    localtz = pytz.timezone("Australia/Sydney")
+    localdt = utc.replace(tzinfo=pytz.utc).astimezone(localtz)
+    return localdt
 
 # Mobile app parts
 
