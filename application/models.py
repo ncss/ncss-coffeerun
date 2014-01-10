@@ -65,7 +65,8 @@ class Run(db.Model):
         return self.deadline.strftime("%I:%M %p %a %d %b")
 
     def readmodified(self):
-        return self.modified.astimezone("Australia/Sydney").strftime("%I:%M %p %a %d %b")
+        localtz = pytz.timezone("Australia/Sydney")
+        return self.modified.astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         tformat = "%Y-%m-%d %H:%M:%S"
