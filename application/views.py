@@ -31,7 +31,7 @@ def login():
             db.session.add(user)
             db.session.commit()
         else:
-            user = db.session.query(User).filter_by(id=formusers.data).first()
+            user = db.session.query(User).filter_by(id=form.users.data).first()
         if login_user(user):
             flash("You are now logged in.", "success")
             return redirect(request.args.get("next") or url_for("home"))
