@@ -3,7 +3,7 @@ from application import app, db
 from application.models import *
 
 #print Status
-db.drop_all()
+#db.drop_all()
 db.init_app(app)
 db.create_all()
 
