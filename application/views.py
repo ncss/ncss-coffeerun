@@ -210,8 +210,9 @@ def add_coffee(runid=None):
     form.run.choices = [(r.id, r.time) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
-        print datetime.now(), run.deadline
-        if sydney_timezone_now() > run.deadline:
+        #print datetime.now(), run.deadline
+        localmodified = run.deadline.replace(tzinfo=pytz.timezone("Australia/Sydney"))
+        if sydney_timezone_now() > localmodified:
             flash("You can't add coffees to this run", "danger")
             return redirect(url_for("view_run", runid=runid))
         form.run.data = runid
