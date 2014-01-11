@@ -211,7 +211,7 @@ def add_coffee(runid=None):
     if runid:
         run = Run.query.filter_by(id=runid).first()
         print datetime.now(), run.deadline
-        if sydney_timezone.now() > run.deadline:
+        if sydney_timezone_now() > run.deadline:
             flash("You can't add coffees to this run", "danger")
             return redirect(url_for("view_run", runid=runid))
         form.run.data = runid
