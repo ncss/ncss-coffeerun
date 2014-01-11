@@ -179,7 +179,7 @@ def add_run():
         run.modified = datetime.utcnow()
         db.session.add(run)
         db.session.commit()
-        flash("Run added", "info")
+        flash("Run added", "success")
         notify_newrun(run)
         return redirect(url_for("view_run", runid=run.id))
     else:
@@ -210,6 +210,7 @@ def add_coffee(runid=None):
     form.run.choices = [(r.id, r.time) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
+        print datetime.now(), run.deadline
         if datetime.now() > run.deadline:
             flash("You can't add coffees to this run", "danger")
             return redirect(url_for("view_run", runid=runid))
