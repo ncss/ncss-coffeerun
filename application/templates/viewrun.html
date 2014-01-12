@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>View Run</h1>
+<h2>Details</h2>
+<div class="row">
+    <label class="col-sm-2">Coffee Fetcher</label>
+    <div class="col-sm-10">
+        <p>{{ run.fetcher.name }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Time</label>
+    <div class="col-sm-10">
+        <p>{{ run.readtime() }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Deadline</label>
+    <div class="col-sm-10">
+        <p>{{ run.readdeadline() }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Cafe</label>
+    <div class="col-sm-10">
+        <p>{{ run.cafe }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Pickup Location</label>
+    <div class="col-sm-10">
+        <p>{{ run.pickup }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Status</label>
+    <div class="col-sm-10">
+        <p>{{ run.statusobj.description }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Modified</label>
+    <div class="col-sm-10">
+        <p>{{ run.readmodified() }}</p>
+    </div>
+</div>
+<a href="/run/{{ run.id }}/edit/" class="btn btn-primary">Edit Run</a>
+<a href="/run/{{ run.id }}/addcoffee/" class="btn btn-primary">Add Coffee</a>
+
+<button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
+    Delete Run
+</button>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Delete Run</h4>
+      </div>
+      <div class="modal-body">
+          <p>Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a href="/run/{{ run.id }}/delete/" class="btn btn-danger">Delete Run</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<h2>Coffees</h2>
+{% from "tables.html" import coffeetable as table %}
+{{ table(run.coffees) }}
+
+{% endblock %}

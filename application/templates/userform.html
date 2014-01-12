@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>{{ formtype }} Coffee</h1>
+<form id="user-form" class="form-horizontal" role="form" method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.name.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.name(class_="form-control") }}
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-1 col-sm-11">
+            <button type="submit" class="btn btn-primary col-sm-1">Save</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
