@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 import pytz
 from application import app, db, lm
-from models import User, Run, Coffee, Status, RegistrationID, sydney_timezone_now
-from forms import LoginForm, CoffeeForm, RunForm, UserForm
+from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, RegistrationID, sydney_timezone_now
+from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
 
 @lm.user_loader
 def load_user(userid):
@@ -52,13 +52,18 @@ def about():
 
 @app.route("/run/")
 def view_all_runs(): 
-    runs = Run.query.order_by(Run.time.desc()).all()
+    runs = Run.query.order_by(Run.id.desc()).all()
     return render_template("viewallruns.html", runs=runs)
 
 @app.route("/coffee/")
 def view_all_coffees(): 
-    coffees = Coffee.query.order_by(Coffee.run.desc()).all()
+    coffees = Coffee.query.order_by(Coffee.id.desc()).all()
     return render_template("viewallcoffees.html", coffees=coffees, current_user=current_user)
+
+@app.route("/cafe/")
+def view_all_cafes():
+    cafes = Cafe.query.order_by(Cafe.name).all()
+    return render_template("viewallcafes.html", cafes=cafes, current_user=current_user)
 
 @app.route("/run/<int:runid>/")
 @login_required
@@ -149,6 +154,19 @@ def edit_user(userid):
         flash("User edit failed", "danger")
         return redirect(url_for("view_user", userid=userid))
 
+@app.route("/cafe/<int:cafeid>/", methods=["GET"])
+def view_cafe(cafeid):
+    cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
+    return render_template("viewcafe.html", cafe=cafe, current_user=current_user)
+
+@app.route("/cafe/<int:cafeid>/edit/", methods=["GET", "POST"])
+def edit_cafe(cafeid):
+    cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
+    form = CafeForm(request.form, obj=cafe)
+    if request.method == "GET":
+        return render_template("cafeform.html", form=form, formtype="Edit", current_user=current_user)
+    return redirect(url_for("home"))
+
 @app.route("/run/add/", methods=["GET", "POST"])
 @login_required
 def add_run():
@@ -159,6 +177,8 @@ def add_run():
     form.person.data = current_user.id
     statuses = Status.query.all()
     form.status.choices = [(s.id, s.description) for s in statuses]
+    cafes = Cafe.query.all()
+    form.cafe.choices = [(cafe.id, cafe.name) for cafe in cafes]
     if request.method == "GET":
         form.time.data = sydney_timezone_now()#.strftime("%Y/%m/%d %H:%M:%S")
         form.deadline.data = sydney_timezone_now()
@@ -201,7 +221,7 @@ def delete_run(runid):
 @app.route("/coffee/add/", methods=["GET", "POST"])
 @login_required
 def add_coffee(runid=None):
-    runs = Run.query.filter(Run.deadline >= sydney_timezone_now()).filter(Run.status==1).all()
+    runs = Run.query.filter(Run.deadline >= sydney_timezone_now()).filter(Run.statusid==1).all()
     if not runs:
         flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
         return redirect(url_for("home"))
@@ -243,8 +263,23 @@ def add_coffee(runid=None):
         print form.data
         return render_template("coffeeform.html", form=form, current_user=current_user)
 
-@app.route("/cafe/", methods=["GET"])
-def view_all_cafes():
+@app.route("/cafe/add/", methods=["GET", "POST"])
+def add_cafe():
+    form = CafeForm(request.form)
+    if request.method == "GET":
+        return render_template("cafeform.html", form=form, formtype="Add", current_user=current_user)
+    if request.method == "POST" and form.validate_on_submit():
+        # Add cafe
+        cafe = Cafe()
+        cafe.name = form.data["name"]
+        cafe.location = form.data["location"]
+        db.session.add(cafe)
+        db.session.commit()
+        return redirect(url_for("view_cafe", cafeid=cafe.id))
+    else:
+        # Broken!
+        flash("Add cafe caused an error", "danger")
+        return render_template("cafeform.html", form=form, formtype="Add", current_user=current_user)
     return redirect(url_for("home"))
 
 @app.route("/coffee/<int:coffeeid>/delete/", methods=["GET"])
@@ -256,7 +291,7 @@ def delete_coffee(coffeeid):
     return redirect(url_for("view_all_coffees"))
 
 def next_run():
-    run = Run.query.filter(Run.status < 4).order_by(Run.time).first()
+    run = Run.query.filter(Run.statusid < 4).order_by(Run.time).first()
     return run
 
 def get_person(name):

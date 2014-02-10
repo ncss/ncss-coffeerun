@@ -7,8 +7,10 @@
             <th>Type</th>
             <th>Size</th>
             <th>Sugar</th>
+            <th>Price</th>
             <th>Run</th>
             <th>Status</th>
+            <th>Paid</th>
         </tr>
     </thead>
     <tbody>
@@ -19,8 +21,10 @@
             <td>{{ coffee.coffeetype }}</td>
             <td>{{ coffee.size }}</td>
             <td>{{ coffee.sugar }}</td>
-            <td><a href="/run/{{ coffee.runobj.id }}/">{{ coffee.runobj.readtime() }}</a></td>
-            <td>{{ coffee.runobj.statusobj.description }}</td>
+            <td>{{ "$%.2f" % coffee.price.amount }}</td>
+            <td><a href="/run/{{ coffee.run.id }}/">{{ coffee.run.readtime() }}</a></td>
+            <td>{{ coffee.run.status.description }}</td>
+            <td>{% if coffee.paid %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -50,8 +54,29 @@
             <td>{{ run.readdeadline() }}</td>
             <td>{{ run.cafe }}</td>
             <td>{{ run.pickup }}</td>
-            <td>{{ run.statusobj.description }}</td>
+            <td>{{ run.status.description }}</td>
             <td>{{ run.coffees|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{%- endmacro %}
+
+{% macro cafetable(cafeset) -%}
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cafe in cafeset %}
+        <tr>
+            <td><a href="/cafe/{{ cafe.id }}/">{{ cafe.id }}</a></td>
+            <td>{{ cafe.name }}</td>
+            <td>{{ cafe.location }}</td>
         </tr>
         {% endfor %}
     </tbody>

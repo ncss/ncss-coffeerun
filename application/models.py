@@ -1,6 +1,6 @@
-"""
-models.py
-
+"""models.py
+DB models for the ncss-coffeerun app
+Maddy Reid 2014
 """
 
 from application import db, app
@@ -18,6 +18,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     device = db.Column(db.String)
+    tutor = db.Column(db.Boolean, default=False)
+    teacher = db.Column(db.Boolean, default=False)
 
     def __init__(self, name=""):
         self.name = name
@@ -37,19 +39,50 @@ class User(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+    def moneyOwedTotal(self):
+        amount = 0.0
+        for coffee in self.coffees:
+            if not coffee.paid:
+                amount += coffee.price.amount
+        return amount
+
+    def moneyIsOwedTotal(self):
+        amount = 0.0
+        for run in self.runs:
+            for coffee in run.coffees:
+                if not coffee.paid:
+                    amount += coffee.price.amount
+        return amount
+
+    def moneyOwedPerson(self, debtor):
+        amount = 0.0
+        for coffee in self.coffees:
+            if not coffee.paid and coffee.run.fetcher == debtor:
+                amount += coffee.price.amount
+        return amount
+
+    def moneyIsOwedPower(self, debtor):
+        amount = 0.0
+        for coffee in debtor.coffees:
+            if not coffee.paid and coffee.run.fetcher == self:
+                amount += coffee.price.amount
+        return amount
+
 class Run(db.Model):
     __tablename__ = "Runs"
     id = db.Column(db.Integer, primary_key=True)
     person = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    time = db.Column(db.DateTime)
-    deadline = db.Column(db.DateTime)
-    cafe = db.Column(db.String)
+    time = db.Column(db.DateTime(timezone=True))
+    deadline = db.Column(db.DateTime(timezone=True))
+    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
+    cafe = db.relationship("Cafe", backref=db.backref("runs", order_by=id))
+
     pickup = db.Column(db.String)
-    status = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
-    statusobj = db.relationship("Status")
+    statusid = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
+    status = db.relationship("Status")
     modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now);
 
-    fetcher = db.relationship("User", backref=db.backref("runs", order_by=id))
+    fetcher = db.relationship("User", backref=db.backref("runs", order_by=time.desc()))
 
     def __init__(self, time):
         #self.personid = personid
@@ -86,6 +119,13 @@ class Run(db.Model):
     #    localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
     #    return localdt
 
+    def calculateTotalRunCost(self):
+        total = 0.0
+        for coffee in self.coffees:
+            if not coffee.paid:
+                total += coffee.price.amount
+        return total
+
     def toJSON(self):
         return {"id": self.id, 
                 "person": self.fetcher.name,
@@ -103,11 +143,18 @@ class Coffee(db.Model):
     coffeetype = db.Column(db.String)
     size = db.Column(db.String)
     sugar = db.Column(db.String)
-    run = db.Column(db.Integer, db.ForeignKey("Runs.id"))
+    runid = db.Column(db.Integer, db.ForeignKey("Runs.id"))
     modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now);
     
-    runobj = db.relationship("Run", backref=db.backref("coffees", order_by="Coffee.id"))
+    run = db.relationship("Run", backref=db.backref("coffees"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
+
+    priceid = db.Column(db.Integer, db.ForeignKey("Prices.id"))
+    price = db.relationship("Price")
+
+    #pricemodid = db.Column(db.Integer, db.ForeignKey("PriceModifiers.id"))
+
+    paid = db.Column(db.Boolean, default=False)
 
     def __init__(self, coffeetype):
         self.coffeetype = coffeetype
@@ -169,6 +216,7 @@ class Cafe(db.Model):
     __tablename__ = "Cafes"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    location = db.Column(db.String)
 
     def __init__(self, name=""):
         self.name = name
@@ -178,16 +226,35 @@ class Cafe(db.Model):
 
 class Price(db.Model):
     __tablename__ = "Prices"
-    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"), primary_key=True)
-    size = db.Column(db.String, primary_key=True)
-    price = db.Column(db.Float)
+    id = db.Column(db.Integer, primary_key=True)
+    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
+    size = db.Column(db.String)
+    amount = db.Column(db.Float)
 
-    cafe = db.relationship("Cafe", backref=db.backref("prices"))
+    cafe = db.relationship("Cafe", backref=db.backref("pricelist"))
 
     def __init__(self, cafeid, size=""):
         self.cafeid = cafeid
         self.size = size
-        self.price = 0
+        self.amount = 0.0
 
     def __repr__(self):
-        return "<Price(%d,'%s','%f')>" % (self.cafeid, self.size, self.price)
+        return "<Price(%d,'%s','%f')>" % (self.cafeid, self.size, self.amount)
+
+class PriceModifier(db.Model):
+    __tablename__ = "PriceModifiers"
+    id = db.Column(db.Integer, primary_key=True)
+    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
+    modtype = db.Column(db.String)
+    amount = db.Column(db.Float)
+
+    cafe = db.relationship("Cafe", backref=db.backref("pricemods"))
+
+    def __init__(self, cafeid, modtype=""):
+        self.cafeid = cafeid
+        self.modtype = size
+        self.amount = 0.0
+
+    def __repr__(self):
+        return "<PriceModifier(%d,'%s','%f')>" % (self.cafeid, self.modtype, self.amount)
+

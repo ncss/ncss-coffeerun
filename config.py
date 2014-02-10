@@ -12,7 +12,6 @@ class DevConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
 
 class TestConfig(Config):
-    DEBUG = True
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-test.db"
     

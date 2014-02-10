@@ -33,9 +33,15 @@
     </div>
 </div>
 <div class="row">
+    <label class="col-sm-1">Price</label>
+    <div class="col-sm-11">
+        <p>{{ "$%.2f" % coffee.price.amount }}</p>
+    </div>
+</div>
+<div class="row">
     <label class="col-sm-1">Run</label>
     <div class="col-sm-11">
-        <p><a href="/run/{{ coffee.runobj.id }}">{{ coffee.runobj.readtime() }}</a> ({{ coffee.runobj.statusobj.description }})</p>
+        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> ({{ coffee.run.status.description }})</p>
     </div>
 </div>
 <div class="row">
@@ -45,7 +51,6 @@
     </div>
 </div>
 <a href="/coffee/{{ coffee.id }}/edit/" class="btn btn-primary">Edit Coffee</a>
-<!--<a href="/coffee/{{ coffee.id }}/delete/" class="btn btn-danger">Delete Coffee</a>-->
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Coffee

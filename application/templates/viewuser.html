@@ -3,15 +3,35 @@
 
 {% block subcontent %}
 <h1>{{ user.name }}</h1>
-<a href="/coffee/add/" class="btn btn-primary">Add Coffee</a>
-<h2>Registration IDs</h2>
-<ul>
-    {% for regid in user.regids %}
-    <li>{{ regid.regid }}</li>
-    {% endfor %}
-</ul>
+<div class="row">
+    <label class="col-sm-2">Tutor:</label>
+    <div class="col-sm-10">
+        {% if user.tutor %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Teacher:</label>
+    <div class="col-sm-10">
+        {% if user.teacher %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+    </div>
+</div>
+<h2>Debts</h2>
+<div class="row">
+    <label class="col-sm-2">Owes (Total):</label>
+    <div class="col-sm-10">
+        <p>${{ "%.2f" % user.moneyOwedTotal() }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Is Owed (Total):</label>
+    <div class="col-sm-10">
+        <p>${{ "%.2f" % user.moneyIsOwedTotal() }}</p>
+    </div>
+</div>
 <h2>Runs</h2>
+<a href="/run/add/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Run</a>
 {{ tables.runtable(user.runs, False) }}
 <h2>Coffees</h2>
+<a href="/coffee/add/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Coffee</a>
 {{ tables.coffeetable(user.coffees, False) }}
 {% endblock %}

@@ -12,6 +12,7 @@ spickup = Status("Pickup")
 sclosed = Status("Closed")
 
 inituser = User("Maddy")
+inituser.tutor = True
 
 db.session.add(sopen)
 db.session.add(sorder)

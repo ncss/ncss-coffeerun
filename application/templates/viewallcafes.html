@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>All Coffee Orders</h1>
+
+{% from "tables.html" import cafetable as table %}
+<a href="/cafe/add/" class="btn btn-primary">Add Cafe</a>
+{{ table(cafes) }}
+
+{% endblock %}

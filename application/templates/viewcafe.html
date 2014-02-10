@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>Cafe: {{ cafe.name }}</h1>
+<div class="row">
+    <label class="col-sm-1">ID</label>
+    <div class="col-sm-11">
+        <p>{{ cafe.id }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Location</label>
+    <div class="col-sm-11">
+        <p>{{ cafe.location }}</p>
+    </div>
+</div>
+
+<h2>Runs</h2>
+{% from "tables.html" import runtable %}
+{{ runtable(cafe.runs) }}
+
+{% endblock %}
