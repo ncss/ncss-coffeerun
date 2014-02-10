@@ -15,8 +15,14 @@
     </div>
 </div>
 
+<h2>Prices</h2>
+{% from "tables.html" import pricetable %}
+<a href="/cafe/{{ cafe.id }}/price/add/" class="btn btn-primary">Add Price</a>
+{{ pricetable(cafe.pricelist, viewcafe=false) }}
+
 <h2>Runs</h2>
 {% from "tables.html" import runtable %}
+<a href="/cafe/{{ cafe.id }}/run/add/" class="btn btn-primary">Add Run</a>
 {{ runtable(cafe.runs) }}
 
 {% endblock %}

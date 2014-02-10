@@ -303,6 +303,14 @@ def CafeTestModel(TestCase):
         db.session.remove()
         db.drop_all()
 
+    def test_add_cafe(self):
+        cafe = Cafe()
+        db.session.add(cafe)
+        db.session.commit()
+        assert cafe in db.session
+        db.session.remove(cafe)
+        db.session.commit()
+        assert cafe not in db.session
 
 
 if __name__ == "__main__":

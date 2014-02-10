@@ -52,7 +52,7 @@
             {% if viewperson %}<td><a href="/user/{{ run.fetcher.id }}">{{ run.fetcher.name }}</a></td>{% endif %}
             <td>{{ run.readtime() }}</td>
             <td>{{ run.readdeadline() }}</td>
-            <td>{{ run.cafe }}</td>
+            <td><a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></td>
             <td>{{ run.pickup }}</td>
             <td>{{ run.status.description }}</td>
             <td>{{ run.coffees|length }}</td>
@@ -77,6 +77,29 @@
             <td><a href="/cafe/{{ cafe.id }}/">{{ cafe.id }}</a></td>
             <td>{{ cafe.name }}</td>
             <td>{{ cafe.location }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{%- endmacro %}
+
+{% macro pricetable(priceset, viewcafe=true) -%}
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            {% if viewcafe %}<th>Cafe</th>{% endif %}
+            <th>Size</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for price in priceset %}
+        <tr>
+            <td><a href="/price/{{ price.id }}/">{{ price.id }}</a></td>
+            {% if viewcafe %}<td><a href="/cafe/{{ price.cafe.id }}">{{ price.cafe.name }}</a></td>{% endif %}
+            <td>{{ price.size }}</td>
+            <td>{{ price.amount }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -168,8 +168,9 @@ def edit_cafe(cafeid):
     return redirect(url_for("home"))
 
 @app.route("/run/add/", methods=["GET", "POST"])
+@app.route("/cafe/<int:cafeid>/run/add/", methods=["GET", "POST"])
 @login_required
-def add_run():
+def add_run(cafeid=None):
     form = RunForm(request.form)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
@@ -179,6 +180,8 @@ def add_run():
     form.status.choices = [(s.id, s.description) for s in statuses]
     cafes = Cafe.query.all()
     form.cafe.choices = [(cafe.id, cafe.name) for cafe in cafes]
+    if cafeid:
+        form.cafe.data = cafeid
     if request.method == "GET":
         form.time.data = sydney_timezone_now()#.strftime("%Y/%m/%d %H:%M:%S")
         form.deadline.data = sydney_timezone_now()
@@ -191,10 +194,12 @@ def add_run():
         run.fetcher = current_user
         #print run
         run.deadline = form.data["deadline"]
-        run.cafe = form.data["cafe"]
+        run.cafeid = form.data["cafe"]
+        cafe = Cafe.query.filter_by(id=run.cafeid).first()
+        run.cafe = cafe
         run.pickup = form.data["pickup"]
-        run.status = form.data["status"]
-        run.statusobj = Status.query.filter_by(id=form.data["status"]).first()
+        run.statusid = form.data["status"]
+        run.status = Status.query.filter_by(id=form.data["status"]).first()
         #run.modified = sydney_timezone_now(datetime.utcnow())
         run.modified = datetime.utcnow()
         db.session.add(run)
@@ -275,12 +280,34 @@ def add_cafe():
         cafe.location = form.data["location"]
         db.session.add(cafe)
         db.session.commit()
+        flash("Cafe added", "success")
         return redirect(url_for("view_cafe", cafeid=cafe.id))
     else:
         # Broken!
         flash("Add cafe caused an error", "danger")
         return render_template("cafeform.html", form=form, formtype="Add", current_user=current_user)
     return redirect(url_for("home"))
+
+@app.route("/cafe/<int:cafeid>/price/add/", methods=["GET", "POST"])
+def add_cafe_price(cafeid):
+    form = PriceForm()
+    cafe = Cafe.query.filter_by(id=cafeid).first_or_404()
+    form.cafe.choices = [(cafe.id, cafe.name)]
+    form.cafe.data = cafe.id
+    if request.method == "GET":
+        return render_template("priceform.html", cafe=cafe, form=form, formtype="Add", current_user=current_user)
+    if request.method == "POST" and form.validate_on_submit():
+        price = Price(cafe.id)
+        price.cafe = cafe
+        price.size = form.data["size"]
+        price.amount = form.data["amount"]
+        db.session.add(price)
+        db.session.commit()
+        flash("Price added to cafe '%s'" % cafe.name, "success")
+        return redirect(url_for("view_cafe", cafeid=cafe.id))
+    else:
+        flash("Add cafe price caused an error", "danger")
+    return render_template("priceform.html", cafe=cafe, form=form, formtype="Add", current_user=current_user)
 
 @app.route("/coffee/<int:coffeeid>/delete/", methods=["GET"])
 def delete_coffee(coffeeid):
@@ -372,7 +399,7 @@ def mobile_syncrun():
         if "id" not in runjson:
             db.session.add(run)
         db.session.commit()
-        notify_newrun(run)
+        #notify_newrun(run)
         return jsonify(msg="success", id=run.id, modified=run.jsondatetime("modified"))
     except:
         return jsonify(msg="error")
