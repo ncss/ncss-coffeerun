@@ -3,31 +3,41 @@
 
 {% block subcontent %}
 <h1>{{ user.name }}</h1>
+
 <div class="row">
-    <label class="col-sm-2">Tutor:</label>
-    <div class="col-sm-10">
-        {% if user.tutor %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+    <div class="col-xs-6 col-sm-6">
+        <h2>Details</h2>
+        <div class="row">
+            <label class="col-sm-2">Tutor:</label>
+            <div class="col-sm-10">
+                {% if user.tutor %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-2">Teacher:</label>
+            <div class="col-sm-10">
+                {% if user.teacher %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+            </div>
+        </div>
+        {% if current_user == user %}<a href="/user/{{ user.id }}/edit/" class="btn btn-primary">Edit User</a>{% endif %}
+    </div>
+    <div class="col-xs-6 col-sm-6">
+        <h2>Debts</h2>
+        <div class="row">
+            <label class="col-sm-3">Owes (Total):</label>
+            <div class="col-sm-9">
+                <p>${{ "%.2f" % user.moneyOwedTotal() }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-3">Is Owed (Total):</label>
+            <div class="col-sm-9">
+                <p>${{ "%.2f" % user.moneyIsOwedTotal() }}</p>
+            </div>
+        </div>
     </div>
 </div>
-<div class="row">
-    <label class="col-sm-2">Teacher:</label>
-    <div class="col-sm-10">
-        {% if user.teacher %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
-    </div>
-</div>
-<h2>Debts</h2>
-<div class="row">
-    <label class="col-sm-2">Owes (Total):</label>
-    <div class="col-sm-10">
-        <p>${{ "%.2f" % user.moneyOwedTotal() }}</p>
-    </div>
-</div>
-<div class="row">
-    <label class="col-sm-2">Is Owed (Total):</label>
-    <div class="col-sm-10">
-        <p>${{ "%.2f" % user.moneyIsOwedTotal() }}</p>
-    </div>
-</div>
+
 <h2>Runs</h2>
 <a href="/run/add/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Run</a>
 {{ tables.runtable(user.runs, False) }}

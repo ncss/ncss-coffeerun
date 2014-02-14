@@ -99,7 +99,7 @@
             <td><a href="/price/{{ price.id }}/">{{ price.id }}</a></td>
             {% if viewcafe %}<td><a href="/cafe/{{ price.cafe.id }}">{{ price.cafe.name }}</a></td>{% endif %}
             <td>{{ price.size }}</td>
-            <td>{{ price.amount }}</td>
+            <td>{{ "$%.2f" % price.amount }}</td>
         </tr>
         {% endfor %}
     </tbody>

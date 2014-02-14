@@ -6,7 +6,7 @@
 <div class="row">
     <label class="col-sm-2">Coffee Fetcher</label>
     <div class="col-sm-10">
-        <p>{{ run.fetcher.name }}</p>
+        <p><a href="/user/{{ run.person }}/">{{ run.fetcher.name }}</a></p>
     </div>
 </div>
 <div class="row">
@@ -24,7 +24,7 @@
 <div class="row">
     <label class="col-sm-2">Cafe</label>
     <div class="col-sm-10">
-        <p>{{ run.cafe }}</p>
+        <p><a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></p>
     </div>
 </div>
 <div class="row">
@@ -46,7 +46,7 @@
     </div>
 </div>
 <a href="/run/{{ run.id }}/edit/" class="btn btn-primary">Edit Run</a>
-<a href="/run/{{ run.id }}/addcoffee/" class="btn btn-primary">Add Coffee</a>
+<a href="/run/{{ run.id }}/addcoffee/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Coffee</a>
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Run
@@ -60,11 +60,15 @@
         <h4 class="modal-title" id="myModalLabel">Delete Run</h4>
       </div>
       <div class="modal-body">
+          {% if run.coffees %}
+          <p>You cannot delete a run with associated coffees.</p>
+          {% else %}
           <p>Are you sure?</p>
+          {% endif %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <a href="/run/{{ run.id }}/delete/" class="btn btn-danger">Delete Run</a>
+        {% if not run.coffees %}<a href="/run/{{ run.id }}/delete/" class="btn btn-danger">Delete Run</a>{% endif %}
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

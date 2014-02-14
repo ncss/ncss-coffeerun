@@ -11,7 +11,13 @@
 <div class="row">
     <label class="col-sm-1">Addict</label>
     <div class="col-sm-11">
-        <p>{{ coffee.addict.name }}</p>
+        <p><a href="/user/{{ coffee.person }}/">{{ coffee.addict.name }}</a></p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Run</label>
+    <div class="col-sm-11">
+        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> ({{ coffee.run.status.description }})</p>
     </div>
 </div>
 <div class="row">
@@ -36,12 +42,6 @@
     <label class="col-sm-1">Price</label>
     <div class="col-sm-11">
         <p>{{ "$%.2f" % coffee.price.amount }}</p>
-    </div>
-</div>
-<div class="row">
-    <label class="col-sm-1">Run</label>
-    <div class="col-sm-11">
-        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> ({{ coffee.run.status.description }})</p>
     </div>
 </div>
 <div class="row">

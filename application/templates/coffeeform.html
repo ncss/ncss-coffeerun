@@ -1,5 +1,14 @@
 {% extends "layout.html" %}
 
+{% block scripts %}
+    {{ super() }}
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <script src="{{ url_for(".static", filename="js/jquery.number.min.js") }}"></script>
+    <script src="{{ url_for(".static", filename="js/coffeeform.js") }}"></script>
+{% endblock %}
+
 {% block subcontent %}
 <h1>{{ formtype }} Coffee</h1>
 <form id="coffee-form" class="form-horizontal" role="form" method="POST">
@@ -10,6 +19,12 @@
             {{ form.person(class_="form-control") }}
         </div>
     </div> 
+    <div class="form-group">
+        {{ form.runid.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.runid(class_="form-control", type="number") }}
+        </div>
+    </div>
     <div class="form-group">
         {{ form.coffeetype.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
@@ -23,15 +38,15 @@
         </div>
     </div>
     <div class="form-group">
-        {{ form.sugar.label(class_="col-sm-1 control-label") }}
+        <label class="col-sm-1 control-label">Price</label>
         <div class="col-sm-11">
-            {{ form.sugar(class_="form-control", type="number") }}
+            <p class="form-control-static">$<span id="price">{{ price }}</span></p>
         </div>
     </div>
     <div class="form-group">
-        {{ form.run.label(class_="col-sm-1 control-label") }}
+        {{ form.sugar.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
-            {{ form.run(class_="form-control", type="number") }}
+            {{ form.sugar(class_="form-control", type="number") }}
         </div>
     </div>
     <div class="form-group">

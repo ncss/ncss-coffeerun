@@ -9,7 +9,7 @@ See: http://flask.pocoo.org/docs/patterns/wtforms/
 """
 
 from flask.ext.wtf import Form
-from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, FloatField
+from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, FloatField, BooleanField
 
 class LoginForm(Form):
     users = SelectField("User", coerce=int)
@@ -20,18 +20,20 @@ class CoffeeForm(Form):
     coffeetype = TextField("Coffee", [validators.Required()])
     size = SelectField("Size", choices=[("S","S"),("M","M"),("L","L")])
     sugar = IntegerField("Sugar", default=0)
-    run = SelectField("Run", coerce=int)
+    runid = SelectField("Run", coerce=int)
 
 class RunForm(Form):
     person = SelectField("Person", coerce=int)
     time = DateTimeField("Time of Run", [validators.Required()], format="%Y/%m/%d %H:%M")
     deadline = DateTimeField("Deadline for Adding", format="%Y/%m/%d %H:%M")
-    cafe = SelectField("Cafe", coerce=int)
+    cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")
-    status = SelectField("Status", coerce=int)
+    statusid = SelectField("Status", coerce=int)
 
 class UserForm(Form):
     name = TextField("Name")
+    tutor = BooleanField("Tutor")
+    teacher = BooleanField("Teacher")
 
 class CafeForm(Form):
     name = TextField("Name", [validators.Required()])

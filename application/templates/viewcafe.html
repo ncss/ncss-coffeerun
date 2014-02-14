@@ -2,23 +2,50 @@
 
 {% block subcontent %}
 <h1>Cafe: {{ cafe.name }}</h1>
+
 <div class="row">
-    <label class="col-sm-1">ID</label>
-    <div class="col-sm-11">
-        <p>{{ cafe.id }}</p>
+    <div class="col-xs-6 col-sm-6">
+        <h2>Details</h2>
+        <div class="row">
+            <label class="col-sm-3">ID</label>
+            <div class="col-sm-9">
+                <p>{{ cafe.id }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-3">Location</label>
+            <div class="col-sm-9">
+                <p>{{ cafe.location }}</p>
+            </div>
+        </div>
+        <a href="/cafe/{{ cafe.id }}/edit/" class="btn btn-primary">Edit Cafe</a>
+        <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">Delete Cafe</button>
     </div>
-</div>
-<div class="row">
-    <label class="col-sm-1">Location</label>
-    <div class="col-sm-11">
-        <p>{{ cafe.location }}</p>
+    <div class="col-xs-6 col-sm-6">
+        <h2>Prices</h2>
+        {% from "tables.html" import pricetable %}
+        <a href="/cafe/{{ cafe.id }}/price/add/" class="btn btn-primary">Add Price</a>
+        {{ pricetable(cafe.pricelist, viewcafe=false) }}
     </div>
 </div>
 
-<h2>Prices</h2>
-{% from "tables.html" import pricetable %}
-<a href="/cafe/{{ cafe.id }}/price/add/" class="btn btn-primary">Add Price</a>
-{{ pricetable(cafe.pricelist, viewcafe=false) }}
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Delete Cafe</h4>
+      </div>
+      <div class="modal-body">
+          <p>Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a href="/cafe/{{ cafe.id }}/delete/" class="btn btn-danger">Delete Cafe</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 <h2>Runs</h2>
 {% from "tables.html" import runtable %}

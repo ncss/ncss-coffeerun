@@ -42,7 +42,7 @@ class User(db.Model):
     def moneyOwedTotal(self):
         amount = 0.0
         for coffee in self.coffees:
-            if not coffee.paid:
+            if not coffee.paid and coffee.run.person != self.id:
                 amount += coffee.price.amount
         return amount
 
@@ -50,7 +50,7 @@ class User(db.Model):
         amount = 0.0
         for run in self.runs:
             for coffee in run.coffees:
-                if not coffee.paid:
+                if not coffee.paid and coffee.person != self.id:
                     amount += coffee.price.amount
         return amount
 
@@ -231,7 +231,7 @@ class Price(db.Model):
     size = db.Column(db.String)
     amount = db.Column(db.Float)
 
-    cafe = db.relationship("Cafe", backref=db.backref("pricelist"))
+    cafe = db.relationship("Cafe", backref=db.backref("pricelist", lazy="dynamic", single_parent=True, cascade="all, delete, delete-orphan"))
 
     def __init__(self, cafeid, size=""):
         self.cafeid = cafeid
