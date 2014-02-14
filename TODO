@@ -1,0 +1,39 @@
+- Users
+  - Pretty addict page formatting
+  - User-only debt summary screen
+- Runs
+- Coffees
+  - Fix bug where deleting a price messes with the coffee's pricing
+- Cafes
+  - Weird redirect bug on edit
+- Prices
+  - Price modifier integration
+- Home page
+  - Fix next run in jumbatron
+  - All cafe mentions link to their page
+  - Make pretty
+- About
+  - Separate into own page
+  - FAQs
+  - News
+- Forms
+  - Per-field validation
+  - Cancel buttons
+    - Run
+    - Coffee
+    - Cafe
+    - Price
+    - User
+- Refactoring
+  - Seperate templates/forms from ORM interaction
+- Activity feed
+  - Event log table and model
+  - Activities all write to event log
+  - Recent feed on home page
+- Admin
+  - Update tables and models for admin column
+  - Admin can make other users admin
+  - Admin can do anything
+  - Dashboard page
+- Notifications
+  - Notify on update
