@@ -5,37 +5,42 @@
 <h1>{{ user.name }}</h1>
 
 <div class="row">
-    <div class="col-xs-6 col-sm-6">
+    <div class="col-xs-6 col-sm-2">
         <h2>Details</h2>
         <div class="row">
-            <label class="col-sm-2">Tutor:</label>
-            <div class="col-sm-10">
+            <label class="col-sm-8">Tutor:</label>
+            <div class="col-sm-4">
                 {% if user.tutor %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
             </div>
         </div>
         <div class="row">
-            <label class="col-sm-2">Teacher:</label>
-            <div class="col-sm-10">
+            <label class="col-sm-8">Teacher:</label>
+            <div class="col-sm-4">
                 {% if user.teacher %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
             </div>
         </div>
         {% if current_user == user %}<a href="/user/{{ user.id }}/edit/" class="btn btn-primary">Edit User</a>{% endif %}
     </div>
-    <div class="col-xs-6 col-sm-6">
+    <div class="col-xs-6 col-sm-2">
         <h2>Debts</h2>
         <div class="row">
-            <label class="col-sm-3">Owes (Total):</label>
-            <div class="col-sm-9">
+            <label class="col-sm-8">Owes (Total):</label>
+            <div class="col-sm-4">
                 <p>${{ "%.2f" % user.moneyOwedTotal() }}</p>
             </div>
         </div>
         <div class="row">
-            <label class="col-sm-3">Is Owed (Total):</label>
-            <div class="col-sm-9">
+            <label class="col-sm-8">Is Owed (Total):</label>
+            <div class="col-sm-4">
                 <p>${{ "%.2f" % user.moneyIsOwedTotal() }}</p>
             </div>
         </div>
+        {% if current_user == user %}<a href="/user/{{ user.id }}/debts/" class="btn btn-primary">View Debts</a>{% endif %}
     </div>
+    <div class="col-xs-12 col-sm-8">
+        <h2>Recent Activity</h2>
+        {{ tables.eventtable(user.events[:4], viewid=false) }}
+    </div> 
 </div>
 
 <h2>Runs</h2>

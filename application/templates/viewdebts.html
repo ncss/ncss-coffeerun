@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>{{ user.name }}'s Debts</h1>
+<div class="row">
+    <div class="col-sm-6">
+    <h2>Owed To Other People</h2>
+        {% if owes %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Coffee</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for coffee in owes %}
+                <tr>
+                    <td><a href="/user/{{ coffee.run.fetcher.id }}/">{{ coffee.run.fetcher.name }}</a></td>
+                    <td><a href="/coffee/{{ coffee.id }}/">{{ coffee.run.readtime() }}</a></td>
+                    <td>{{ "$%.2f" % coffee.price.amount }}</td>
+                </tr>
+                {% if loop.last %}
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    <td><strong>{{ "$%.2f" % owes|sum(attribute="price.amount") }}</strong></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>{{ user.name }} doesn't owe anyone anything.</p>
+        {% endif %}
+    </div>
+    <div class="col-sm-6">
+        <h2>Owed To {{ user.name }}</h2>
+        {% if isowed %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Coffee</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for coffee in isowed %}
+                <tr>
+                    <td><a href="/user/{{ coffee.addict.id }}/">{{ coffee.addict.name }}</a></td>
+                    <td><a href="/coffee/{{ coffee.id }}/">{{ coffee.run.readtime() }}</a></td>
+                    <td>{{ "$%.2f" % coffee.price.amount }}</td>
+                </tr>
+                {% if loop.last %}
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    <td><strong>{{ "$%.2f" % isowed|sum(attribute="price.amount") }}</strong></td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>{{ user.name }} isn't owed anything.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

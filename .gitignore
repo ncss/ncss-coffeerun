@@ -4,3 +4,4 @@ env
 *.pyc
 *.db
 *.swp
+*.DS_Store

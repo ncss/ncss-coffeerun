@@ -43,6 +43,7 @@
             <th>Pickup</th>
             <th>Status</th>
             <th>Coffees</th>
+            <th>Cost</th>
         </tr>
     </thead>
     <tbody>
@@ -56,6 +57,7 @@
             <td>{{ run.pickup }}</td>
             <td>{{ run.status.description }}</td>
             <td>{{ run.coffees|length }}</td>
+            <td>{{ "$%.2f" % run.calculateTotalRunCost() }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -100,6 +102,27 @@
             {% if viewcafe %}<td><a href="/cafe/{{ price.cafe.id }}">{{ price.cafe.name }}</a></td>{% endif %}
             <td>{{ price.size }}</td>
             <td>{{ "$%.2f" % price.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{%- endmacro %}
+
+{% macro eventtable(eventset, viewid=true) -%}
+<table class="table">
+    <thead>
+        <tr>
+            {% if viewid %}<th>ID</th>{% endif %}
+            <th>Activity</th>
+            <th>Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in eventset %}
+        <tr>
+            {% if viewid %}<td>{{ event.id }}</td>{% endif %}
+            <td><a href="/user/{{ event.user.id }}/">{{ event.user.name }}</a> {{ event.action }} a <a href="/{{ event.objtype }}/{{ event.objid }}/">{{ event.objtype }}</a> {{ event.descrobj()|safe }}</td>
+            <td>{{ event.readtime() }}</td>
         </tr>
         {% endfor %}
     </tbody>

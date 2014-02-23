@@ -4,37 +4,37 @@
 <h1>{{ formtype }} Run</h1>
 <form id="run-form" class="form-horizontal" role="form" method="POST">
     {{ form.hidden_tag() }}
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.person.errors }}">
         {{ form.person.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.person(class_="form-control") }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.time.errors }}">
         {{ form.time.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.time(class_="form-control") }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.deadline.errors }}">
         {{ form.deadline.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.deadline(class_="form-control") }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.cafeid.errors }}">
         {{ form.cafeid.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.cafeid(class_="form-control") }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.pickup.errors }}">
         {{ form.pickup.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.pickup(class_="form-control") }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ "has-error" if form.statusid.errors }}">
         {{ form.statusid.label(class_="col-sm-2 control-label") }}
         <div class="col-sm-10">
             {{ form.statusid(class_="form-control") }}
@@ -43,6 +43,7 @@
     <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
             <button type="submit" class="btn btn-primary">Save</button>
+            <a href="/run/" class="btn btn-default">Cancel</a>
         </div>
     </div>
 </form>

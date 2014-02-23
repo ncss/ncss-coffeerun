@@ -45,6 +45,12 @@
     </div>
 </div>
 <div class="row">
+    <label class="col-sm-1">Paid</label>
+    <div class="col-sm-11">
+        <p>{% if coffee.paid %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</p>
+    </div>
+</div>
+<div class="row">
     <label class="col-sm-1">Modified</label>
     <div class="col-sm-11">
         <p>{{ coffee.readmodified() }}</p>

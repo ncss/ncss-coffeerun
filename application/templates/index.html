@@ -5,18 +5,28 @@
     <h1>NCSS CoffeeRun</h1>
     {% if run %}
         {% if run.statusid == 3 %}
-        <p>The run from {{ run.cafe.name }} at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is now available for pickup{% if run.pickup %} at {{ run.pickup }}{% endif %}.</p>
+        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is now available for pickup{% if run.pickup %} at {{ run.pickup }}{% endif %}.</p>
         {% elif run.statusid == 2 %}
-        <p>The run from {{ run.cafe.name }} at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is currently on its way.</p>
+        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is currently on its way.</p>
         {% else %}
-        <p><strong>Next run:</strong> <a href="/run/{{ run.id }}">{{ run.readtime() }}</a></p>
+        <p><strong>Next run:</strong> <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></p>
         {% endif %}
     {% else %}
     <p>There are no upcoming runs.</p>
     {% endif %}
 </div>
-<div class="col-md-offset-3 col-md-6">
-    <a href="/run/add/" class="btn btn-primary btn-large btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Run</a>
-    <a href="/coffee/add/" class="btn btn-primary btn-large btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Coffee</a>
+<div class="row">
+    <div class="col-md-4">
+        <h2>Quick Actions</h2>
+        <a href="/run/add/" class="btn btn-primary btn-lg btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Run</a>
+        <a href="/coffee/add/" class="btn btn-primary btn-lg btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Coffee</a>
+        <a href="/cafe/add/" class="btn btn-primary btn-lg btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Cafe</a>
+        <a href="/price/add/" class="btn btn-primary btn-lg btn-block" role="button"><span class="glyphicon glyphicon-plus"></span> Add Price</a>
+    </div>
+    <div class="col-md-8">
+        <h2>Recent Activity</h2>
+        {% from "tables.html" import eventtable as table %}
+        {{ table(events, viewid=false) }}
+    </div>
 </div>
 {% endblock %}

@@ -1,35 +1,38 @@
-- Users
-  - Pretty addict page formatting
-  - User-only debt summary screen
-- Runs
++ Users
+  + Pretty addict page formatting
+  + User-only debt summary screen: /user/<int:userid>/debts/
++ Runs
+  + Total cost of run on table and view
+  + Editing cafe forces recalculation of coffee prices
 - Coffees
   - Fix bug where deleting a price messes with the coffee's pricing
-- Cafes
-  - Weird redirect bug on edit
++ Cafes
+  + Weird redirect bug on edit
 - Prices
+  + View page/function
+  + View all prices page/function
+  - Fix buggy addition
+  + Modify page/function
+  + Delete button/modal/function
+  + Adding price with no cafes redirects back to home
   - Price modifier integration
-- Home page
-  - Fix next run in jumbatron
-  - All cafe mentions link to their page
-  - Make pretty
++ Home page
+  + Fix next run in jumbatron
+  + All cafe mentions link to their page
+  + Make pretty
 - About
   - Separate into own page
   - FAQs
   - News
-- Forms
-  - Per-field validation
-  - Cancel buttons
-    - Run
-    - Coffee
-    - Cafe
-    - Price
-    - User
++ Forms
+  + Per-field validation
+  + Cancel buttons
 - Refactoring
   - Seperate templates/forms from ORM interaction
-- Activity feed
-  - Event log table and model
-  - Activities all write to event log
-  - Recent feed on home page
++ Activity feed
+  + Event log table and model
+  + Activities all write to event log
+  + Recent feed on home page
 - Admin
   - Update tables and models for admin column
   - Admin can make other users admin

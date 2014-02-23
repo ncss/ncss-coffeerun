@@ -142,7 +142,7 @@ class Coffee(db.Model):
     person = db.Column(db.Integer, db.ForeignKey("Users.id"))
     coffeetype = db.Column(db.String)
     size = db.Column(db.String)
-    sugar = db.Column(db.String)
+    sugar = db.Column(db.Integer)
     runid = db.Column(db.Integer, db.ForeignKey("Runs.id"))
     modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now);
     
@@ -258,3 +258,42 @@ class PriceModifier(db.Model):
     def __repr__(self):
         return "<PriceModifier(%d,'%s','%f')>" % (self.cafeid, self.modtype, self.amount)
 
+class Event(db.Model):
+    __tablename__ = "Events"
+    id = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.Integer, db.ForeignKey("Users.id"))
+    action = db.Column(db.String)
+    objtype = db.Column(db.String)
+    objid = db.Column(db.Integer)
+    time = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+
+    user = db.relationship("User", backref=db.backref("events", order_by=id.desc()))
+
+    def __init__(self, userid=0, action="", objtype="", objid=""):
+        self.userid = userid
+        self.action = action
+        self.objtype = objtype
+        self.objid = objid
+
+    def __repr__(self):
+        return "<PriceModifier(%d, %d, '%s', '%s', %d, '%s')>" % (self.id, self.userid, self.cation, self.objtype, self.objid, self.time)
+    
+    def readtime(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        return self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+
+    def descrobj(self):
+        if self.objtype == "run":
+            run = Run.query.filter_by(id=self.objid).first()
+            return "for time %s" % run.readtime()
+        elif self.objtype == "coffee":
+            coffee = Coffee.query.filter_by(id=self.objid).first()
+            return "for <a href=\"/run/%s/\">run</a> at time %s" % (coffee.run.id, coffee.run.readtime())
+        elif self.objtype == "cafe":
+            cafe = Cafe.query.filter_by(id=self.objid).first()
+            return "named '%s'" % cafe.name
+        elif self.objtype == "price":
+            price = Price.query.filter_by(id=self.objid).first()
+            return "for <a href=\"/cafe/%s/\">cafe</a> '%s'" % (price.cafe.id, price.cafe.name)
+        else:
+            return ""

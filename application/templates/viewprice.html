@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>Price</h1>
+<div class="row">
+    <label class="col-sm-1">ID</label>
+    <div class="col-sm-11">
+        <p>{{ price.id }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Cafe</label>
+    <div class="col-sm-11">
+        <p><a href="/cafe/{{ price.cafe.id }}/">{{ price.cafe.name }}</a></p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Size</label>
+    <div class="col-sm-11">
+        <p>{{ price.size }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Amount</label>
+    <div class="col-sm-11">
+        <p>{{ "$%.2f" % price.amount }}</p>
+    </div>
+</div>
+
+<a href="/price/{{ price.id }}/edit/" class="btn btn-primary">Edit Price</a>
+<button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
+    Delete Price
+</button>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Delete Price</h4>
+      </div>
+      <div class="modal-body">
+          <p>Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a href="/price/{{ price.id }}/delete/" class="btn btn-danger">Delete Price</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endblock %}

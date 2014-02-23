@@ -21,6 +21,7 @@ class CoffeeForm(Form):
     size = SelectField("Size", choices=[("S","S"),("M","M"),("L","L")])
     sugar = IntegerField("Sugar", default=0)
     runid = SelectField("Run", coerce=int)
+    paid = BooleanField("Paid", default=False)
 
 class RunForm(Form):
     person = SelectField("Person", coerce=int)
@@ -40,6 +41,6 @@ class CafeForm(Form):
     location = TextField("Location")
 
 class PriceForm(Form):
-    cafe = SelectField("Cafe", coerce=int)
+    cafeid = SelectField("Cafe", coerce=int)
     size = SelectField("Size", [validators.Required()], choices=[("S", "S"), ("M", "M"), ("L", "L")])
     amount = FloatField("Amount", [validators.Required()])

@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>All Prices</h1>
+
+{% from "tables.html" import pricetable as table %}
+<a href="/price/add/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> Add Price</a>
+{{ table(prices) }}
+
+{% endblock %}
