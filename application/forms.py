@@ -20,6 +20,7 @@ class CoffeeForm(Form):
     coffeetype = TextField("Coffee", [validators.Required()])
     size = SelectField("Size", choices=[("S","S"),("M","M"),("L","L")])
     sugar = IntegerField("Sugar", default=0)
+    price = FloatField("Price", default=0)
     runid = SelectField("Run", coerce=int)
     paid = BooleanField("Paid", default=False)
 
@@ -33,6 +34,7 @@ class RunForm(Form):
 
 class UserForm(Form):
     name = TextField("Name")
+    email = TextField("Email", [validators.Required()])
     tutor = BooleanField("Tutor")
     teacher = BooleanField("Teacher")
 

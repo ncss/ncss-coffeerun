@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h1>Frequently Asked Questions</h1>
+
+<div class="panel-group" id="accordion">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#question1">Question 1</a>
+            </h4>
+        </div>
+        <div id="question1" class="panel-collapse collapse">
+            <div class="panel-body">
+                Answer to Question 1
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#question2">Question 2</a>
+            </h4>
+        </div>
+        <div id="question2" class="panel-collapse collapse">
+            <div class="panel-body">
+                Answer to Question 2
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

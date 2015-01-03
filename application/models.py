@@ -17,6 +17,7 @@ class User(db.Model):
     __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    email = db.Column(db.String)
     device = db.Column(db.String)
     tutor = db.Column(db.Boolean, default=False)
     teacher = db.Column(db.Boolean, default=False)
@@ -43,7 +44,7 @@ class User(db.Model):
         amount = 0.0
         for coffee in self.coffees:
             if not coffee.paid and coffee.run.person != self.id:
-                amount += coffee.price.amount
+                amount += coffee.price
         return amount
 
     def moneyIsOwedTotal(self):
@@ -51,21 +52,21 @@ class User(db.Model):
         for run in self.runs:
             for coffee in run.coffees:
                 if not coffee.paid and coffee.person != self.id:
-                    amount += coffee.price.amount
+                    amount += coffee.price
         return amount
 
     def moneyOwedPerson(self, debtor):
         amount = 0.0
         for coffee in self.coffees:
             if not coffee.paid and coffee.run.fetcher == debtor:
-                amount += coffee.price.amount
+                amount += coffee.price
         return amount
 
     def moneyIsOwedPower(self, debtor):
         amount = 0.0
         for coffee in debtor.coffees:
             if not coffee.paid and coffee.run.fetcher == self:
-                amount += coffee.price.amount
+                amount += coffee.price
         return amount
 
 class Run(db.Model):
@@ -123,7 +124,7 @@ class Run(db.Model):
         total = 0.0
         for coffee in self.coffees:
             if not coffee.paid:
-                total += coffee.price.amount
+                total += coffee.price
         return total
 
     def toJSON(self):
@@ -150,7 +151,8 @@ class Coffee(db.Model):
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
 
     priceid = db.Column(db.Integer, db.ForeignKey("Prices.id"))
-    price = db.relationship("Price")
+    #price = db.relationship("Price")
+    price = db.Column(db.Float)
 
     #pricemodid = db.Column(db.Integer, db.ForeignKey("PriceModifiers.id"))
 

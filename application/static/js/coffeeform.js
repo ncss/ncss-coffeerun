@@ -5,7 +5,7 @@ $(document).ready(function() {
     var origsize = $("#size option:selected").val();
     $("#size").change(function() {
         var size = $("#size option:selected").text();
-        $("#price").text(sizes[size]).number(true, 2);
+        $("#price").val(sizes[size]).number(true, 2);
     });
     $("#runid").change(function() {
         $.getJSON($SCRIPT_ROOT + "/_prices_for_run/", {

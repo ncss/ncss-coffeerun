@@ -27,7 +27,14 @@
                     <li><a href="/price/">Prices</a></li>
                     <li><a href="/user/">Addicts</a></li>
                     <li><a href="/activity/">Activity</a></li>
-                    <li><a href="/about/">About</a></li>
+                    <li class="dropdown">
+                        <a href="/about/" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/about/">CoffeeRun</a></li>
+                            <li><a href="/about/history/">History</a></li>
+                            <li><a href="/about/faqs">FAQs</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 {% if current_user %}<p class="navbar-text navbar-right">User: <a href="/user/{{ current_user.id }}/">{{ current_user.name }}</a> <a href="/logout/">Logout</a></p>{% endif %}
             </div>

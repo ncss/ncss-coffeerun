@@ -23,25 +23,50 @@ def home():
 
 @app.route("/login/", methods=["GET","POST"])
 def login():
-    form = LoginForm()
+    loginform = LoginForm()
+    registerform = UserForm()
     users = db.session.query(User).all()
-    form.users.choices = [(u.id, u.name) for u in users]
-    if form.validate_on_submit():
-        if form.newuser.data:
-            user = User(form.newuser.data)
+    loginform.users.choices = [(u.id, u.name) for u in users]
+    if loginform.validate_on_submit():
+        if loginform.newuser.data:
+            user = User(loginform.newuser.data)
             db.session.add(user)
             db.session.commit()
             write_to_events("created", "user", user.id, user)
         else:
-            user = db.session.query(User).filter_by(id=form.users.data).first()
+            user = db.session.query(User).filter_by(id=loginform.users.data).first()
         if login_user(user):
             flash("You are now logged in.", "success")
             return redirect(request.args.get("next") or url_for("home"))
             #return url_for("home")
         else:
             flash("Login unsuccessful.", "danger")
-            return render_template("login.html", form=form)
-    return render_template("login.html", form=form)
+            return render_template("login.html", loginform=loginform, registerform=registerform)
+    return render_template("login.html", loginform=loginform, registerform=registerform)
+
+@app.route("/register/", methods=["POST"])
+def register():
+    registerform = UserForm()
+    if registerform.validate_on_submit():
+        user = User()
+        user.name = registerform.data["name"]
+        user.email = registerform.data["email"]
+        user.tutor = registerform.data["tutor"]
+        user.teacher = registerform.data["teacher"]
+        db.session.add(user)
+        db.session.commit()
+        write_to_events("created", "user", user.id, user)
+        login_user(user)
+        flash("You are now logged in.", "success")
+    else:
+        flash("Register unsuccessful.", "danger")
+        for field, errors in registerform.errors.items():
+            flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
+        loginform = LoginForm()
+        users = db.session.query(User).all()
+        loginform.users.choices = [(u.id, u.name) for u in users]
+        return render_template("login.html", loginform=loginform, registerform=registerform)
+    return redirect(url_for("home"))
 
 @app.route("/logout/")
 @login_required
@@ -51,7 +76,15 @@ def logout():
 
 @app.route("/about/")
 def about():
-    return render_template("about.html")
+    return render_template("about/main.html")
+
+@app.route("/about/history/")
+def about_history():
+    return render_template("about/history.html")
+
+@app.route("/about/faqs/")
+def about_faqs():
+    return render_template("about/faqs.html")
 
 @app.route("/run/")
 def view_all_runs(): 
@@ -70,7 +103,7 @@ def view_all_cafes():
 
 @app.route("/price/")
 def view_all_prices():
-    prices = Price.query.order_by(Price.id.desc()).all()
+    prices = Price.query.order_by(Price.cafeid, Price.amount).all()
     return render_template("viewallprices.html", prices=prices, current_user=current_user)
 
 @app.route("/activity/", methods=["GET"])
@@ -121,6 +154,7 @@ def edit_run(runid):
 @login_required
 def view_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
+    print coffee, coffee.price
     return render_template("viewcoffee.html", coffee=coffee, current_user=current_user)
 
 @app.route("/coffee/<int:coffeeid>/edit/", methods=["GET", "POST"])
@@ -134,7 +168,7 @@ def edit_coffee(coffeeid):
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
     if request.method == "GET":
-        return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price.amount, current_user=current_user)
+        return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
         #coffee.modified=sydney_timezone_now()
@@ -304,6 +338,7 @@ def add_coffee(runid=None):
             form.sugar.data = lastcoffee.sugar
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
+        print form.data
         coffee = Coffee(form.data["coffeetype"])
         coffee.size = form.data["size"]
         coffee.sugar = form.data["sugar"]
@@ -313,7 +348,9 @@ def add_coffee(runid=None):
         coffee.runid = form.data["runid"]
         run = Run.query.filter_by(id=form.data["runid"]).first()
         #coffee.price = db.session.query(Run).filter_by(id=run.id).first().cafe.pricelist.any(size=form.data["size"]).first()
-        coffee.price = run.cafe.pricelist.filter(Price.size==coffee.size).first()
+        #coffee.price = run.cafe.pricelist.filter(Price.size==coffee.size).first()
+        coffee.price = form.data["price"]
+        print coffee.price
         coffee.modified = datetime.utcnow()
         db.session.add(coffee)
         db.session.commit()
@@ -330,6 +367,7 @@ def prices_for_run():
     runid = request.args.get("runid", 0, type=int)
     run = Run.query.filter_by(id=runid).first()
     prices = run.cafe.pricelist
+    print prices
     jprices = {p.size: p.amount for p in prices}
     return jsonify(**jprices)
 
