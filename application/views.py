@@ -2,11 +2,12 @@
 
 from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
 from flask.ext.login import login_required, login_user, current_user, logout_user
+from flask.ext.mail import Message
 import requests
 import json
 from datetime import datetime
 import pytz
-from application import app, db, lm
+from application import app, db, lm, mail
 from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now
 from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
 
@@ -132,14 +133,19 @@ def edit_run(runid):
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         print form.data
+        oldstatus = run.status.description
         form.populate_obj(run)
+        newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
+        print oldstatus, newstatus
+        if oldstatus != newstatus and newstatus == "Pickup":
+            call_to_pickup(run)
         run.modified = datetime.utcnow()
         db.session.commit()
         write_to_events("updated", "run", run.id)
-        for coffee in run.coffees:
-            price = Price.query.filter_by(cafeid=run.cafeid).filter_by(size=coffee.size).first()
-            coffee.price = price
-            write_to_events("updated", "coffee", coffee.id)
+        #for coffee in run.coffees:
+        #    price = Price.query.filter_by(cafeid=run.cafeid).filter_by(size=coffee.size).first()
+        #    coffee.price = price.amount
+        #    write_to_events("updated", "coffee", coffee.id)
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
@@ -355,6 +361,7 @@ def add_coffee(runid=None):
         db.session.add(coffee)
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
+        notify_run_owner_of_coffee(run.fetcher, person, coffee)
         flash("Coffee order added", "success")
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
     else:
@@ -507,6 +514,24 @@ def write_to_events(action, objtype, objid, user=None):
     db.session.add(event)
     db.session.commit()
     return event.id
+
+# Mail helpers
+
+def notify_run_owner_of_coffee(owner, addict, coffee):
+    if owner.alerts:
+        recipients = [owner.email]
+        run = coffee.run
+        subject = "Alert: %s added a coffee for run to %s at %s" % (addict.name, run.cafe.name, run.readtime())
+        body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
+        msg = Message(subject, recipients)
+        mail.send(msg)
+
+def call_to_pickup(run):
+    recipients = [c.addict.email for c in run.coffees if c.addict.alerts]
+    subject = "Alert: your coffee is ready to pickup!"
+    body = "%s has taken your coffee to %s. Please go fetch and pay.\nRegards, your favourite Coffee Bot!" % (run.fetcher.name, run.pickup)
+    msg = Message(subject=subject, body=body, recipients=recipients)
+    mail.send(msg)
 
 # Mobile app parts
 

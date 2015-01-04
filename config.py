@@ -7,6 +7,13 @@ import os
 class Config(object):
     CSFR_ENABLED = True
     SECRET_KEY = "HyP0oHYnYeqv47uXohfvOkiv"
+    MAIL_SERVER = "smtp.gmail.com"
+    MAIL_PORT = "465"
+    MAIL_USERNAME = "ncsscoffeerun@gmail.com"
+    MAIL_PASSWORD = "kpTMnBNZn06z"
+    MAIL_DEFAULT_SENDER = ("NCSS Coffeebot", "ncsscoffeerun@gmail.com")
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
 
 class DevConfig(Config):
     DEBUG = True

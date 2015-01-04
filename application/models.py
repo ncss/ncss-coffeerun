@@ -21,6 +21,7 @@ class User(db.Model):
     device = db.Column(db.String)
     tutor = db.Column(db.Boolean, default=False)
     teacher = db.Column(db.Boolean, default=False)
+    alerts = db.Column(db.Boolean, default=False)
 
     def __init__(self, name=""):
         self.name = name
