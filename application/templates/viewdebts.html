@@ -19,13 +19,13 @@
                 <tr>
                     <td><a href="/user/{{ coffee.run.fetcher.id }}/">{{ coffee.run.fetcher.name }}</a></td>
                     <td><a href="/coffee/{{ coffee.id }}/">{{ coffee.run.readtime() }}</a></td>
-                    <td>{{ "$%.2f" % coffee.price.amount }}</td>
+                    <td>{{ "$%.2f" % coffee.price }}</td>
                 </tr>
                 {% if loop.last %}
                 <tr>
                     <td><strong>Total</strong></td>
                     <td></td>
-                    <td><strong>{{ "$%.2f" % owes|sum(attribute="price.amount") }}</strong></td>
+                    <td><strong>{{ "$%.2f" % owes|sum(attribute="price") }}</strong></td>
                 </tr>
                 {% endif %}
                 {% endfor %}
@@ -51,13 +51,13 @@
                 <tr>
                     <td><a href="/user/{{ coffee.addict.id }}/">{{ coffee.addict.name }}</a></td>
                     <td><a href="/coffee/{{ coffee.id }}/">{{ coffee.run.readtime() }}</a></td>
-                    <td>{{ "$%.2f" % coffee.price.amount }}</td>
+                    <td>{{ "$%.2f" % coffee.price }}</td>
                 </tr>
                 {% if loop.last %}
                 <tr>
                     <td><strong>Total</strong></td>
                     <td></td>
-                    <td><strong>{{ "$%.2f" % isowed|sum(attribute="price.amount") }}</strong></td>
+                    <td><strong>{{ "$%.2f" % isowed|sum(attribute="price") }}</strong></td>
                 </tr>
                 {% endif %}
             {% endfor %}
