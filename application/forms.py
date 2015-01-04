@@ -37,6 +37,7 @@ class UserForm(Form):
     email = TextField("Email", [validators.Required()])
     tutor = BooleanField("Tutor")
     teacher = BooleanField("Teacher")
+    alerts = BooleanField("Email Alerts")
 
 class CafeForm(Form):
     name = TextField("Name", [validators.Required()])
