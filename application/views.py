@@ -134,7 +134,15 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         oldstatus = run.status.description
-        form.populate_obj(run)
+        run.time = form.data["time"] 
+        person = User.query.filter_by(id=form.data["person"]).first()
+        run.person = person.id
+        run.fetcher = person
+        run.deadline = form.data["deadline"]
+        run.cafeid = form.data["cafeid"]
+        run.pickup = form.data["pickup"]
+        run.statusid = form.data["statusid"]
+        run.modified = datetime.utcnow()
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
         print oldstatus, newstatus
         if oldstatus != newstatus and newstatus == "Pickup":
@@ -142,17 +150,12 @@ def edit_run(runid):
         run.modified = datetime.utcnow()
         db.session.commit()
         write_to_events("updated", "run", run.id)
-        #for coffee in run.coffees:
-        #    price = Price.query.filter_by(cafeid=run.cafeid).filter_by(size=coffee.size).first()
-        #    coffee.price = price.amount
-        #    write_to_events("updated", "coffee", coffee.id)
         db.session.commit()
         flash("Run edited", "success")
         return redirect(url_for("view_run", runid=run.id))
     else:
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
-        #flash(form.errors, "danger")
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
 
 
@@ -177,7 +180,6 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        #coffee.modified=sydney_timezone_now()
         coffee.modified = datetime.utcnow()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
@@ -262,7 +264,6 @@ def add_run(cafeid=None):
     form = RunForm(request.form)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
-    #form.person.data = current_user.name
     statuses = Status.query.all()
     form.statusid.choices = [(s.id, s.description) for s in statuses]
     cafes = Cafe.query.all()
@@ -284,21 +285,15 @@ def add_run(cafeid=None):
         person = User.query.filter_by(id=form.data["person"]).first()
         run.person = person.id
         run.fetcher = person
-        #print run
         run.deadline = form.data["deadline"]
         run.cafeid = form.data["cafeid"]
-        #cafe = Cafe.query.filter_by(id=run.cafeid).first()
-        #run.cafe = cafe
         run.pickup = form.data["pickup"]
         run.statusid = form.data["statusid"]
-        #run.status = Status.query.filter_by(id=form.data["status"]).first()
-        #run.modified = sydney_timezone_now(datetime.utcnow())
         run.modified = datetime.utcnow()
         db.session.add(run)
         db.session.commit()
         write_to_events("created", "run", run.id)
         flash("Run added", "success")
-        #notify_newrun(run)
         return redirect(url_for("view_run", runid=run.id))
     else:
         for field, errors in form.errors.items():
@@ -328,7 +323,6 @@ def add_coffee(runid=None):
     form.runid.choices = [(r.id, r.time) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
-        #print datetime.now(), run.deadline
         localmodified = run.deadline.replace(tzinfo=pytz.timezone("Australia/Sydney"))
         if sydney_timezone_now() > localmodified:
             flash("You can't add coffees to this run", "danger")
@@ -353,8 +347,6 @@ def add_coffee(runid=None):
         coffee.addict = person
         coffee.runid = form.data["runid"]
         run = Run.query.filter_by(id=form.data["runid"]).first()
-        #coffee.price = db.session.query(Run).filter_by(id=run.id).first().cafe.pricelist.any(size=form.data["size"]).first()
-        #coffee.price = run.cafe.pricelist.filter(Price.size==coffee.size).first()
         coffee.price = form.data["price"]
         print coffee.price
         coffee.modified = datetime.utcnow()
@@ -603,7 +595,6 @@ def mobile_syncrun():
         if "id" not in runjson:
             db.session.add(run)
         db.session.commit()
-        #notify_newrun(run)
         return jsonify(msg="success", id=run.id, modified=run.jsondatetime("modified"))
     except:
         return jsonify(msg="error")
