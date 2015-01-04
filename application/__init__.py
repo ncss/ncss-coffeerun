@@ -7,7 +7,7 @@ from flask.ext.bootstrap import Bootstrap
 
 # Setup app
 app = Flask(__name__)
-app.config.from_object("config.DevConfig")
+app.config.from_object("config.ProdConfig")
 Bootstrap(app)
 
 db = SQLAlchemy(app)
