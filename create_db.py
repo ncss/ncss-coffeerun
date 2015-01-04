@@ -12,6 +12,7 @@ spickup = Status("Pickup")
 sclosed = Status("Closed")
 
 inituser = User("Maddy")
+inituser.email = "maddy.reid.21@gmail.com"
 inituser.tutor = True
 
 db.session.add(sopen)
