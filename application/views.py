@@ -148,7 +148,7 @@ def edit_run(runid):
         
         #localtz = pytz.timezone("Australia/Sydney")
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
-        run.modified = datetime.utcnow()
+        #run.modified = datetime.utcnow()
         db.session.commit()
         write_to_events("updated", "run", run.id)
         db.session.commit()
