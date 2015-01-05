@@ -134,17 +134,21 @@ def edit_run(runid):
     if request.method == "POST" and form.validate_on_submit():
         print form.data
         oldstatus = run.status.description
-        run.time = form.data["time"] 
-        person = User.query.filter_by(id=form.data["person"]).first()
-        run.person = person.id
-        run.fetcher = person
-        run.deadline = form.data["deadline"]
-        run.cafeid = form.data["cafeid"]
-        run.pickup = form.data["pickup"]
-        run.statusid = form.data["statusid"]
+        #print run.time, run.deadline
+        #run.time = form.data["time"] 
+        #person = User.query.filter_by(id=form.data["person"]).first()
+        #run.person = person.id
+        #run.fetcher = person
+        #run.deadline = form.data["deadline"]
+        #run.cafeid = form.data["cafeid"]
+        #run.pickup = form.data["pickup"]
+        #run.statusid = form.data["statusid"]
+
+        form.populate_obj(run)
+
         run.modified = datetime.utcnow()
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
-        print oldstatus, newstatus
+        print run
         if oldstatus != newstatus and newstatus == "Pickup":
             call_to_pickup(run)
         run.modified = datetime.utcnow()
