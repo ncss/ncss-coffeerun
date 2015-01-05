@@ -138,13 +138,13 @@ def edit_run(runid):
         #print type(run.time)
         #print type (datetime.utcnow())
         oldstatus = run.status.description
-        #form.populate_obj(run)
-        person = User.query.filter_by(id=form.data["person"]).first()
-        run.person = person.id
-        run.fetcher = person
-        run.cafeid = form.data["cafeid"]
-        run.pickup = form.data["pickup"]
-        run.statusid = form.data["statusid"]
+        form.populate_obj(run)
+        #person = User.query.filter_by(id=form.data["person"]).first()
+        #run.person = person.id
+        #run.fetcher = person
+        #run.cafeid = form.data["cafeid"]
+        #run.pickup = form.data["pickup"]
+        #run.statusid = form.data["statusid"]
         
         #localtz = pytz.timezone("Australia/Sydney")
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
