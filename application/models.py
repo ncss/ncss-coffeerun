@@ -291,18 +291,20 @@ class Event(db.Model):
         return self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def descrobj(self):
-        if self.objtype == "run":
-            run = Run.query.filter_by(id=self.objid).first()
-            print run
-            return "for time %s" % run.readtime()
-        elif self.objtype == "coffee":
-            coffee = Coffee.query.filter_by(id=self.objid).first()
-            return "for <a href=\"/run/%s/\">run</a> at time %s" % (coffee.run.id, coffee.run.readtime())
-        elif self.objtype == "cafe":
-            cafe = Cafe.query.filter_by(id=self.objid).first()
-            return "named '%s'" % cafe.name
-        elif self.objtype == "price":
-            price = Price.query.filter_by(id=self.objid).first()
-            return "for <a href=\"/cafe/%s/\">cafe</a> '%s'" % (price.cafe.id, price.cafe.name)
+        if self.action != "deleted":
+            if self.objtype == "run":
+                run = Run.query.filter_by(id=self.objid).first()
+                return "for time %s" % run.readtime()
+            elif self.objtype == "coffee":
+                coffee = Coffee.query.filter_by(id=self.objid).first()
+                return "for <a href=\"/run/%s/\">run</a> at time %s" % (coffee.run.id, coffee.run.readtime())
+            elif self.objtype == "cafe":
+                cafe = Cafe.query.filter_by(id=self.objid).first()
+                return "named '%s'" % cafe.name
+            elif self.objtype == "price":
+                price = Price.query.filter_by(id=self.objid).first()
+                return "for <a href=\"/cafe/%s/\">cafe</a> '%s'" % (price.cafe.id, price.cafe.name)
+            else:
+                return ""
         else:
             return ""
