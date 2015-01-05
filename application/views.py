@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 import pytz
 from application import app, db, lm, mail
-from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now
+from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now, sydney_timezone
 from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
 
 @lm.user_loader
@@ -130,32 +130,31 @@ def edit_run(runid):
     cafes = Cafe.query.all()
     form.cafeid.choices = [(cafe.id, cafe.name) for cafe in cafes]
     if request.method == "GET":
+        print run.time.strftime('%Y-%m-%d %H:%M:%S %Z%z')
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         print form.data
+        #print type(form.data["time"])
+        #print type(run.time)
+        #print type (datetime.utcnow())
         oldstatus = run.status.description
-        #print run.time, run.deadline
-        #run.time = form.data["time"] 
-        #person = User.query.filter_by(id=form.data["person"]).first()
-        #run.person = person.id
-        #run.fetcher = person
-        #run.deadline = form.data["deadline"]
-        #run.cafeid = form.data["cafeid"]
-        #run.pickup = form.data["pickup"]
-        #run.statusid = form.data["statusid"]
-
-        form.populate_obj(run)
-
-        run.modified = datetime.utcnow()
+        #form.populate_obj(run)
+        person = User.query.filter_by(id=form.data["person"]).first()
+        run.person = person.id
+        run.fetcher = person
+        run.cafeid = form.data["cafeid"]
+        run.pickup = form.data["pickup"]
+        run.statusid = form.data["statusid"]
+        
+        #localtz = pytz.timezone("Australia/Sydney")
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
-        print run
-        if oldstatus != newstatus and newstatus == "Pickup":
-            call_to_pickup(run)
         run.modified = datetime.utcnow()
         db.session.commit()
         write_to_events("updated", "run", run.id)
         db.session.commit()
         flash("Run edited", "success")
+        if oldstatus != newstatus and newstatus == "Pickup":
+            call_to_pickup(run)
         return redirect(url_for("view_run", runid=run.id))
     else:
         for field, errors in form.errors.items():

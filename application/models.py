@@ -12,6 +12,11 @@ def sydney_timezone_now():
     localdt = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(localtz)
     return localdt
 
+def sydney_timezone(time):
+    localtz = pytz.timezone("Australia/Sydney")
+    localdt = time.astimezone(localtz)
+    return localdt
+    
 
 class User(db.Model):
     __tablename__ = "Users"
