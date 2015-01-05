@@ -293,6 +293,7 @@ class Event(db.Model):
     def descrobj(self):
         if self.objtype == "run":
             run = Run.query.filter_by(id=self.objid).first()
+            print run
             return "for time %s" % run.readtime()
         elif self.objtype == "coffee":
             coffee = Coffee.query.filter_by(id=self.objid).first()
