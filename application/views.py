@@ -103,7 +103,7 @@ def view_all_cafes():
     return render_template("viewallcafes.html", cafes=cafes, current_user=current_user)
 
 @app.route("/price/")
-uef view_all_prices():
+def view_all_prices():
     prices = Price.query.order_by(Price.cafeid, Price.amount).all()
     return render_template("viewallprices.html", prices=prices, current_user=current_user)
 
