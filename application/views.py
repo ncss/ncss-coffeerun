@@ -516,7 +516,7 @@ def notify_run_owner_of_coffee(owner, addict, coffee):
     if owner.alerts:
         recipients = [owner.email]
         run = coffee.run
-        subject = "Alert: %s added a coffee for run to %s at %s" % (addict.name, run.cafe.name, run.readtime())
+        subject = "Alert: coffee added for run to %s at %s" % (run.cafe.name, run.readtime())
         body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
         msg = Message(subject, recipients)
         mail.send(msg)
