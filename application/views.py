@@ -183,7 +183,8 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        coffee.modified = datetime.utcnow()
+        #coffee.modified = datetime.utcnow()
+        coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
         flash("Coffee edited", "success")
