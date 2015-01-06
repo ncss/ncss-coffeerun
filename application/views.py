@@ -116,7 +116,9 @@ def view_activity():
 @login_required
 def view_run(runid):
     run = Run.query.filter(Run.id==runid).first_or_404()
-    return render_template("viewrun.html", run=run, current_user=current_user)
+    nextstatusid = run.statusid + 1
+    nextstatus = Status.query.filter(Status.id==nextstatusid).first()
+    return render_template("viewrun.html", run=run, current_user=current_user, nextstatus=nextstatus)
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
 @login_required
@@ -161,7 +163,21 @@ def edit_run(runid):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
 
-
+@app.route("/run/<int:runid>/nextstatus/")
+@login_required
+def next_status_for_run(runid):
+    run = Run.query.filter_by(id=runid).first_or_404()
+    if run.status.description != "closed":
+        nextstatus = Status.query.filter_by(id=run.statusid+1).first()
+        run.status = nextstatus
+        #run.modified = sydney_timezone_now()
+        db.session.commit()
+        write_to_events("updated", "run", run.id)
+        flash("Run edited", "success")
+    else:
+        flash("There is no next status for this run", "danger")
+    return redirect(url_for("view_run", runid=run.id))
+    
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
