@@ -136,7 +136,7 @@ def edit_run(runid):
         print form.data
         #print type(form.data["time"])
         #print type(run.time)
-        #print type (datetime.utcnow())
+        #print type (sydney_timezone_now())
         oldstatus = run.status.description
         #form.populate_obj(run)
         person = User.query.filter_by(id=form.data["person"]).first()
@@ -148,7 +148,7 @@ def edit_run(runid):
         
         #localtz = pytz.timezone("Australia/Sydney")
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
-        #run.modified = datetime.utcnow()
+        #run.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "run", run.id)
         db.session.commit()
@@ -183,7 +183,7 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        #coffee.modified = datetime.utcnow()
+        #coffee.modified = sydney_timezone_now()
         coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
@@ -293,7 +293,8 @@ def add_run(cafeid=None):
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
         run.statusid = form.data["statusid"]
-        run.modified = datetime.utcnow()
+        #run.modified = sydney_timezone_now()
+        run.modified = sydney_timezone_now()
         db.session.add(run)
         db.session.commit()
         write_to_events("created", "run", run.id)
@@ -353,7 +354,7 @@ def add_coffee(runid=None):
         run = Run.query.filter_by(id=form.data["runid"]).first()
         coffee.price = form.data["price"]
         print coffee.price
-        coffee.modified = datetime.utcnow()
+        coffee.modified = sydney_timezone_now()
         db.session.add(coffee)
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
@@ -506,7 +507,7 @@ def write_to_events(action, objtype, objid, user=None):
         event = Event(user.id, action, objtype, objid)
     else:
         event = Event(current_user.id, action, objtype, objid)
-    event.time = datetime.utcnow()
+    event.time = sydney_timezone_now()
     db.session.add(event)
     db.session.commit()
     return event.id
