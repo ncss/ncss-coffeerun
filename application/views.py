@@ -210,6 +210,16 @@ def edit_coffee(coffeeid):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
 
+@app.route("/coffee/<int:coffeeid>/pay/", methods=["GET"])
+@login_required
+def pay_for_coffee(coffeeid):
+    coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
+    coffee.paid = True
+    db.session.commit()
+    write_to_events("updated", "coffee", coffee.id)
+    flash("Coffee edited", "success")
+    return redirect(url_for("view_coffee", coffeeid=coffee.id))
+
 @app.route("/user/", methods=["GET"])
 def get_all_users():
     people = User.query.all()
