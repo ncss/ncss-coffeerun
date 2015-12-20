@@ -3,7 +3,7 @@ Unittesting module for the NCSS Coffeerun web app
 Maddy Reid 2014"""
 
 from application import app, db
-from application.models import User, Run, Coffee, Status, Cafe, Price
+from application.models import User, Run, Coffee, RunStatus, Cafe, Price
 import config
 import unittest
 from flask.ext.testing import TestCase
@@ -200,7 +200,7 @@ class RunModelTest(TestCase):
         assert run.coffees[1] == coffee2
 
     def test_run_has_status(self):
-        status = Status("Open")
+        status = RunStatus("Open")
         db.session.add(status)
         db.session.commit()
         run = Run(datetime.utcnow())

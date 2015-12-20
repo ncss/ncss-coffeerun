@@ -26,6 +26,7 @@ class User(db.Model):
     device = db.Column(db.String)
     tutor = db.Column(db.Boolean, default=False)
     teacher = db.Column(db.Boolean, default=False)
+    group = db.Column(db.String)
     alerts = db.Column(db.Boolean, default=False)
 
     def __init__(self, name=""):
@@ -157,10 +158,7 @@ class Coffee(db.Model):
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
 
     priceid = db.Column(db.Integer, db.ForeignKey("Prices.id"))
-    #price = db.relationship("Price")
     price = db.Column(db.Float)
-
-    #pricemodid = db.Column(db.Integer, db.ForeignKey("PriceModifiers.id"))
 
     paid = db.Column(db.Boolean, default=False)
 
@@ -170,9 +168,6 @@ class Coffee(db.Model):
     def __repr__(self):
         return "<Coffee(%d,%d,'%s %s %ds')>" % (self.id, self.person, self.size, self.coffeetype, self.sugar)
 
-    #def readmodified(self):
-    #    return self.modified.strftime("%I:%M %p %a %d %b")
-
     def readmodified(self):
         localtz = pytz.timezone("Australia/Sydney")
         return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
@@ -180,11 +175,6 @@ class Coffee(db.Model):
     def jsondatetime(self, arg):
         if arg == "modified":
             return self.modified.strftime("%Y-%m-%d %H:%M:%S")
-
-    #def sydney_timezone_now(self, utcdt):
-    #    localtz = pytz.timezone("Australia/Sydney")
-    #    localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
-    #    return localdt
 
     def toJSON(self):
         return {"id": self.id, 
@@ -195,7 +185,7 @@ class Coffee(db.Model):
                 "runid": self.run,
                 "modified": self.jsondatetime("modified") }
 
-class Status(db.Model):
+class RunStatus(db.Model):
     __tablename__ = "Statuses"
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String)
@@ -248,23 +238,6 @@ class Price(db.Model):
 
     def __repr__(self):
         return "<Price(%d,'%s','%f')>" % (self.cafeid, self.size, self.amount)
-
-class PriceModifier(db.Model):
-    __tablename__ = "PriceModifiers"
-    id = db.Column(db.Integer, primary_key=True)
-    cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
-    modtype = db.Column(db.String)
-    amount = db.Column(db.Float)
-
-    cafe = db.relationship("Cafe", backref=db.backref("pricemods"))
-
-    def __init__(self, cafeid, modtype=""):
-        self.cafeid = cafeid
-        self.modtype = size
-        self.amount = 0.0
-
-    def __repr__(self):
-        return "<PriceModifier(%d,'%s','%f')>" % (self.cafeid, self.modtype, self.amount)
 
 class Event(db.Model):
     __tablename__ = "Events"

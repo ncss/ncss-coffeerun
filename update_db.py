@@ -5,12 +5,12 @@ from application.models import *
 db.init_app(app)
 db.create_all()
 
-s = Status.query.all()
+s = RunStatus.query.all()
 if len(s) == 0:
-    sopen = Status("Open")
-    sorder = Status("Ordering")
-    spickup = Status("Pickup")
-    sclosed = Status("Closed")
+    sopen = RunStatus("Open")
+    sorder = RunStatus("Ordering")
+    spickup = RunStatus("Pickup")
+    sclosed = RunStatus("Closed")
 
     inituser = User("Maddy")
 

@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 import pytz
 from application import app, db, lm, mail
-from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now, sydney_timezone
+from models import User, Run, Coffee, RunStatus, Cafe, Price, Event, RegistrationID, sydney_timezone_now, sydney_timezone
 from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
 
 @lm.user_loader
@@ -117,7 +117,7 @@ def view_activity():
 def view_run(runid):
     run = Run.query.filter(Run.id==runid).first_or_404()
     nextstatusid = run.statusid + 1
-    nextstatus = Status.query.filter(Status.id==nextstatusid).first()
+    nextstatus = RunStatus.query.filter(RunStatus.id==nextstatusid).first()
     return render_template("viewrun.html", run=run, current_user=current_user, nextstatus=nextstatus)
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
@@ -125,7 +125,7 @@ def view_run(runid):
 def edit_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     form = RunForm(request.form, obj=run)
-    statuses = Status.query.all()
+    statuses = RunStatus.query.all()
     form.statusid.choices = [(s.id, s.description) for s in statuses]
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
@@ -149,7 +149,7 @@ def edit_run(runid):
         run.statusid = form.data["statusid"]
         
         #localtz = pytz.timezone("Australia/Sydney")
-        newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
+        newstatus = RunStatus.query.filter_by(id=form.data["statusid"]).first().description
         #run.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "run", run.id)
@@ -168,7 +168,7 @@ def edit_run(runid):
 def next_status_for_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     if run.status.description != "closed":
-        nextstatus = Status.query.filter_by(id=run.statusid+1).first()
+        nextstatus = RunStatus.query.filter_by(id=run.statusid+1).first()
         run.status = nextstatus
         #run.modified = sydney_timezone_now()
         db.session.commit()
@@ -294,7 +294,7 @@ def add_run(cafeid=None):
     form = RunForm(request.form)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
-    statuses = Status.query.all()
+    statuses = RunStatus.query.all()
     form.statusid.choices = [(s.id, s.description) for s in statuses]
     cafes = Cafe.query.all()
     if not cafes:
@@ -622,7 +622,7 @@ def mobile_syncrun():
         run.cafe = runjson["cafe"]
         run.pickup = runjson["pickup"]
         run.status = runjson["status"]
-        run.statusobj = Status.query.filter_by(id=runjson["status"]).first()
+        run.statusobj = RunStatus.query.filter_by(id=runjson["status"]).first()
         if "id" not in runjson:
             db.session.add(run)
         db.session.commit()
