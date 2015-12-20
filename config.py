@@ -14,6 +14,8 @@ class Config(object):
     MAIL_DEFAULT_SENDER = ("NCSS Coffeebot", "ncsscoffeerun@gmail.com")
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
+    BASEDIR = os.path.abspath(os.path.dirname(__file__))
+    SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
 
 class DevConfig(Config):
     DEBUG = True

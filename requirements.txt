@@ -19,3 +19,4 @@ psycopg2==2.5.1
 pyOpenSSL==0.13
 requests==2.1.0
 pytz==2012d
+sqlalchemy-migrate==0.10.0
