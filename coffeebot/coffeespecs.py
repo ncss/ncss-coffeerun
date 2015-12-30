@@ -6,7 +6,7 @@ _PRECEDENCE = ['size', 'type', 'milk', 'strength', 'iced', 'decaf', 'sugar']
 
 _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 
-ALLOW_TOKENS = ['with', 'please', 'i would like', 'would like', 'can i have', 'may i have', 'thanks', 'a', 'me', 'order', 'mine', 'for', 'the', 'like']
+ALLOW_TOKENS = ['with', 'please', 'i would like', 'would like', 'can i have', 'may i have', 'thanks', 'a', 'me', 'order', 'mine', 'for', 'the', 'like', 'want']
 
 
 class Coffee(object):
@@ -148,7 +148,7 @@ COFFEE_SPECS['decaf'] = CoffeeSpec('decaf', 'Decaf?', required=False, options={
 })
 
 COFFEE_SPECS['size'] = CoffeeSpec('size', 'What size (S/L)?', required=False, options={
-    'Small': ['S', 'sm'],
+    'Small': ['s', 'sm'],
     'Regular': ['reg', 'r', 'rg'],
     'Large': ['L', 'lge', 'lg'],
 })

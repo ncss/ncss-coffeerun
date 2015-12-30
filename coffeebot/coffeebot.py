@@ -10,8 +10,10 @@ from slackclient import SlackClient
 from coffeespecs import Coffee
 
 
-TOKEN = "xoxb-16617666518-3Lh8g3yORvyyu5yzkreeAki7"  # found at https://api.slack.com/web#authentication
+TOKEN = 'xoxb-16617666518-3Lh8g3yORvyyu5yzkreeAki7'  # found at https://api.slack.com/web#authentication
+#TOKEN = 'xoxb-17128429879-cOJ20g0lhgcwaftlt6Z6l2BI'
 USER_ID = 'U0GJ5KLF8'
+#USER_ID = 'U0H3SCMRV'
 
 MENTION_RE = re.compile(r'<@([A-Z0-9]+)\|?[^>]*>')
 EMOJI_RE = re.compile(r':[a-z]+:')
@@ -19,6 +21,31 @@ EMOJI_RE = re.compile(r':[a-z]+:')
 DISPATCH = {}
 
 OPEN_QUESTIONS = {}
+
+TRIGGERS = {}
+
+
+def load_triggers(filename):
+  trigger = None
+  for line in open(filename):
+    if not line.strip():
+      continue
+    if line.startswith('@@@ '):
+      trigger = re.compile(line[4:].strip())
+      if trigger not in TRIGGERS:
+        TRIGGERS[trigger] = []
+    elif trigger:
+      TRIGGERS[trigger].append(line.strip())
+
+
+def trigger_check(slackclient, user, channel, text):
+  text = text.lower()
+  for trigger in TRIGGERS:
+    if trigger.match(text):
+      msg = random.choice(TRIGGERS[trigger])
+      msg = mention(user) + ': ' + msg
+      slackclient.rtm_send_message(channel.id, msg)
+      return
 
 
 def mention(user):
@@ -33,14 +60,16 @@ def clean_text(text):
 
 
 def handle_mention_message(slackclient, user, channel, text):
-  msg = 'Hi {}, would you like coffee?'.format(mention(user), channel.name)
-
   clean = clean_text(text)
+  trigger_check(slackclient, user, channel, clean)
+  msg = None
+
   c = Coffee(clean)
   if c.validate():
     msg = 'Ok, that\'s a {} for {}'.format(c, mention(user))
 
-  slackclient.rtm_send_message(channel.id, msg)
+  if msg:
+    slackclient.rtm_send_message(channel.id, msg)
 
 
 def handle_message(slackclient, event):
@@ -67,6 +96,8 @@ def register_handlers():
 
 
 def main():
+  load_triggers('sass.txt')
+  print(TRIGGERS)
   register_handlers()
   client = SlackClient(TOKEN)
   res = client.rtm_connect()
