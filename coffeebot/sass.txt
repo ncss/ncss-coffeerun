@@ -1,0 +1,58 @@
+@@@ .*pumpkin spice
+WTF is "pumpkin spice"?
+Would you like cream on that? How about no.
+It's not Autumn, this is not America and I am not a Starbucks.
+I don't see any knee-high uggs or yoga pants, so no.
+The spice must flow!
+
+@@@ .*decaf
+Clearly you need less sleep.
+What's the point of drinking coffee then??
+Well... I guess it had better taste good then.
+mutter... waste of good coffee beans... mutter...
+
+@@@ :?\s*(hi|hello|g'day|greetings|hey)
+Hey
+Yo.
+Hola!
+Hello
+Hi there!
+Are you ok?
+'sup?
+G'day
+
+@@@ .*hot
+Of course it's hot!
+
+@@@ :?\s*who (made|wrote) you\?
+Katie did.
+Katie did.
+Katie did.
+Katie did.
+Katydid (https://en.wikipedia.org/wiki/Tettigoniidae).
+Katie the awesome is the maker of all good things.
+
+@@@ .*affogato
+Hi Sam!
+
+@@@ .*(-[0-9]|inf)(\s|$)
+Are you trying to break me? It's not gonna work.
+Trying to be clever are we?
+
+@@@ .*-[0-9]+ sugar
+You can't do negative sugars! That's ridiculous.
+
+@@@ .*nan
+You do realise that NaN means "Not a Number" right?
+
+@@@ .*earl grey
+Make it so!
+Engage!
+Hot!
+
+@@@ ^\s*:?\s*$
+Cat got your tongue?
+So... are you gonna order a coffee or not?
+Yes?
+You rang?
+At your service.
