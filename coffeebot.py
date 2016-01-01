@@ -4,19 +4,17 @@ from __future__ import absolute_import, print_function, unicode_literals
 import re
 import time
 import random
-import sys
 
 from slackclient import SlackClient
 
+from application import app
 from application.models import Run, User
 
 from coffeespecs import Coffee
 
 
-TOKEN = 'xoxb-16617666518-3Lh8g3yORvyyu5yzkreeAki7'  # found at https://api.slack.com/web#authentication
-DEV_TOKEN = 'xoxb-17128429879-cOJ20g0lhgcwaftlt6Z6l2BI'
-USER_ID = 'U0GJ5KLF8'
-DEV_USER_ID = 'U0H3SCMRV'
+TOKEN = None
+USER_ID = None
 
 MENTION_RE = re.compile(r'<@([A-Z0-9]+)\|?[^>]*>:?')
 EMOJI_RE = re.compile(r':[a-z]+:')
@@ -118,7 +116,6 @@ def register_handlers():
 def main():
   load_triggers('sass.txt')
   set_up_orders()
-  print(TRIGGERS)
   register_handlers()
   client = SlackClient(TOKEN)
   res = client.rtm_connect()
@@ -141,8 +138,8 @@ def main():
 
 
 if __name__ == '__main__':
-  dev = len(sys.argv) > 1 and sys.argv[1] == 'dev'
-  if dev:
-    TOKEN = DEV_TOKEN
-    USER_ID = DEV_USER_ID
+  TOKEN = app.config['SLACK_API_TOKEN']
+  USER_ID = app.config['SLACK_BOT_USER_ID']
+  if not TOKEN or not USER_ID:
+    print('Missing slack token or slack user id')
   main()
