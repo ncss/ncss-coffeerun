@@ -4,25 +4,39 @@ from __future__ import absolute_import, print_function, unicode_literals
 import re
 import time
 import random
+import sys
 
 from slackclient import SlackClient
+
+from application.models import Run, User
 
 from coffeespecs import Coffee
 
 
 TOKEN = 'xoxb-16617666518-3Lh8g3yORvyyu5yzkreeAki7'  # found at https://api.slack.com/web#authentication
-#TOKEN = 'xoxb-17128429879-cOJ20g0lhgcwaftlt6Z6l2BI'
+DEV_TOKEN = 'xoxb-17128429879-cOJ20g0lhgcwaftlt6Z6l2BI'
 USER_ID = 'U0GJ5KLF8'
-#USER_ID = 'U0H3SCMRV'
+DEV_USER_ID = 'U0H3SCMRV'
 
-MENTION_RE = re.compile(r'<@([A-Z0-9]+)\|?[^>]*>')
+MENTION_RE = re.compile(r'<@([A-Z0-9]+)\|?[^>]*>:?')
 EMOJI_RE = re.compile(r':[a-z]+:')
 
 DISPATCH = {}
-
-OPEN_QUESTIONS = {}
-
+ORDERS_DISPATCH = {}
 TRIGGERS = {}
+
+
+def list_runs(slackclient, user, channel, match):
+  q = Run.query.all()
+  if not q:
+    slackclient.rtm_send_message(channel.id, 'No open runs')
+  for run in q:
+    person = User.query.filter_by(id=run.person).first()
+    slackclient.rtm_send_message(channel.id, '{} is going to {} at {}'.format(person.name, run.cafe.name, run.time))
+
+
+def set_up_orders():
+  ORDERS_DISPATCH[re.compile('(open|list)? ?runs')] = list_runs
 
 
 def load_triggers(filename):
@@ -56,13 +70,18 @@ def clean_text(text):
   # Remove @mentions and emoji
   text = MENTION_RE.sub('', text)
   text = EMOJI_RE.sub('', text)
-  return text
+  return text.strip()
 
 
 def handle_mention_message(slackclient, user, channel, text):
   clean = clean_text(text)
-  trigger_check(slackclient, user, channel, clean)
   msg = None
+
+  for order_re in ORDERS_DISPATCH:
+    match = order_re.match(clean)
+    if match:
+      ORDERS_DISPATCH[order_re](slackclient, user, channel, match)
+      break
 
   c = Coffee(clean)
   if c.validate():
@@ -70,6 +89,7 @@ def handle_mention_message(slackclient, user, channel, text):
 
   if msg:
     slackclient.rtm_send_message(channel.id, msg)
+  trigger_check(slackclient, user, channel, clean)
 
 
 def handle_message(slackclient, event):
@@ -97,6 +117,7 @@ def register_handlers():
 
 def main():
   load_triggers('sass.txt')
+  set_up_orders()
   print(TRIGGERS)
   register_handlers()
   client = SlackClient(TOKEN)
@@ -120,4 +141,8 @@ def main():
 
 
 if __name__ == '__main__':
+  dev = len(sys.argv) > 1 and sys.argv[1] == 'dev'
+  if dev:
+    TOKEN = DEV_TOKEN
+    USER_ID = DEV_USER_ID
   main()
