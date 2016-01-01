@@ -7,7 +7,7 @@ import random
 
 from slackclient import SlackClient
 
-from coffeebot.coffeespecs import Coffee
+from coffeespecs import Coffee
 
 
 TOKEN = 'xoxb-16617666518-3Lh8g3yORvyyu5yzkreeAki7'  # found at https://api.slack.com/web#authentication
