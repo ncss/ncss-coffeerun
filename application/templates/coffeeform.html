@@ -18,12 +18,6 @@
         <div class="col-sm-11">
             {{ form.person(class_="form-control") }}
         </div>
-    </div> 
-    <div class="form-group" {{ "has-error" if form.runid.errors }}>
-        {{ form.runid.label(class_="col-sm-1 control-label") }}
-        <div class="col-sm-11">
-            {{ form.runid(class_="form-control", type="number") }}
-        </div>
     </div>
     <div class="form-group" {{ "has-error" if form.coffeetype.errors }}>
         {{ form.coffeetype.label(class_="col-sm-1 control-label") }}
@@ -47,6 +41,39 @@
         {{ form.sugar.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
             {{ form.sugar(class_="form-control", type="number") }}
+        </div>
+    </div>
+    <div class="form-group">
+        {{ form.starttime.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.starttime(class_="form-control") }}
+        </div>
+    </div>
+    <div class="form-group">
+        {{ form.endtime.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.endtime(class_="form-control") }}
+        </div>
+    </div>
+
+    <div class="form-group runFields" {{ "has-error" if form.runid.errors }}>
+        {{ form.runid.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.runid(class_="form-control", type="number") }}
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-1 col-sm-11">
+            <div class="checkbox">
+                {{ form.recurring() }}
+                {{ form.recurring.label() }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group recurringFields">
+        {{ form.days.label(class_="col-sm-1 control-label") }}
+        <div class="col-sm-11">
+            {{ form.days(class_="form-control", type="number") }}
         </div>
     </div>
     <div class="form-group">

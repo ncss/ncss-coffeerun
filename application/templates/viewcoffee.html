@@ -17,7 +17,9 @@
 <div class="row">
     <label class="col-sm-1">Run</label>
     <div class="col-sm-11">
+        {% if coffee.run %}
         <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> ({{ coffee.run.status.description }})</p>
+        {% endif %}
     </div>
 </div>
 <div class="row">
@@ -39,6 +41,18 @@
     </div>
 </div>
 <div class="row">
+    <label class="col-sm-1">Start Time</label>
+    <div class="col-sm-11">
+        <p>{{ coffee.readstarttime() }}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">End Time</label>
+    <div class="col-sm-11">
+        <p>{{ coffee.readendtime() }}</p>
+    </div>
+</div>
+<div class="row">
     <label class="col-sm-1">Price</label>
     <div class="col-sm-11">
         <p>{{ "$%.2f" % coffee.price }}</p>
@@ -48,6 +62,12 @@
     <label class="col-sm-1">Paid</label>
     <div class="col-sm-11">
         <p>{% if coffee.paid %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-1">Expired</label>
+    <div class="col-sm-11">
+        <p>{% if coffee.expired %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</p>
     </div>
 </div>
 <div class="row">

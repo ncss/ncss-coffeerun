@@ -87,26 +87,21 @@ class Run(db.Model):
 
     pickup = db.Column(db.String)
     statusid = db.Column(db.Integer, db.ForeignKey("Statuses.id"))
-    status = db.relationship("Status")
+    status = db.relationship("RunStatus")
     modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now);
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=time.desc()))
 
     def __init__(self, time):
-        #self.personid = personid
         self.time = time
 
     def __repr__(self):
         return "<Run('%s','%s')>" % (self.fetcher.name, self.time)
 
     def readtime(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        #return self.time.astimezone(localtz).strftime("%I:%M %p %a %d %b")
         return self.time.strftime("%I:%M %p %a %d %b")
 
     def readdeadline(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        #return self.deadline.astimezone(localtz).strftime("%I:%M %p %a %d %b")
         return self.deadline.strftime("%I:%M %p %a %d %b")
 
     def readmodified(self):
@@ -121,11 +116,6 @@ class Run(db.Model):
             return self.deadline.strftime(tformat)
         if arg == "modified":    
             return self.modified.strftime(tformat)
-
-    #def sydney_timezone_now(self, utcdt):
-    #    localtz = pytz.timezone("Australia/Sydney")
-    #    localdt = utcdt.replace(tzinfo=pytz.utc).astimezone(localtz)
-    #    return localdt
 
     def calculateTotalRunCost(self):
         total = 0.0
@@ -162,6 +152,10 @@ class Coffee(db.Model):
 
     paid = db.Column(db.Boolean, default=False)
 
+    startTime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    endTime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    expired = db.Column(db.Boolean, default=False)
+
     def __init__(self, coffeetype):
         self.coffeetype = coffeetype
 
@@ -171,6 +165,14 @@ class Coffee(db.Model):
     def readmodified(self):
         localtz = pytz.timezone("Australia/Sydney")
         return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+
+    def readstarttime(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        return self.startTime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+
+    def readendtime(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        return self.endTime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         if arg == "modified":

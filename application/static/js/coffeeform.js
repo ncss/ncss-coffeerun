@@ -22,7 +22,17 @@ $(document).ready(function() {
             $("#size").change();
         });
     });
+    $("#recurring").change(function() {
+        if ($(this).is(":checked")) {
+            $(".recurringFields").show();
+        } else {
+            $(".recurringFields").hide();
+        }
+    });
+
     $("#runid").val(origrun);
     $("#runid").change();
     $("#size").change();
+    $("#recurring").change();
+
 });

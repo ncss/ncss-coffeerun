@@ -1,14 +1,13 @@
 
 
-from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
+from flask import render_template, flash, redirect, session, url_for, request, jsonify
 from flask.ext.login import login_required, login_user, current_user, logout_user
 from flask.ext.mail import Message
-import requests
-import json
-from datetime import datetime
 import pytz
-from application import app, db, lm, mail
-from models import User, Run, Coffee, RunStatus, Cafe, Price, Event, RegistrationID, sydney_timezone_now, sydney_timezone
+import datetime
+from application import app, db, lm
+from tasks import send_email
+from models import User, Run, Coffee, RunStatus, Cafe, Price, Event, RegistrationID, sydney_timezone_now
 from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
 
 @lm.user_loader
@@ -39,7 +38,6 @@ def login():
         if login_user(user):
             flash("You are now logged in.", "success")
             return redirect(request.args.get("next") or url_for("home"))
-            #return url_for("home")
         else:
             flash("Login unsuccessful.", "danger")
             return render_template("login.html", loginform=loginform, registerform=registerform)
@@ -52,6 +50,7 @@ def register():
         user = User()
         user.name = registerform.data["name"]
         user.email = registerform.data["email"]
+        user.group = registerform.data["group"]
         user.tutor = registerform.data["tutor"]
         user.teacher = registerform.data["teacher"]
         db.session.add(user)
@@ -136,11 +135,7 @@ def edit_run(runid):
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         print form.data
-        #print type(form.data["time"])
-        #print type(run.time)
-        #print type (sydney_timezone_now())
         oldstatus = run.status.description
-        #form.populate_obj(run)
         person = User.query.filter_by(id=form.data["person"]).first()
         run.person = person.id
         run.fetcher = person
@@ -170,7 +165,7 @@ def next_status_for_run(runid):
     if run.status.description != "closed":
         nextstatus = RunStatus.query.filter_by(id=run.statusid+1).first()
         run.status = nextstatus
-        #run.modified = sydney_timezone_now()
+        run.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "run", run.id)
         flash("Run edited", "success")
@@ -199,7 +194,6 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        #coffee.modified = sydney_timezone_now()
         coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
@@ -305,12 +299,11 @@ def add_run(cafeid=None):
         if cafeid:
             form.cafe.data = cafeid
         form.person.data = current_user.id
-        form.time.data = sydney_timezone_now()#.strftime("%Y/%m/%d %H:%M:%S")
+        form.time.data = sydney_timezone_now()
         form.deadline.data = sydney_timezone_now()
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         # Add run
-        print form.data
         run = Run(form.data["time"])
         person = User.query.filter_by(id=form.data["person"]).first()
         run.person = person.id
@@ -319,11 +312,16 @@ def add_run(cafeid=None):
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
         run.statusid = form.data["statusid"]
-        #run.modified = sydney_timezone_now()
         run.modified = sydney_timezone_now()
         db.session.add(run)
         db.session.commit()
         write_to_events("created", "run", run.id)
+        if form.data["addpending"]:
+            coffees = get_coffees_for_time(sydney_timezone_now())
+            for coffee in coffees:
+                coffee.runid = run.id
+                db.session.add(coffee)
+            db.session.commit()
         flash("Run added", "success")
         return redirect(url_for("view_run", runid=run.id))
     else:
@@ -346,12 +344,12 @@ def delete_run(runid):
 @login_required
 def add_coffee(runid=None):
     runs = Run.query.filter(Run.deadline >= sydney_timezone_now()).filter(Run.statusid==1).all()
-    if not runs:
-        flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
-        return redirect(url_for("home"))
+    # if not runs:
+    #     flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
+    #     return redirect(url_for("home"))
     lastcoffee = Coffee.query.filter(Coffee.addict==current_user).order_by(Coffee.id.desc()).first()
     form = CoffeeForm(request.form)
-    form.runid.choices = [(r.id, r.time) for r in runs]
+    form.runid.choices = [(-1, '')] + [(r.id, r.time) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
         localmodified = run.deadline.replace(tzinfo=pytz.timezone("Australia/Sydney"))
@@ -363,6 +361,8 @@ def add_coffee(runid=None):
     form.person.choices = [(user.id, user.name) for user in users]
     if request.method == "GET":
         form.person.data = current_user.id
+        form.starttime.data = sydney_timezone_now()
+        form.endtime.data = sydney_timezone_now()
         if lastcoffee:
             form.coffeetype.data = lastcoffee.coffeetype
             form.size.data = lastcoffee.size
@@ -376,16 +376,22 @@ def add_coffee(runid=None):
         person = User.query.filter_by(id=form.data["person"]).first()
         coffee.personid = person.id
         coffee.addict = person
-        coffee.runid = form.data["runid"]
-        run = Run.query.filter_by(id=form.data["runid"]).first()
         coffee.price = form.data["price"]
-        print coffee.price
+        if form.data["runid"] == -1:
+            coffee.startTime = form.data["starttime"]
+            coffee.endTime = form.data["endtime"]
+        else:
+            coffee.runid = form.data["runid"]
+            run = Run.query.filter_by(id=form.data["runid"]).first()
         coffee.modified = sydney_timezone_now()
         db.session.add(coffee)
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
-        notify_run_owner_of_coffee(run.fetcher, person, coffee)
+        if form.data["runid"] != -1:
+            notify_run_owner_of_coffee(run.fetcher, person, coffee)
         flash("Coffee order added", "success")
+        if form.data["recurring"]:
+            recur_coffee(coffee, form.data["days"])
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
     else:
         for field, errors in form.errors.items():
@@ -528,6 +534,30 @@ def get_person(name):
         write_to_events("created", "user", person.id, person)
     return person
 
+def recur_coffee(coffee, days):
+    for i in range(days):
+        newcoffee = Coffee(coffee.coffeetype)
+        newcoffee.addict = coffee.addict
+        newcoffee.size = coffee.size
+        newcoffee.sugar = coffee.sugar
+        newcoffee.person = coffee.person
+        newcoffee.addict = coffee.addict
+        newcoffee.price = coffee.price
+        starttime = coffee.startTime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
+        starttime += datetime.timedelta(days=i+1)
+        newcoffee.startTime = starttime
+        endtime = coffee.endTime
+        endtime += datetime.timedelta(days=i+1)
+        newcoffee.endTime = endtime
+        db.session.add(newcoffee)
+        db.session.commit()
+        write_to_events("created", "coffee", newcoffee.id)
+
+def get_coffees_for_time(time):
+    coffees = Coffee.query.filter(Coffee.endTime >= time) \
+        .filter(Coffee.startTime <= time).filter(Coffee.expired==False).all()
+    return coffees
+
 def write_to_events(action, objtype, objid, user=None):
     if user:
         event = Event(user.id, action, objtype, objid)
@@ -547,186 +577,14 @@ def notify_run_owner_of_coffee(owner, addict, coffee):
         subject = "Alert: coffee added for run to %s at %s" % (run.cafe.name, run.readtime())
         body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
         msg = Message(subject, recipients)
-        mail.send(msg)
+        send_email(msg)
 
 def call_to_pickup(run):
     recipients = [c.addict.email for c in run.coffees if c.addict.alerts]
     subject = "Alert: your coffee is ready to pickup!"
     body = "%s has taken your coffee to %s. Please go fetch and pay.\nRegards, your favourite Coffee Bot!" % (run.fetcher.name, run.pickup)
     msg = Message(subject=subject, body=body, recipients=recipients)
-    mail.send(msg)
-
-# Mobile app parts
-
-@app.route("/m/sync/", methods=["POST"])
-def mobile_sync():
-    if request.headers["Content-Type"] == "application/json":
-        dinput = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    #print dinput
-    doutput = {}
-    qruns = Run.query.all()
-    qcoffees = Coffee.query.all()
-    #print len(qruns), len(qcoffees)
-    runs = []
-    coffees = []
-    if len(dinput["runs"]) > 0:
-        #print dinput["runs"]
-        rdict = { int(d["id"]): d["modified"]  for d in dinput["runs"]}
-    else:
-        rdict = {}
-    for r in qruns:
-        #print r, rdict
-        if r.id in rdict:
-            #dt = datetime.
-            #print r.id, r.modified, "|", r.readmodified(), "|", r.jsondatetime("modified"), "|", rdict[r.id]
-            if r.jsondatetime("modified") != rdict[r.id]:
-                runs.append(r.toJSON())
-        else:
-            runs.append(r.toJSON())
-    if len(dinput["coffees"]) > 0:
-        #print dinput["coffees"]
-        cdict = { int(d["id"]): d["modified"]  for d in dinput["coffees"]}
-    else:
-        cdict = {}
-    for c in qcoffees:
-        if c.id in cdict:
-            #print c, c.jsondatetime("modified"), cdict[c.id], c.jsondatetime("modified") == cdict[c.id]
-            if c.jsondatetime("modified") != cdict[c.id]:
-                coffees.append(c.toJSON())
-        else:
-            coffees.append(c.toJSON())
-    #print jsonify(runs=runs, coffees=coffees)
-    print "runs", runs
-    print "coffees", coffees
-    return jsonify(runs=runs, coffees=coffees)
-
-@app.route("/m/run/", methods=["POST"])
-def mobile_syncrun():
-    if request.headers["Content-Type"] == "application/json":
-        runjson = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    try: 
-        print "Run JSON Request", runjson
-        if "id" in runjson:
-            run = Run.query.filter_by(id=runjson["id"]).first()
-            run.time = runjson["time"]
-        else:
-            run = Run(runjson["time"])
-        person = get_person(runjson["person"])
-        run.person = person.id
-        run.fetcher = person
-        run.deadline = runjson["deadline"]
-        run.cafe = runjson["cafe"]
-        run.pickup = runjson["pickup"]
-        run.status = runjson["status"]
-        run.statusobj = RunStatus.query.filter_by(id=runjson["status"]).first()
-        if "id" not in runjson:
-            db.session.add(run)
-        db.session.commit()
-        return jsonify(msg="success", id=run.id, modified=run.jsondatetime("modified"))
-    except:
-        return jsonify(msg="error")
-
-@app.route("/m/run/delete/", methods=["POST"])
-def mobile_deleterun():
-    if request.headers["Content-Type"] == "application/json":
-        runjson = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    if "id" not in runjson:
-        return jsonify(msg="error")
-    run = Run.query.filter_by(id=runjson["id"]).first()
-    db.session.delete(run)
-    db.session.commit()
-    return jsonify(msg="success", id=runjson["id"])
-
-@app.route("/m/coffee/", methods=["POST"])
-def mobile_synccoffee():
-    # Parse JSON
-    # Try to add
-    # Return success or failure, with ID or error
-    if request.headers["Content-Type"] == "application/json":
-        coffeejson = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    try: 
-        print "Coffee JSON Request", coffeejson
-        if "id" in coffeejson:
-            coffee = Coffee.query.filter_by(id=coffeejson["id"]).first()
-        else:
-            coffee = Coffee(coffeejson["coffeetype"])
-        person = get_person(coffeejson["person"])
-        coffee.person = person.id
-        coffee.addict = person
-        coffee.size = coffeejson["size"]
-        coffee.sugar = coffeejson["sugar"]
-        coffee.run = coffeejson["run"]
-        coffee.runobj = Run.query.filter_by(id=coffeejson["run"]).first()
-        if "id" not in coffeejson:
-            db.session.add(coffee)
-        db.session.commit()
-        return jsonify(msg="success", id=coffee.id, modified=coffee.jsondatetime("modified"))
-    except:
-        return jsonify(msg="error")
-
-@app.route("/m/coffee/delete/", methods=["POST"])
-def mobile_deletecoffee():
-    if request.headers["Content-Type"] == "application/json":
-        coffeejson = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    if "id" not in coffeejson:
-        return jsonify(msg="error")
-    coffee = Coffee.query.filter_by(id=coffeejson["id"]).first()
-    db.session.delete(coffee)
-    db.session.commit()
-    return jsonify(msg="success", id=coffeejson["id"])
-
-@app.route("/m/regid/add/", methods=["POST"])
-def mobile_addregid():
-    if request.headers["Content-Type"] == "application/json":
-        regjson = request.get_json()
-    else:
-        return redirect(url_for("home"))
-    if "name" not in regjson:
-        return jsonify(msg="error")
-    user = User.query.filter_by(name=regjson["name"]).first()
-    if not user:
-        print "Adding new user"
-        user = User(regjson["name"])
-        db.session.add(user)
-        db.session.commit()
-    if "regid" not in regjson:
-        return jsonify(msg="error")
-    reg = RegistrationID(user.id, regjson["regid"])
-    reg.user = user
-    db.session.add(reg)
-    db.session.commit()
-    return jsonify(msg="success")
-
-## Notifications
-
-def notify_newrun(run):
-    # Notify all users of the new run
-    headers = {"Content-Type": "application/json", "Authorization":"key=%s" % app.config["API_KEY"]}
-    regids = [r.regid for r in RegistrationID.query.all()]
-    notifydata = {"msg": "New run added"}
-    data = {"registration_ids": regids, "data": notifydata}
-    print "Data", data
-    url = "https://android.googleapis.com/gcm/send"
-    r = requests.post(url, data=json.dumps(data))
-    print "Text", r.text
-    print "Status", r.status_code
-    print "Headers", r.headers
-
-def notify_newcoffee():
-    # Get the run
-    # Send notification to the person doing the run
-    pass
-
+    send_email(msg)
 
 ## Error handlers
 # Handle 404 errors

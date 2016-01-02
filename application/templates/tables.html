@@ -22,8 +22,8 @@
             <td>{{ coffee.size }}</td>
             <td>{{ coffee.sugar }}</td>
             <td>{{ "$%.2f" % coffee.price }}</td>
-            <td><a href="/run/{{ coffee.run.id }}/">{{ coffee.run.readtime() }}</a></td>
-            <td>{{ coffee.run.status.description }}</td>
+            <td>{% if coffee.run %}<a href="/run/{{ coffee.run.id }}/">{{ coffee.run.readtime() }}</a>{% endif %}</td>
+            <td>{% if coffee.run %}{{ coffee.run.status.description }}{% endif %}</td>
             <td>{% if coffee.paid %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
         </tr>
         {% endfor %}

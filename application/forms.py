@@ -23,6 +23,10 @@ class CoffeeForm(Form):
     price = FloatField("Price", default=0)
     runid = SelectField("Run", coerce=int)
     paid = BooleanField("Paid", default=False)
+    recurring = BooleanField("Recurring", default=False)
+    starttime = DateTimeField("Start Time", format="%Y/%m/%d %H:%M")
+    endtime = DateTimeField("End Time", format="%Y/%m/%d %H:%M")
+    days = IntegerField("Days Repeating", default = 1)
 
 class RunForm(Form):
     person = SelectField("Person", coerce=int)
@@ -31,10 +35,12 @@ class RunForm(Form):
     cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")
     statusid = SelectField("Status", coerce=int)
+    addpending = BooleanField("Add All Pending Coffees", default=True)
 
 class UserForm(Form):
     name = TextField("Name")
     email = TextField("Email", [validators.Required()])
+    group = TextField("Group")
     tutor = BooleanField("Tutor")
     teacher = BooleanField("Teacher")
     alerts = BooleanField("Email Alerts")
