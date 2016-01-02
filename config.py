@@ -4,6 +4,7 @@ Configuration objects for the ncss-coffee Flask app
 Maddy Reid 2014"""
 import os
 
+
 class Config(object):
     CSFR_ENABLED = True
     SECRET_KEY = "HyP0oHYnYeqv47uXohfvOkiv"
@@ -16,15 +17,20 @@ class Config(object):
     MAIL_USE_SSL = True
     SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
     SLACK_BOT_USER_ID = os.environ.get('SLACK_BOT_USER_ID')
+    SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
+    SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
+
 
 class DevConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
 
+
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-test.db"
-    
+
+
 class ProdConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-prod.db"
     DEBUG = True

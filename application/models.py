@@ -16,12 +16,14 @@ def sydney_timezone(time):
     localtz = pytz.timezone("Australia/Sydney")
     localdt = time.astimezone(localtz)
     return localdt
-    
+
 
 class User(db.Model):
     __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    slack_team_id = db.Column(db.String)
+    slack_user_id = db.Column(db.String)
     email = db.Column(db.String)
     device = db.Column(db.String)
     tutor = db.Column(db.Boolean, default=False)

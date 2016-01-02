@@ -1,19 +1,68 @@
 
-
-from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
-from flask.ext.login import login_required, login_user, current_user, logout_user
-from flask.ext.mail import Message
+from functools import wraps
 import requests
 import json
 from datetime import datetime
 import pytz
+
+from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
+from flask.ext.login import login_required, login_user, current_user, logout_user
+from flask.ext.mail import Message
+from flask_oauthlib.client import OAuth
 from application import app, db, lm, mail
 from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now, sydney_timezone
-from forms import LoginForm, CoffeeForm, RunForm, UserForm, CafeForm, PriceForm
+from forms import CoffeeForm, RunForm, CafeForm, PriceForm
+
+oauth = OAuth(app)
+
+slack_auth = oauth.remote_app(
+    'slack',
+    consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
+    consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
+    request_token_params={'scope': 'identify'},
+    base_url='https://slack.com/api/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://slack.com/api/oauth.access',
+    authorize_url='https://slack.com/oauth/authorize'
+)
+
 
 @lm.user_loader
-def load_user(userid):
-    return User.query.get(int(userid))
+def load_user(user_id):
+    return User.query.get(user_id)
+
+
+def get_user_from_slack_token():
+    token = session.get('slack_token')[0]
+    resp = requests.get('http://slack.com/api/auth.test', params={'token': token})
+    if resp.status_code != 200:
+        print(resp)
+        flash('Error retrieving user info')
+        return None
+
+    content = json.loads(resp.content)
+    if not content['ok']:
+        print(content)
+        flash('Error retrieving user info: ' + content['error'])
+        return None
+
+    q = User.query.filter_by(slack_user_id=content['user_id'], slack_team_id=content['team_id'])
+    users = q.all()
+    if len(users) == 1:
+        return users[0]
+    if len(users) == 0:
+        user = User()
+        user.name = content['user']
+        user.slack_user_id = content['user_id']
+        user.slack_team_id = content['team_id']
+        user.tutor = content['team_id'] == 'T0FGHB4TZ'
+        user.teacher = not user.tutor
+        db.session.add(user)
+        db.session.commit()
+        return user
+    raise 'More than one user with the same slack ID - Something is very wrong'
+
 
 @app.route("/")
 @login_required
@@ -22,95 +71,98 @@ def home():
     events = Event.query.order_by(Event.time.desc())[:4]
     return render_template("index.html", run=run, events=events, current_user=current_user)
 
+
+@app.route("/slacklogin/")
+def slacklogin():
+  if 'slack_token' in session:
+    user = get_user_from_slack_token()
+    if user:
+      login_user(user)
+      return redirect(request.args.get("next") or url_for("home"))
+  return slack_auth.authorize(callback=url_for('authorized', _external=True))
+
+
+@app.route('/login/authorized')
+def authorized():
+    resp = slack_auth.authorized_response()
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error'],
+            request.args['error_description']
+        )
+    if not resp.get('ok', False):
+        return 'There was an error: ' + resp['error']
+
+    session['slack_token'] = (resp['access_token'], '')
+    user = get_user_from_slack_token()
+    login_user(user)
+
+    return redirect(request.args.get("next") or url_for("home"))
+
+
+@slack_auth.tokengetter
+def get_slack_token():
+    token = session.get('slack_token')
+    return token
+
+
 @app.route("/login/", methods=["GET","POST"])
 def login():
-    loginform = LoginForm()
-    registerform = UserForm()
-    users = db.session.query(User).all()
-    loginform.users.choices = [(u.id, u.name) for u in users]
-    if loginform.validate_on_submit():
-        if loginform.newuser.data:
-            user = User(loginform.newuser.data)
-            db.session.add(user)
-            db.session.commit()
-            write_to_events("created", "user", user.id, user)
-        else:
-            user = db.session.query(User).filter_by(id=loginform.users.data).first()
-        if login_user(user):
-            flash("You are now logged in.", "success")
-            return redirect(request.args.get("next") or url_for("home"))
-            #return url_for("home")
-        else:
-            flash("Login unsuccessful.", "danger")
-            return render_template("login.html", loginform=loginform, registerform=registerform)
-    return render_template("login.html", loginform=loginform, registerform=registerform)
+    return render_template("login.html")
 
-@app.route("/register/", methods=["POST"])
-def register():
-    registerform = UserForm()
-    if registerform.validate_on_submit():
-        user = User()
-        user.name = registerform.data["name"]
-        user.email = registerform.data["email"]
-        user.tutor = registerform.data["tutor"]
-        user.teacher = registerform.data["teacher"]
-        db.session.add(user)
-        db.session.commit()
-        write_to_events("created", "user", user.id, user)
-        login_user(user)
-        flash("You are now logged in.", "success")
-    else:
-        flash("Register unsuccessful.", "danger")
-        for field, errors in registerform.errors.items():
-            flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
-        loginform = LoginForm()
-        users = db.session.query(User).all()
-        loginform.users.choices = [(u.id, u.name) for u in users]
-        return render_template("login.html", loginform=loginform, registerform=registerform)
-    return redirect(url_for("home"))
 
 @app.route("/logout/")
 @login_required
 def logout():
+    session.pop('slack_token', None)
     logout_user()
     return redirect(url_for("login"))
 
+
 @app.route("/about/")
 def about():
-    return render_template("about/main.html")
+    return render_template("about/main.html", current_user=current_user)
+
 
 @app.route("/about/history/")
 def about_history():
-    return render_template("about/history.html")
+    return render_template("about/history.html", current_user=current_user)
+
 
 @app.route("/about/faqs/")
 def about_faqs():
-    return render_template("about/faqs.html")
+    return render_template("about/faqs.html", current_user=current_user)
+
 
 @app.route("/run/")
-def view_all_runs(): 
+def view_all_runs():
     runs = Run.query.order_by(Run.id.desc()).all()
-    return render_template("viewallruns.html", runs=runs)
+    return render_template("viewallruns.html", runs=runs, current_user=current_user)
+
 
 @app.route("/coffee/")
-def view_all_coffees(): 
+def view_all_coffees():
     coffees = Coffee.query.order_by(Coffee.id.desc()).all()
     return render_template("viewallcoffees.html", coffees=coffees, current_user=current_user)
+
 
 @app.route("/cafe/")
 def view_all_cafes():
     cafes = Cafe.query.order_by(Cafe.name).all()
     return render_template("viewallcafes.html", cafes=cafes, current_user=current_user)
 
+
 @app.route("/price/")
 def view_all_prices():
     prices = Price.query.order_by(Price.cafeid, Price.amount).all()
     return render_template("viewallprices.html", prices=prices, current_user=current_user)
 
+
 @app.route("/activity/", methods=["GET"])
 def view_activity():
     events = Event.query.order_by(Event.time.desc()).all()
     return render_template("viewallactivity.html", events=events, current_user=current_user)
+
 
 @app.route("/run/<int:runid>/")
 @login_required
@@ -147,7 +199,7 @@ def edit_run(runid):
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
         run.statusid = form.data["statusid"]
-        
+
         #localtz = pytz.timezone("Australia/Sydney")
         newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
         #run.modified = sydney_timezone_now()
