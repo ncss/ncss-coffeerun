@@ -18,43 +18,23 @@
         <div class="col-sm-11">
             {{ form.person(class_="form-control") }}
         </div>
-    </div> 
+    </div>
     <div class="form-group" {{ "has-error" if form.runid.errors }}>
         {{ form.runid.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
             {{ form.runid(class_="form-control", type="number") }}
         </div>
     </div>
-    <div class="form-group" {{ "has-error" if form.coffeetype.errors }}>
-        {{ form.coffeetype.label(class_="col-sm-1 control-label") }}
+    <div class="form-group" {{ "has-error" if form.coffee.errors }}>
+        {{ form.coffee.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
-            {{ form.coffeetype(class_="form-control") }}
-        </div>
-    </div>
-    <div class="form-group" {{ "has-error" if form.size.errors }}>
-        {{ form.size.label(class_="col-sm-1 control-label") }}
-        <div class="col-sm-11">
-            {{ form.size(class_="form-control") }}
+            {{ form.coffee(class_="form-control") }}
         </div>
     </div>
     <div class="form-group">
         {{ form.price.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
             {{ form.price(class_="form-control") }}
-        </div>
-    </div>
-    <div class="form-group">
-        {{ form.sugar.label(class_="col-sm-1 control-label") }}
-        <div class="col-sm-11">
-            {{ form.sugar(class_="form-control", type="number") }}
-        </div>
-    </div>
-    <div class="form-group">
-        <div class="col-sm-offset-1 col-sm-11">
-            <div class="checkbox">
-                {{ form.paid() }}
-                {{ form.paid.label() }}
-            </div>
         </div>
     </div>
     <div class="form-group">

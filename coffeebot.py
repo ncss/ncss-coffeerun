@@ -7,14 +7,16 @@ import random
 
 from slackclient import SlackClient
 
-from application import app
-from application.models import Run, User
+from application import app, db
+from application.models import Run, User, Coffee
 
-from coffeespecs import Coffee
+import coffeespecs
+import utils
 
 
 TOKEN = None
 USER_ID = None
+TEAM_ID = None
 
 MENTION_RE = re.compile(r'<@([A-Z0-9]+)\|?[^>]*>:?')
 EMOJI_RE = re.compile(r':[a-z]+:')
@@ -30,11 +32,50 @@ def list_runs(slackclient, user, channel, match):
     slackclient.rtm_send_message(channel.id, 'No open runs')
   for run in q:
     person = User.query.filter_by(id=run.person).first()
-    slackclient.rtm_send_message(channel.id, '{} is going to {} at {}'.format(person.name, run.cafe.name, run.time))
+    slackclient.rtm_send_message(channel.id, 'Run {}: {} is going to {} at {}'.format(run.id, person.name, run.cafe.name, run.time))
+
+
+def order_coffee(slackclient, user, channel, match):
+  print(match.groupdict())
+  runid = match.groupdict().get('runid', None)
+  run = None
+  if runid and runid.isdigit():
+    run = Run.query.filter_by(id=int(runid)).first()
+  if not run:
+    # Pick a run
+    runs = Run.query.filter_by(is_open=True).order_by('time').all()
+    if len(runs) > 1:
+      slackclient.rtm_send_message(channel.id, 'More than one open run, please specify by adding run=<id> on the end.')
+      list_runs(slackclient, user, channel, None)
+      return
+    if len(runs) == 0:
+      slackclient.rtm_send_message(channel.id, 'No open runs')
+      return
+    run = runs[0]
+
+  # Create the coffee
+  coffee = Coffee(match.group(1))
+
+  # Find the user that requested this
+  dbuser = utils.get_or_create_user(user.id, TEAM_ID, user.name)
+  print(dbuser)
+
+  # Put it all together
+  coffee.person = dbuser.id
+  coffee.runid = run.id
+  db.session.add(coffee)
+  db.session.commit()
+  print(coffee)
+
+  runuser = User.query.filter_by(id=run.person).first()
+
+  slackclient.rtm_send_message(channel.id, 'That\'s a {} for {} (added to <@{}>\'s run.)'.format(coffee.pretty_print(), mention(user), runuser.slack_user_id))
 
 
 def set_up_orders():
   ORDERS_DISPATCH[re.compile('(open|list)? ?runs')] = list_runs
+  ORDERS_DISPATCH[re.compile('order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
+  ORDERS_DISPATCH[re.compile('([^\=]+) (?:plz|please)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
 
 
 def load_triggers(filename):
@@ -68,12 +109,12 @@ def clean_text(text):
   # Remove @mentions and emoji
   text = MENTION_RE.sub('', text)
   text = EMOJI_RE.sub('', text)
+  text = text.lower()
   return text.strip()
 
 
 def handle_mention_message(slackclient, user, channel, text):
   clean = clean_text(text)
-  msg = None
 
   for order_re in ORDERS_DISPATCH:
     match = order_re.match(clean)
@@ -81,12 +122,6 @@ def handle_mention_message(slackclient, user, channel, text):
       ORDERS_DISPATCH[order_re](slackclient, user, channel, match)
       break
 
-  c = Coffee(clean)
-  if c.validate():
-    msg = 'Ok, that\'s a {} for {}'.format(c, mention(user))
-
-  if msg:
-    slackclient.rtm_send_message(channel.id, msg)
   trigger_check(slackclient, user, channel, clean)
 
 
@@ -140,6 +175,7 @@ def main():
 if __name__ == '__main__':
   TOKEN = app.config['SLACK_API_TOKEN']
   USER_ID = app.config['SLACK_BOT_USER_ID']
+  TEAM_ID = app.config['SLACK_TEAM_ID']
   if not TOKEN or not USER_ID:
     print('Missing slack token or slack user id')
   main()

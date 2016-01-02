@@ -14,20 +14,15 @@ from wtforms import validators, SelectField, TextField, IntegerField, DateTimeFi
 
 class CoffeeForm(Form):
     person = SelectField("Addict", coerce=int)
-    coffeetype = TextField("Coffee", [validators.Required()])
-    size = SelectField("Size", choices=[("S","S"),("M","M"),("L","L")])
-    sugar = IntegerField("Sugar", default=0)
+    coffee = TextField("Coffee", [validators.Required()])
     price = FloatField("Price", default=0)
     runid = SelectField("Run", coerce=int)
-    paid = BooleanField("Paid", default=False)
 
 class RunForm(Form):
     person = SelectField("Person", coerce=int)
     time = DateTimeField("Time of Run", [validators.Required()], format="%Y/%m/%d %H:%M")
-    deadline = DateTimeField("Deadline for Adding", format="%Y/%m/%d %H:%M")
     cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")
-    statusid = SelectField("Status", coerce=int)
 
 class CafeForm(Form):
     name = TextField("Name", [validators.Required()])

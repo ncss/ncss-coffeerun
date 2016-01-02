@@ -1,6 +1,8 @@
 # vim: set et nosi ai ts=2 sts=2 sw=2:
 # coding: utf-8
 
+import json
+
 COFFEE_SPECS = {}
 _PRECEDENCE = ['size', 'type', 'milk', 'strength', 'iced', 'decaf', 'sugar']
 
@@ -63,6 +65,17 @@ class Coffee(object):
           tokens.append('with')
         tokens.append(self.specs[spec])
     return ' '.join(tokens)
+
+  def toJSON(self):
+    return json.dumps(self.specs)
+
+  @staticmethod
+  def fromJSON(coffee_json):
+    coffee = Coffee('C')
+    coffee.specs = json.loads(coffee_json)
+    if not coffee.validate():
+      raise Exception('Invalid coffee')
+    return coffee
 
 
 class CoffeeSpec(object):

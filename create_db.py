@@ -1,23 +1,14 @@
 
 from application import app, db
-from application.models import *
+from application.models import Cafe
 
 db.drop_all()
 db.init_app(app)
 db.create_all()
 
-sopen = Status("Open")
-sorder = Status("Ordering")
-spickup = Status("Pickup")
-sclosed = Status("Closed")
+db.session.add(Cafe('Toby\'s Estate', 'City Rd'))
+db.session.add(Cafe('Campos', 'Newtown'))
+db.session.add(Cafe('Twenty 8 Acres', 'Ivy Ln, Darlington'))
+db.session.add(Cafe('Taste Baguette', 'Sydney Uni Law Building'))
 
-inituser = User("Maddy")
-inituser.email = "maddy.reid.21@gmail.com"
-inituser.tutor = True
-
-db.session.add(sopen)
-db.session.add(sorder)
-db.session.add(spickup)
-db.session.add(sclosed)
-db.session.add(inituser)
 db.session.commit()

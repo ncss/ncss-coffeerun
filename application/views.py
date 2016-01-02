@@ -2,7 +2,7 @@
 from functools import wraps
 import requests
 import json
-from datetime import datetime
+from datetime import timedelta
 import pytz
 
 from flask import render_template, flash, redirect, session, url_for, request, g, json, jsonify
@@ -10,8 +10,10 @@ from flask.ext.login import login_required, login_user, current_user, logout_use
 from flask.ext.mail import Message
 from flask_oauthlib.client import OAuth
 from application import app, db, lm, mail
-from models import User, Run, Coffee, Status, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now, sydney_timezone
+from models import User, Run, Coffee, Cafe, Price, PriceModifier, Event, RegistrationID, sydney_timezone_now, sydney_timezone
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm
+
+import utils
 
 oauth = OAuth(app)
 
@@ -47,21 +49,8 @@ def get_user_from_slack_token():
         flash('Error retrieving user info: ' + content['error'])
         return None
 
-    q = User.query.filter_by(slack_user_id=content['user_id'], slack_team_id=content['team_id'])
-    users = q.all()
-    if len(users) == 1:
-        return users[0]
-    if len(users) == 0:
-        user = User()
-        user.name = content['user']
-        user.slack_user_id = content['user_id']
-        user.slack_team_id = content['team_id']
-        user.tutor = content['team_id'] == 'T0FGHB4TZ'
-        user.teacher = not user.tutor
-        db.session.add(user)
-        db.session.commit()
-        return user
-    raise 'More than one user with the same slack ID - Something is very wrong'
+    user = utils.get_or_create_user(content['user_id'], content['team_id'], content['user'])
+    return user
 
 
 @app.route("/")
@@ -167,18 +156,15 @@ def view_activity():
 @app.route("/run/<int:runid>/")
 @login_required
 def view_run(runid):
-    run = Run.query.filter(Run.id==runid).first_or_404()
-    nextstatusid = run.statusid + 1
-    nextstatus = Status.query.filter(Status.id==nextstatusid).first()
-    return render_template("viewrun.html", run=run, current_user=current_user, nextstatus=nextstatus)
+    run = Run.query.filter_by(id=runid).first_or_404()
+    return render_template("viewrun.html", run=run, current_user=current_user)
+
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
 @login_required
 def edit_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     form = RunForm(request.form, obj=run)
-    statuses = Status.query.all()
-    form.statusid.choices = [(s.id, s.description) for s in statuses]
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
     cafes = Cafe.query.all()
@@ -187,28 +173,16 @@ def edit_run(runid):
         print run.time.strftime('%Y-%m-%d %H:%M:%S %Z%z')
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
-        print form.data
-        #print type(form.data["time"])
-        #print type(run.time)
-        #print type (sydney_timezone_now())
-        oldstatus = run.status.description
-        #form.populate_obj(run)
         person = User.query.filter_by(id=form.data["person"]).first()
         run.person = person.id
         run.fetcher = person
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
-        run.statusid = form.data["statusid"]
 
-        #localtz = pytz.timezone("Australia/Sydney")
-        newstatus = Status.query.filter_by(id=form.data["statusid"]).first().description
-        #run.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "run", run.id)
         db.session.commit()
         flash("Run edited", "success")
-        if oldstatus != newstatus and newstatus == "Pickup":
-            call_to_pickup(run)
         return redirect(url_for("view_run", runid=run.id))
     else:
         for field, errors in form.errors.items():
@@ -242,7 +216,7 @@ def view_coffee(coffeeid):
 def edit_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     form = CoffeeForm(request.form, obj=coffee)
-    runs = Run.query.filter(Run.time >= sydney_timezone_now()).all()
+    runs = Run.query.filter_by(is_open=True).all()
     form.runid.choices = [(r.id, r.time) for r in runs]
     form.runid.data = coffee.runid
     users = User.query.all()
@@ -251,8 +225,6 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        #coffee.modified = sydney_timezone_now()
-        coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
         flash("Coffee edited", "success")
@@ -283,25 +255,6 @@ def view_user(userid):
     user = User.query.filter(User.id==userid).first_or_404()
     return render_template("viewuser.html", user=user, current_user=current_user)
 
-@app.route("/user/<int:userid>/edit/", methods=["GET", "POST"])
-@login_required
-def edit_user(userid):
-    if userid != current_user.id:
-        flash("You cannot edit a different user!", "danger")
-        return redirect(url_for("view_user", userid=userid))
-    form = UserForm(request.form, obj=current_user)
-    if request.method == "GET":
-        return render_template("userform.html", form=form, current_user=current_user)
-    if request.method == "POST" and form.validate_on_submit():
-        form.populate_obj(current_user)
-        db.session.commit()
-        write_to_events("updated", "user", current_user.id)
-        flash("User edited", "success")
-        return redirect(url_for("view_user", userid=userid))
-    else:
-        for field, errors in form.errors.items():
-            flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
-        return redirect(url_for("view_user", userid=userid))
 
 @app.route("/user/<int:userid>/debts/", methods=["GET", "POST"])
 @login_required
@@ -346,8 +299,6 @@ def add_run(cafeid=None):
     form = RunForm(request.form)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
-    statuses = Status.query.all()
-    form.statusid.choices = [(s.id, s.description) for s in statuses]
     cafes = Cafe.query.all()
     if not cafes:
         flash("There are no cafes currently configured. Please add one before creating a run", "warning")
@@ -357,8 +308,7 @@ def add_run(cafeid=None):
         if cafeid:
             form.cafe.data = cafeid
         form.person.data = current_user.id
-        form.time.data = sydney_timezone_now()#.strftime("%Y/%m/%d %H:%M:%S")
-        form.deadline.data = sydney_timezone_now()
+        form.time.data = sydney_timezone_now() + timedelta(minutes=30)  # strftime("%Y/%m/%d %H:%M:%S")
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         # Add run
@@ -367,10 +317,8 @@ def add_run(cafeid=None):
         person = User.query.filter_by(id=form.data["person"]).first()
         run.person = person.id
         run.fetcher = person
-        run.deadline = form.data["deadline"]
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
-        run.statusid = form.data["statusid"]
         #run.modified = sydney_timezone_now()
         run.modified = sydney_timezone_now()
         db.session.add(run)
@@ -393,20 +341,21 @@ def delete_run(runid):
     flash("Run %d deleted" % runid, "success")
     return redirect(url_for("view_all_runs"))
 
+
 @app.route("/run/<int:runid>/addcoffee/", methods=["GET", "POST"])
 @app.route("/coffee/add/", methods=["GET", "POST"])
 @login_required
 def add_coffee(runid=None):
-    runs = Run.query.filter(Run.deadline >= sydney_timezone_now()).filter(Run.statusid==1).all()
+    runs = Run.query.filter(Run.time >= sydney_timezone_now()).filter_by(is_open=True).all()
     if not runs:
         flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
         return redirect(url_for("home"))
-    lastcoffee = Coffee.query.filter(Coffee.addict==current_user).order_by(Coffee.id.desc()).first()
+    lastcoffee = Coffee.query.filter_by(addict=current_user).order_by(Coffee.id.desc()).first()
     form = CoffeeForm(request.form)
     form.runid.choices = [(r.id, r.time) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
-        localmodified = run.deadline.replace(tzinfo=pytz.timezone("Australia/Sydney"))
+        localmodified = run.time.replace(tzinfo=pytz.timezone("Australia/Sydney"))
         if sydney_timezone_now() > localmodified:
             flash("You can't add coffees to this run", "danger")
             return redirect(url_for("view_run", runid=runid))
@@ -415,16 +364,10 @@ def add_coffee(runid=None):
     form.person.choices = [(user.id, user.name) for user in users]
     if request.method == "GET":
         form.person.data = current_user.id
-        if lastcoffee:
-            form.coffeetype.data = lastcoffee.coffeetype
-            form.size.data = lastcoffee.size
-            form.sugar.data = lastcoffee.sugar
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         print form.data
-        coffee = Coffee(form.data["coffeetype"])
-        coffee.size = form.data["size"]
-        coffee.sugar = form.data["sugar"]
+        coffee = Coffee(form.data["coffee"])
         person = User.query.filter_by(id=form.data["person"]).first()
         coffee.personid = person.id
         coffee.addict = person
@@ -568,7 +511,7 @@ def delete_cafe(cafeid):
     return redirect(url_for("view_all_cafes"))
 
 def next_run():
-    run = Run.query.filter(Run.statusid < 4).order_by(Run.time).first()
+    run = Run.query.filter_by(is_open=True).order_by(Run.time).first()
     return run
 
 def get_person(name):
@@ -600,6 +543,7 @@ def notify_run_owner_of_coffee(owner, addict, coffee):
         body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
         msg = Message(subject, recipients)
         mail.send(msg)
+
 
 def call_to_pickup(run):
     recipients = [c.addict.email for c in run.coffees if c.addict.alerts]
@@ -660,7 +604,7 @@ def mobile_syncrun():
         runjson = request.get_json()
     else:
         return redirect(url_for("home"))
-    try: 
+    try:
         print "Run JSON Request", runjson
         if "id" in runjson:
             run = Run.query.filter_by(id=runjson["id"]).first()
@@ -670,10 +614,10 @@ def mobile_syncrun():
         person = get_person(runjson["person"])
         run.person = person.id
         run.fetcher = person
-        run.deadline = runjson["deadline"]
+        run.time = runjson["time"]
         run.cafe = runjson["cafe"]
         run.pickup = runjson["pickup"]
-        run.status = runjson["status"]
+        run.is_open = runjson["is_open"]
         run.statusobj = Status.query.filter_by(id=runjson["status"]).first()
         if "id" not in runjson:
             db.session.add(run)
@@ -771,7 +715,6 @@ def notify_newrun(run):
     url = "https://android.googleapis.com/gcm/send"
     r = requests.post(url, data=json.dumps(data))
     print "Text", r.text
-    print "Status", r.status_code
     print "Headers", r.headers
 
 def notify_newcoffee():
