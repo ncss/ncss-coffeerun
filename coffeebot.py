@@ -8,7 +8,7 @@ import random
 from slackclient import SlackClient
 
 from application import app, db
-from application.models import Run, User, Coffee, Event
+from application.models import Run, User, Coffee, Event, sydney_timezone_now
 
 import coffeespecs
 import utils
@@ -67,7 +67,7 @@ def order_coffee(slackclient, user, channel, match):
 
   # Write the event
   event = Event(coffee.person, "created", "coffee", coffee.id)
-  event.time = app.sydney_timezone_now()
+  event.time = sydney_timezone_now()
   db.session.add(event)
   db.session.commit()
   print(coffee)
