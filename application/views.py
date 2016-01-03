@@ -14,6 +14,7 @@ from tasks import send_email
 from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm
 
+import coffeespecs
 import utils
 
 oauth = OAuth(app)
@@ -372,11 +373,10 @@ def add_coffee(runid=None):
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         print form.data
-        coffee = Coffee(form.data["coffee"])
+        coffee = Coffee(form.data["coffee"], form.data['price'], form.data['runid'])
         person = User.query.filter_by(id=form.data["person"]).first()
         coffee.personid = person.id
         coffee.addict = person
-        coffee.price = form.data["price"]
         if form.data["runid"] == -1:
             coffee.starttime = form.data["starttime"]
             coffee.endtime = form.data["endtime"]
@@ -398,14 +398,16 @@ def add_coffee(runid=None):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("coffeeform.html", form=form, current_user=current_user)
 
+
 @app.route("/_prices_for_run/")
 def prices_for_run():
     runid = request.args.get("runid", 0, type=int)
     run = Run.query.filter_by(id=runid).first()
     prices = run.cafe.pricelist
     print prices
-    jprices = {p.size: p.amount for p in prices}
+    jprices = {p.price_key: p.amount for p in prices}
     return jsonify(**jprices)
+
 
 @app.route("/cafe/add/", methods=["GET", "POST"])
 def add_cafe():
@@ -441,24 +443,22 @@ def add_cafe_price(cafeid=None):
         if not cafes:
             flash("There are no existing cafes. Would you like to make one instead?", "warning")
             return redirect(url_for("home"))
-        form.cafeid.choices = [(cafe.id, cafe.name) for cafe in cafes]
+        form.cafeid.choices = [(c.id, c.name) for c in cafes]
+        cafe = cafes[0]
     if request.method == "GET":
         return render_template("priceform.html", cafe=cafe, form=form, formtype="Add", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         cafeid = form.data["cafeid"]
-        if Price.query.filter_by(cafeid=cafeid).filter_by(size=form.data["size"]).first():
-            flash("There is already a price for this size", "danger")
-            return redirect(url_for("add_cafe_price", cafeid=cafeid))
-        price = Price(cafe.id)
+        cafe = Cafe.query.filter_by(id=cafeid).first_or_404()
+        coffee = coffeespecs.Coffee(form.data["price_key"])
+        price = Price(cafe.id, coffee)
         if cafeid:
             price.cafeid = cafeid
         else:
             price.cafeid = form.data["cafeid"]
-        price.size = form.data["size"]
         price.amount = form.data["amount"]
         db.session.add(price)
         db.session.commit()
-        write_to_events("created", "price", price.id)
         flash("Price added to cafe '%s'" % cafe.name, "success")
         return redirect(url_for("view_cafe", cafeid=cafeid))
     else:

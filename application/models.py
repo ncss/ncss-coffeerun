@@ -108,7 +108,7 @@ class Run(db.Model):
     def calculateTotalRunCost(self):
         total = 0
         for coffee in self.coffees:
-          total += coffee.get_price()
+          total += coffee.price
         return total
 
     def close_run(self, total_cost):
@@ -126,6 +126,7 @@ class Run(db.Model):
             "modified": self.jsondatetime("modified")
         }
 
+
 class Coffee(db.Model):
     __tablename__ = "Coffees"
     id = db.Column(db.Integer, primary_key=True)
@@ -137,17 +138,22 @@ class Coffee(db.Model):
     run = db.relationship("Run", backref=db.backref("coffees"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
 
-    price = db.Column(db.Integer)  # In cents
+    price = db.Column(db.Float)  # In Dollars
     paid = db.Column(db.Boolean, default=False)
 
     starttime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
     endtime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
     expired = db.Column(db.Boolean, default=False)
 
-    def __init__(self, coffee_request):
+    def __init__(self, coffee_request, entered_price, runid):
         c = coffeespecs.Coffee(coffee_request)
         self.coffee = c.toJSON()
-        self.price = self.get_price()
+        if runid != -1:
+            self.runid = runid
+        if entered_price != 0:
+            self.price = entered_price
+        else:
+            self.price = self.lookup_price()
 
     def __repr__(self):
         c = coffeespecs.Coffee.fromJSON(self.coffee)
@@ -169,9 +175,14 @@ class Coffee(db.Model):
         if arg == "modified":
             return self.modified.strftime("%Y-%m-%d %H:%M:%S")
 
-    def get_price(self):
-        """ Calculate price of this coffee."""
-        return 4.0
+    def lookup_price(self):
+        price_key = coffeespecs.Coffee.fromJSON(self.coffee).get_price_key()
+        print 'Price key', price_key
+        run = Run.query.filter_by(id=self.runid).first()
+        if not run:
+            return 0
+        price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
+        return price.amount
 
     def pretty_print(self):
         return str(coffeespecs.Coffee.fromJSON(self.coffee))
@@ -202,6 +213,7 @@ class RegistrationID(db.Model):
     def __repr__(self):
         return "<RegistrationID(%d,'%s')>" % (self.userid, self.regid)
 
+
 class Cafe(db.Model):
     __tablename__ = "Cafes"
     id = db.Column(db.Integer, primary_key=True)
@@ -215,22 +227,23 @@ class Cafe(db.Model):
     def __repr__(self):
         return "<Cafe(%d,'%s')>" % (self.id, self.name)
 
+
 class Price(db.Model):
     __tablename__ = "Prices"
     id = db.Column(db.Integer, primary_key=True)
     cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
-    size = db.Column(db.String)
-    amount = db.Column(db.Float)
+    price_key = db.Column(db.String)
+    amount = db.Column(db.Float)  # Dollars
 
     cafe = db.relationship("Cafe", backref=db.backref("pricelist", lazy="dynamic", single_parent=True, cascade="all, delete, delete-orphan"))
 
-    def __init__(self, cafeid, size=""):
+    def __init__(self, cafeid, coffee):
         self.cafeid = cafeid
-        self.size = size
+        self.price_key = coffee.get_price_key()
         self.amount = 0.0
 
     def __repr__(self):
-        return "<Price(%d,'%s','%f')>" % (self.cafeid, self.size, self.amount)
+        return "<Price(%d,'%s','%f')>" % (self.cafeid, self.price_key, self.amount)
 
 class Event(db.Model):
     __tablename__ = "Events"
@@ -249,9 +262,6 @@ class Event(db.Model):
         self.objtype = objtype
         self.objid = objid
 
-    def __repr__(self):
-        return "<PriceModifier(%d, %d, '%s', '%s', %d, '%s')>" % (self.id, self.userid, self.cation, self.objtype, self.objid, self.time)
-    
     def readtime(self):
         localtz = pytz.timezone("Australia/Sydney")
         return self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")

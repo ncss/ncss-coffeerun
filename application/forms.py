@@ -35,5 +35,5 @@ class CafeForm(Form):
 
 class PriceForm(Form):
     cafeid = SelectField("Cafe", coerce=int)
-    size = SelectField("Size", [validators.Required()], choices=[("S", "S"), ("M", "M"), ("L", "L")])
+    price_key = TextField("Price ID (format is picky)")
     amount = FloatField("Amount", [validators.Required()])

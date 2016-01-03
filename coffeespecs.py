@@ -33,6 +33,22 @@ class Coffee(object):
           return
       request = request.strip()
 
+  def get_price_key(self):
+    tokens = []
+    for spec in _OUT_ORDER:
+      if spec == 'size' and spec not in self.specs:
+        tokens.append('Regular')
+      if spec in self.specs:
+        if spec == 'sugar':
+          continue
+        if spec == 'milk':
+          # Only output the milk if it's soy
+          if self.specs[spec] == 'Soy':
+            tokens.append('Soy')
+          continue
+        tokens.append(self.specs[spec])
+    return ' '.join(tokens)
+
   def add_token(self, token):
     for spec in _PRECEDENCE:
       if COFFEE_SPECS[spec].validate(token) and spec not in self.specs:

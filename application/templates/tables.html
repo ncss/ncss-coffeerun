@@ -81,7 +81,7 @@
         <tr>
             <th>ID</th>
             {% if viewcafe %}<th>Cafe</th>{% endif %}
-            <th>Size</th>
+            <th>Coffee Type</th>
             <th>Amount</th>
         </tr>
     </thead>
@@ -90,7 +90,7 @@
         <tr>
             <td><a href="/price/{{ price.id }}/">{{ price.id }}</a></td>
             {% if viewcafe %}<td><a href="/cafe/{{ price.cafe.id }}">{{ price.cafe.name }}</a></td>{% endif %}
-            <td>{{ price.size }}</td>
+            <td>{{ price.price_key }}</td>
             <td>{{ "$%.2f" % price.amount }}</td>
         </tr>
         {% endfor %}
