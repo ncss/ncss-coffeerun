@@ -22,5 +22,5 @@ pytz==2012d
 sqlalchemy-migrate==0.10.0
 celery==3.1.17
 slackclient==0.16
-Flask-Migrate=1.7.0
-Flask-Script=2.0.5
+Flask-Migrate==1.7.0
+Flask-Script==2.0.5
