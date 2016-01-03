@@ -301,8 +301,6 @@ def add_run(cafeid=None):
     form = RunForm(request.form)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
-    statuses = RunStatus.query.all()
-    form.statusid.choices = [(s.id, s.description) for s in statuses]
     cafes = Cafe.query.all()
     if not cafes:
         flash("There are no cafes currently configured. Please add one before creating a run", "warning")
@@ -384,8 +382,8 @@ def add_coffee(runid=None):
         coffee.addict = person
         coffee.price = form.data["price"]
         if form.data["runid"] == -1:
-            coffee.startTime = form.data["starttime"]
-            coffee.endTime = form.data["endtime"]
+            coffee.starttime = form.data["starttime"]
+            coffee.endtime = form.data["endtime"]
         else:
             coffee.runid = form.data["runid"]
             run = Run.query.filter_by(id=form.data["runid"]).first()
@@ -542,23 +540,23 @@ def get_person(name):
 
 def recur_coffee(coffee, days):
     for i in range(days):
-        newcoffee = Coffee(coffee.coffeetype)
+        newcoffee = Coffee(coffee.coffee)
         newcoffee.addict = coffee.addict
         newcoffee.person = coffee.person
         newcoffee.price = coffee.price
         starttime = coffee.startTime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
         starttime += datetime.timedelta(days=i+1)
-        newcoffee.startTime = starttime
+        newcoffee.starttime = starttime
         endtime = coffee.endTime
         endtime += datetime.timedelta(days=i+1)
-        newcoffee.endTime = endtime
+        newcoffee.endtime = endtime
         db.session.add(newcoffee)
         db.session.commit()
         write_to_events("created", "coffee", newcoffee.id)
 
 def get_coffees_for_time(time):
-    coffees = Coffee.query.filter(Coffee.endTime >= time) \
-        .filter(Coffee.startTime <= time).filter(Coffee.expired==False).all()
+    coffees = Coffee.query.filter(Coffee.endtime >= time) \
+        .filter(Coffee.starttime <= time).filter(Coffee.expired==False).all()
     return coffees
 
 def write_to_events(action, objtype, objid, user=None):

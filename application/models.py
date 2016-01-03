@@ -138,9 +138,10 @@ class Coffee(db.Model):
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
 
     price = db.Column(db.Integer)  # In cents
+    paid = db.Column(db.Boolean, default=False)
 
-    startTime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
-    endTime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    starttime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    endtime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
     expired = db.Column(db.Boolean, default=False)
 
     def __init__(self, coffee_request):
@@ -158,11 +159,11 @@ class Coffee(db.Model):
 
     def readstarttime(self):
         localtz = pytz.timezone("Australia/Sydney")
-        return self.startTime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        return self.starttime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def readendtime(self):
         localtz = pytz.timezone("Australia/Sydney")
-        return self.endTime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        return self.endtime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         if arg == "modified":

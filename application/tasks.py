@@ -17,7 +17,7 @@ def send_email(msg):
 
 @celery.task
 def expire_coffees():
-    coffees = Coffee.query.filter(Coffee.endTime <= sydney_timezone_now()).filter(Coffee.expired==False).all()
+    coffees = Coffee.query.filter(Coffee.endtime <= sydney_timezone_now()).filter(Coffee.expired==False).all()
     print "coffees", len(coffees), sydney_timezone_now()
     for coffee in coffees:
         coffee.expired = True
