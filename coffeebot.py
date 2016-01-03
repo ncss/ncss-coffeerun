@@ -54,7 +54,7 @@ def order_coffee(slackclient, user, channel, match):
     run = runs[0]
 
   # Create the coffee
-  coffee = Coffee(match.group(1))
+  coffee = Coffee(match.group(1), 0, run.id)
 
   # Find the user that requested this
   dbuser = utils.get_or_create_user(user.id, TEAM_ID, user.name)
@@ -62,7 +62,6 @@ def order_coffee(slackclient, user, channel, match):
 
   # Put it all together
   coffee.person = dbuser.id
-  coffee.runid = run.id
   db.session.add(coffee)
   db.session.commit()
   print(coffee)

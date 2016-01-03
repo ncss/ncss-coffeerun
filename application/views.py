@@ -196,12 +196,13 @@ def edit_run(runid):
 def next_status_for_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     run.is_open = False
+    # Create Money exchanges to pay for the purchased coffees.
     db.session.add(run)
     db.session.commit()
     write_to_events("updated", "run", run.id)
     flash("Run closed", "success")
     return redirect(url_for("view_run", runid=run.id))
-    
+
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
