@@ -18,26 +18,14 @@
     <label class="col-sm-1">Run</label>
     <div class="col-sm-11">
         {% if coffee.run %}
-        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> ({{ coffee.run.status.description }})</p>
+        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> (open={{ coffee.run.is_open }})</p>
         {% endif %}
     </div>
 </div>
 <div class="row">
     <label class="col-sm-1">Type</label>
     <div class="col-sm-11">
-        <p>{{ coffee.coffeetype }}</p>
-    </div>
-</div>
-<div class="row">
-    <label class="col-sm-1">Size</label>
-    <div class="col-sm-11">
-        <p>{{ coffee.size }}</p>
-    </div>
-</div>
-<div class="row">
-    <label class="col-sm-1">Sugar</label>
-    <div class="col-sm-11">
-        <p>{{ coffee.sugar }}</p>
+        <p>{{ coffee.pretty_print() }}</p>
     </div>
 </div>
 <div class="row">
@@ -58,6 +46,7 @@
         <p>{{ "$%.2f" % coffee.price }}</p>
     </div>
 </div>
+<<<<<<< HEAD
 <div class="row">
     <label class="col-sm-1">Paid</label>
     <div class="col-sm-11">
@@ -76,8 +65,9 @@
         <p>{{ coffee.readmodified() }}</p>
     </div>
 </div>
+=======
+>>>>>>> coffeebot/master
 <a href="/coffee/{{ coffee.id }}/edit/" class="btn btn-primary">Edit Coffee</a>
-<a href="/coffee/{{ coffee.id }}/pay/" class="btn btn-primary">Pay For Coffee</a>
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Coffee

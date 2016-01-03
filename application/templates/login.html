@@ -4,66 +4,7 @@
 <h1>Welcome to NCSS CoffeeRun</h1>
 <div class="row">
     <div class="col-md-6">
-        <form id="login-form" class="form-horizontal" role="form" action="/login/" method="POST">
-            {{ loginform.hidden_tag() }}
-            <h2>Login</h2>
-            <div class="form-group" {{ "has-error" if loginform.users.errors }}>
-                {{ loginform.users.label(class_="col-sm-1 control-label") }}
-                <div class="col-sm-11">
-                    {{ loginform.users(class_="form-control") }}
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-offset-1 col-sm-11">
-                    <button type="submit" class="btn btn-default">Go</button>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div class="col-md-6">
-        <form id="register-form" class="form-horizontal" role="form" action="/register/" method="POST">
-            {{ registerform.hidden_tag() }}
-            <h2>Register</h2>
-            <div class="form-group" {{ "has-error" if registerform.name.errors }}>
-                {{ registerform.name.label(class_="col-sm-1 control-label") }}
-                <div class="col-sm-11">
-                    {{ registerform.name(class_="form-control") }}
-                </div>
-            </div>
-            <div class="form-group" {{ "has-error" if registerform.email.errors }}>
-                {{ registerform.email.label(class_="col-sm-1 control-label") }}
-                <div class="col-sm-11">
-                    {{ registerform.email(class_="form-control", type="email") }}
-                </div>
-            </div>
-            <div class="form-group" {{ "has-error" if registerform.group.errors }}>
-                {{ registerform.group.label(class_="col-sm-1 control-label") }}
-                <div class="col-sm-11">
-                    {{ registerform.group(class_="form-control") }}
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-offset-1 col-sm-11">
-                    <div class="checkbox">
-                        {{ registerform.tutor() }}
-                        {{ registerform.tutor.label() }}
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-offset-1 col-sm-11">
-                    <div class="checkbox">
-                        {{ registerform.teacher() }}
-                        {{ registerform.teacher.label() }}
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-offset-1 col-sm-11">
-                    <button type="submit" class="btn btn-default">Go</button>
-                </div>
-            </div>
-        </form>
+      <a class="btn btn-primary" href="/slacklogin">Login via Slack</a>
     </div>
 </div>
 {% endblock %}

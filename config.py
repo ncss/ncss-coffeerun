@@ -5,7 +5,6 @@ Maddy Reid 2014"""
 import os
 from datetime import timedelta
 
-
 class Config(object):
     CSFR_ENABLED = True
     SECRET_KEY = "HyP0oHYnYeqv47uXohfvOkiv"
@@ -16,6 +15,11 @@ class Config(object):
     MAIL_DEFAULT_SENDER = ("NCSS Coffeebot", "ncsscoffeerun@gmail.com")
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
+    SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
+    SLACK_BOT_USER_ID = os.environ.get('SLACK_BOT_USER_ID')
+    SLACK_TEAM_ID = os.environ.get('SLACK_TEAM_ID')
+    SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
+    SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
     BASEDIR = os.path.abspath(os.path.dirname(__file__))
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
     SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
@@ -27,15 +31,18 @@ class Config(object):
         }
     }
 
+
 class DevConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
     CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
+
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-test.db"
-    
+
+
 class ProdConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-prod.db"
     DEBUG = True

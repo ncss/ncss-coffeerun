@@ -1,6 +1,6 @@
 
 from application import app, db
-from application.models import RunStatus
+from application.models import *
 
 from migrate.versioning import api
 from config import ProdConfig
@@ -15,14 +15,9 @@ if not os.path.exists(ProdConfig.SQLALCHEMY_MIGRATE_REPO):
 else:
     api.version_control(ProdConfig.SQLALCHEMY_DATABASE_URI, ProdConfig.SQLALCHEMY_MIGRATE_REPO, api.version(ProdConfig.SQLALCHEMY_MIGRATE_REPO))
 
-sopen = RunStatus("Open")
-sorder = RunStatus("Ordering")
-spickup = RunStatus("Pickup")
-sclosed = RunStatus("Closed")
-
-db.session.add(sopen)
-db.session.add(sorder)
-db.session.add(spickup)
-db.session.add(sclosed)
+db.session.add(Cafe('Toby\'s Estate', 'City Rd'))
+db.session.add(Cafe('Campos', 'Newtown'))
+db.session.add(Cafe('Twenty 8 Acres', 'Ivy Ln, Darlington'))
+db.session.add(Cafe('Taste Baguette', 'Sydney Uni Law Building'))
 
 db.session.commit()
