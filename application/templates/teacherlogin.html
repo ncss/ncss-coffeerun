@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
 {% block subcontent %}
+<h1>{% if register %}Register{% else %}Login{% endif %}</h1>
 <form id="user-form" class="form-horizontal" role="form" method="POST">
     {{ form.hidden_tag() }}
     <div class="form-group" {{ "has-error" if form.name.errors }}>
@@ -9,12 +10,14 @@
             {{ form.name(class_="form-control") }}
         </div>
     </div>
+    {% if register %}
     <div class="form-group" {{ "has-error" if form.email.errors }}>
         {{ form.email.label(class_="col-sm-1 control-label") }}
         <div class="col-sm-11">
             {{ form.email(class_="form-control") }}
         </div>
     </div>
+    {% endif %}
     <div class="form-group">
         <div class="col-sm-offset-1 col-sm-11">
             <button type="submit" class="btn btn-primary col-sm-1">Save</button>

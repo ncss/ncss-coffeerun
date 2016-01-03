@@ -97,11 +97,11 @@ def get_slack_token():
     return token
 
 
-@app.route("/teacherlogin/", methods=["GET","POST"])
-def login_teachers():
+@app.route("/teacher/register/", methods=["GET","POST"])
+def register_teachers():
     form = TeacherForm()
     if request.method == "GET":
-        return render_template('teacherlogin.html', form=form)
+        return render_template('teacherlogin.html', form=form, register=True)
     if request.method == "POST" and form.validate_on_submit():
         user = User()
         user.name = form.data["name"]
@@ -111,11 +111,27 @@ def login_teachers():
         db.session.commit()
         write_to_events("created", "user", user.id, user)
         login_user(user)
-        return redirect(request.args.get("next") or url_for("home"))
+        return redirect(url_for("home"))
     else:
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
-        return render_template("teacherlogin.html", form=form)
+        return render_template("teacherlogin.html", form=form, register=True)
+
+@app.route("/teacher/login/", methods=["GET", "POST"])
+def login_teachers():
+    form = TeacherForm()
+    if request.method == "GET":
+        return render_template('teacherlogin.html', form=form, register=False)
+    if request.method == "POST" and form.validate_on_submit():
+        user = db.session.query(User).filter_by(name=form.data["name"]).first()
+        if user and login_user(user):
+            flash("You are now logged in.", "success")
+            return redirect(request.args.get("next") or url_for("home"))
+        else:
+            flash("Login unsuccessful.", "danger")
+            return render_template('teacherlogin.html', form=form, register=False)
+    else:
+        return render_template('teacherlogin.html', form=form, register=False)
 
 
 @app.route("/login/", methods=["GET","POST"])

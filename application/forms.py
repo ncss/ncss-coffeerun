@@ -40,4 +40,4 @@ class PriceForm(Form):
 
 class TeacherForm(Form):
     name = TextField("Username", [validators.Required()])
-    email = TextField("Email", [validators.Required()])
+    email = TextField("Email")
