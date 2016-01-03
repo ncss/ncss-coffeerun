@@ -238,14 +238,18 @@ def edit_coffee(coffeeid):
     form = CoffeeForm(request.form, obj=coffee)
     runs = Run.query.filter_by(is_open=True).all()
     form.runid.choices = [(r.id, r.time) for r in runs]
-    form.runid.data = coffee.runid
+    c = coffeespecs.Coffee.fromJSON(coffee.coffee)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
     if request.method == "GET":
+        form.coffee.data = str(c)
+        form.runid.data = coffee.runid
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(coffee)
-        coffee.modified = sydney_timezone_now()
+        coffee.coffee = coffeespecs.Coffee(coffee.coffee).toJSON()
+        # This line is broken due to datetime comparision
+        #coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
         flash("Coffee edited", "success")
