@@ -37,3 +37,7 @@ class PriceForm(Form):
     cafeid = SelectField("Cafe", coerce=int)
     price_key = TextField("Price ID (format is picky)")
     amount = FloatField("Amount", [validators.Required()])
+
+class TeacherForm(Form):
+    name = TextField("Username", [validators.Required()])
+    email = TextField("Email", [validators.Required()])

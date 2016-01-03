@@ -12,7 +12,7 @@ from flask_oauthlib.client import OAuth
 from application import app, db, lm
 from tasks import send_email
 from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
-from forms import CoffeeForm, RunForm, CafeForm, PriceForm
+from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
 
 import coffeespecs
 import utils
@@ -95,6 +95,27 @@ def authorized():
 def get_slack_token():
     token = session.get('slack_token')
     return token
+
+
+@app.route("/teacherlogin/", methods=["GET","POST"])
+def login_teachers():
+    form = TeacherForm()
+    if request.method == "GET":
+        return render_template('teacherlogin.html', form=form)
+    if request.method == "POST" and form.validate_on_submit():
+        user = User()
+        user.name = form.data["name"]
+        user.email = form.data["email"]
+        user.teacher = True
+        db.session.add(user)
+        db.session.commit()
+        write_to_events("created", "user", user.id, user)
+        login_user(user)
+        return redirect(request.args.get("next") or url_for("home"))
+    else:
+        for field, errors in form.errors.items():
+            flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
+        return render_template("teacherlogin.html", form=form)
 
 
 @app.route("/login/", methods=["GET","POST"])
@@ -352,10 +373,6 @@ def delete_run(runid):
 @login_required
 def add_coffee(runid=None):
     runs = Run.query.filter(Run.time >= sydney_timezone_now()).filter_by(is_open=True).all()
-    #if not runs:
-    #    flash("There are no upcoming coffee runs. Would you like to make one instead?", "warning")
-    #    return redirect(url_for("home"))
-    lastcoffee = Coffee.query.filter_by(addict=current_user).order_by(Coffee.id.desc()).first()
     form = CoffeeForm(request.form)
     form.runid.choices = [(-1, '')] + [(r.id, r.time) for r in runs]
     if runid:
