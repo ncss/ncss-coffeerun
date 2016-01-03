@@ -182,6 +182,8 @@ class Coffee(db.Model):
         if not run:
             return 0
         price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
+        if not price:
+            return 4.0
         return price.amount
 
     def pretty_print(self):
