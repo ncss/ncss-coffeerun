@@ -1,5 +1,4 @@
 
-from functools import wraps
 import requests
 import json
 from datetime import timedelta
@@ -10,9 +9,9 @@ from flask import render_template, flash, redirect, session, url_for, request, j
 from flask.ext.login import login_required, login_user, current_user, logout_user
 from flask.ext.mail import Message
 from flask_oauthlib.client import OAuth
-from application import app, db, lm, mail
+from application import app, db, lm
 from tasks import send_email
-from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
+from models import User, Run, Coffee, Cafe, Price, Event, RunStatus, sydney_timezone_now
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm
 
 import utils
@@ -545,10 +544,7 @@ def recur_coffee(coffee, days):
     for i in range(days):
         newcoffee = Coffee(coffee.coffeetype)
         newcoffee.addict = coffee.addict
-        newcoffee.size = coffee.size
-        newcoffee.sugar = coffee.sugar
         newcoffee.person = coffee.person
-        newcoffee.addict = coffee.addict
         newcoffee.price = coffee.price
         starttime = coffee.startTime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
         starttime += datetime.timedelta(days=i+1)
@@ -584,6 +580,7 @@ def notify_run_owner_of_coffee(owner, addict, coffee):
         subject = "Alert: coffee added for run to %s at %s" % (run.cafe.name, run.readtime())
         body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
         msg = Message(subject, recipients)
+        msg.body = body
         send_email(msg)
 
 
