@@ -20,9 +20,7 @@ class Config(object):
     SLACK_TEAM_ID = os.environ.get('SLACK_TEAM_ID')
     SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
-    BASEDIR = os.path.abspath(os.path.dirname(__file__))
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
-    SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
     CELERY_TIMEZONE = 'UTC'
     CELERYBEAT_SCHEDULE = {
         'every-minute': {
