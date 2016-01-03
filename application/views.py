@@ -190,7 +190,17 @@ def edit_run(runid):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
 
-
+@app.route("/run/<int:runid>/close/")
+@login_required
+def next_status_for_run(runid):
+    run = Run.query.filter_by(id=runid).first_or_404()
+    run.is_open = False
+    db.session.add(run)
+    db.session.commit()
+    write_to_events("updated", "run", run.id)
+    flash("Run closed", "success")
+    return redirect(url_for("view_run", runid=run.id))
+    
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
@@ -526,14 +536,14 @@ def get_person(name):
 
 def recur_coffee(coffee, days):
     for i in range(days):
-        newcoffee = Coffee(coffee.coffee)
+        newcoffee = Coffee(coffee.pretty_print())
         newcoffee.addict = coffee.addict
         newcoffee.person = coffee.person
         newcoffee.price = coffee.price
-        starttime = coffee.startTime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
+        starttime = coffee.starttime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
         starttime += datetime.timedelta(days=i+1)
         newcoffee.starttime = starttime
-        endtime = coffee.endTime
+        endtime = coffee.endtime
         endtime += datetime.timedelta(days=i+1)
         newcoffee.endtime = endtime
         db.session.add(newcoffee)
