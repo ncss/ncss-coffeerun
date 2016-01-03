@@ -66,7 +66,7 @@ def order_coffee(slackclient, user, channel, match):
   db.session.commit()
 
   # Write the event
-  event = Event(coffee.person.id, "created", "coffee", coffee.id)
+  event = Event(coffee.person, "created", "coffee", coffee.id)
   event.time = app.sydney_timezone_now()
   db.session.add(event)
   db.session.commit()
