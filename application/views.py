@@ -11,7 +11,7 @@ from flask.ext.mail import Message
 from flask_oauthlib.client import OAuth
 from application import app, db, lm
 from tasks import send_email
-from models import User, Run, Coffee, Cafe, Price, Event, RunStatus, sydney_timezone_now
+from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm
 
 import utils
@@ -190,21 +190,7 @@ def edit_run(runid):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
 
-@app.route("/run/<int:runid>/nextstatus/")
-@login_required
-def next_status_for_run(runid):
-    run = Run.query.filter_by(id=runid).first_or_404()
-    if run.status.description != "closed":
-        nextstatus = RunStatus.query.filter_by(id=run.statusid+1).first()
-        run.status = nextstatus
-        run.modified = sydney_timezone_now()
-        db.session.commit()
-        write_to_events("updated", "run", run.id)
-        flash("Run edited", "success")
-    else:
-        flash("There is no next status for this run", "danger")
-    return redirect(url_for("view_run", runid=run.id))
-    
+
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):

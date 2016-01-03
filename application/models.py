@@ -187,13 +187,6 @@ class Coffee(db.Model):
             "modified": self.jsondatetime("modified")
         }
 
-class RunStatus(db.Model):
-    __tablename__ = "Statuses"
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String)
-    
-    def __init__(self, description=""):
-        self.description = description
 
 class RegistrationID(db.Model):
     __tablename__ = "RegistrationIDs"
