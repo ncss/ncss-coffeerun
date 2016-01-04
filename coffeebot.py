@@ -1,9 +1,11 @@
 # vim: set et nosi ai ts=2 sts=2 sw=2:
 # coding: utf-8
 from __future__ import absolute_import, print_function, unicode_literals
+import logging
+import pprint
+import random
 import re
 import time
-import random
 
 from slackclient import SlackClient
 
@@ -62,7 +64,8 @@ def order_coffee(slackclient, user, channel, match):
       message was received on.
     match: the object returned by re.match (an _sre.SRE_Match object).
   """
-  print(match.groupdict())
+  logger = logging.getLogger('order_coffee')
+  logger.info('Matches: %s', pprint.pformat(match.groupdict()))
   runid = match.groupdict().get('runid', None)
   run = None
   if runid and runid.isdigit():
@@ -84,7 +87,7 @@ def order_coffee(slackclient, user, channel, match):
 
   # Find the user that requested this
   dbuser = utils.get_or_create_user(user.id, TEAM_ID, user.name)
-  print(dbuser)
+  logger.info('User: %s', dbuser)
 
   # Put it all together
   coffee.person = dbuser.id
@@ -96,7 +99,7 @@ def order_coffee(slackclient, user, channel, match):
   event.time = sydney_timezone_now()
   db.session.add(event)
   db.session.commit()
-  print(coffee)
+  logger.info('Parsed coffee: %s', coffee)
 
   runuser = User.query.filter_by(id=run.person).first()
 
@@ -190,7 +193,8 @@ def handle_mention_message(slackclient, user, channel, text):
 
 
 def handle_message(slackclient, event):
-  print('message event')
+  logger = logging.getLogger('handle_message')
+  logger.debug('message event: %s', event)
   channel = slackclient.server.channels.find(event['channel'])
   if 'subtype' in event and event['subtype'] == 'message_changed':
     event = event['message']
@@ -198,7 +202,7 @@ def handle_message(slackclient, event):
   text = event['text']
 
   mentions = MENTION_RE.findall(text)
-  print(mentions)
+  logger.info('Mentions: %s', mentions)
 
   # Behaviours:
   if USER_ID in mentions:
@@ -213,33 +217,37 @@ def register_handlers():
 
 
 def main():
+  logger = logging.getLogger('main')
+
   load_triggers('sass.txt')
   set_up_orders()
   register_handlers()
   client = SlackClient(TOKEN)
   res = client.rtm_connect()
-  print(res)
+  logger.debug('Connection result: %r', res)
   if res:
-    print(client.server.users)
-    print(client.server.channels)
+    logger.info('Users: %s', client.server.users)
+    logger.info('Channels: %s', client.server.channels)
     while True:
       for event in client.rtm_read():
-        print(event)
+        logger.debug('Event: %s', event)
         if 'type' in event:
           event_type = event['type']
-          print(event_type)
+          logger.debug('Event type: %s', event_type)
           if event_type in DISPATCH:
             for handler in DISPATCH[event_type]:
               handler(client, event)
       time.sleep(0.1)
   else:
-    print('Connection Failed.')
+    logger.error('Connection Failed.')
 
 
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.DEBUG)
+
   TOKEN = app.config['SLACK_API_TOKEN']
   USER_ID = app.config['SLACK_BOT_USER_ID']
   TEAM_ID = app.config['SLACK_TEAM_ID']
   if not TOKEN or not USER_ID:
-    print('Missing slack token or slack user id')
+    logging.error('Missing slack token or slack user id')
   main()
