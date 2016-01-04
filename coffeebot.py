@@ -27,6 +27,21 @@ TRIGGERS = {}
 
 
 def list_runs(slackclient, user, channel, match):
+  """Handle the 'open runs' command.
+
+  This command only displays the open runs. If there are multiple runs
+  currently open, it orders them by time (on the assumption that you want
+  things in the first available run).
+
+  Args:
+    slackclient: the slackclient.SlackClient object for the current
+      connection to Slack.
+    user: the slackclient.User object for the user who send the
+      message to us.
+    channel: the slackclient.Channel object for the channel the
+      message was received on.
+    match: the object returned by re.match (an _sre.SRE_Match object).
+  """
   q = Run.query.filter_by(is_open=True).order_by('time').all()
   if not q:
     slackclient.rtm_send_message(channel.id, 'No open runs')
@@ -36,6 +51,17 @@ def list_runs(slackclient, user, channel, match):
 
 
 def order_coffee(slackclient, user, channel, match):
+  """Handle adding coffee to existing orders.
+
+  Args:
+    slackclient: the slackclient.SlackClient object for the current
+      connection to Slack.
+    user: the slackclient.User object for the user who send the
+      message to us.
+    channel: the slackclient.Channel object for the channel the
+      message was received on.
+    match: the object returned by re.match (an _sre.SRE_Match object).
+  """
   print(match.groupdict())
   runid = match.groupdict().get('runid', None)
   run = None
@@ -46,7 +72,7 @@ def order_coffee(slackclient, user, channel, match):
     runs = Run.query.filter_by(is_open=True).order_by('time').all()
     if len(runs) > 1:
       slackclient.rtm_send_message(channel.id, 'More than one open run, please specify by adding run=<id> on the end.')
-      list_runs(slackclient, user, channel, None)
+      list_runs(slackclient, user, channel, match=None)
       return
     if len(runs) == 0:
       slackclient.rtm_send_message(channel.id, 'No open runs')
@@ -74,7 +100,11 @@ def order_coffee(slackclient, user, channel, match):
 
   runuser = User.query.filter_by(id=run.person).first()
 
-  slackclient.rtm_send_message(channel.id, 'That\'s a {} for {} (added to <@{}>\'s run.)'.format(coffee.pretty_print(), mention(user), runuser.slack_user_id))
+  slackclient.rtm_send_message(
+      channel.id, 'That\'s a {} for {} (added to <@{}>\'s run.)'.format(
+        coffee.pretty_print(),
+        mention(user),
+        runuser.slack_user_id))
 
 
 def set_up_orders():
@@ -84,6 +114,8 @@ def set_up_orders():
 
 
 def load_triggers(filename):
+  """Parse the sass file, loading them into the TRIGGERS global.
+  """
   trigger = None
   for line in open(filename):
     if not line.strip():
@@ -97,6 +129,17 @@ def load_triggers(filename):
 
 
 def trigger_check(slackclient, user, channel, text):
+  """Check if we need to sass the user.
+
+  Args:
+    slackclient: the slackclient.SlackClient object for the current
+      connection to Slack.
+    user: the slackclient.User object for the user who send the
+      message to us.
+    channel: the slackclient.Channel object for the channel the
+      message was received on.
+    match: the object returned by re.match (an _sre.SRE_Match object).
+  """
   text = text.lower()
   for trigger in TRIGGERS:
     if trigger.match(text):
@@ -107,6 +150,11 @@ def trigger_check(slackclient, user, channel, text):
 
 
 def mention(user):
+  """Generate a mention for the given user.
+
+  Args:
+    user: a slackclient.User object for the user to mention.
+  """
   return '<@{}|{}>'.format(user.id, user.name)
 
 
@@ -119,6 +167,17 @@ def clean_text(text):
 
 
 def handle_mention_message(slackclient, user, channel, text):
+  """We were mentioned in a message, dispatch it to the method.
+
+  Args:
+    slackclient: the slackclient.SlackClient object for the current
+      connection to Slack.
+    user: the slackclient.User object for the user who send the
+      message to us.
+    channel: the slackclient.Channel object for the channel the
+      message was received on.
+    text: the raw text that was sent to us.
+  """
   clean = clean_text(text)
 
   for order_re in ORDERS_DISPATCH:
