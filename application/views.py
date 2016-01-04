@@ -253,7 +253,7 @@ def edit_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     form = CoffeeForm(request.form, obj=coffee)
     runs = Run.query.filter_by(is_open=True).all()
-    form.runid.choices = [(r.id, r.time) for r in runs]
+    form.runid.choices = [(r.id, r.prettyprint()) for r in runs]
     c = coffeespecs.Coffee.fromJSON(coffee.coffee)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
@@ -394,7 +394,7 @@ def delete_run(runid):
 def add_coffee(runid=None):
     runs = Run.query.filter(Run.time >= sydney_timezone_now()).filter_by(is_open=True).all()
     form = CoffeeForm(request.form)
-    form.runid.choices = [(-1, '')] + [(r.id, r.time) for r in runs]
+    form.runid.choices = [(-1, '')] + [(r.id, r.prettyprint()) for r in runs]
     if runid:
         run = Run.query.filter_by(id=runid).first()
         localmodified = run.time.replace(tzinfo=pytz.timezone("Australia/Sydney"))

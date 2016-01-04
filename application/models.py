@@ -98,6 +98,12 @@ class Run(db.Model):
         localtz = pytz.timezone("Australia/Sydney")
         return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
+    def prettyprint(self):
+        localtz = pytz.timezone("Australia/Sydney")
+        time = self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        cafe = self.cafe.name
+        return time + " to " + cafe
+
     def jsondatetime(self, arg):
         tformat = "%Y-%m-%d %H:%M:%S"
         if arg == "time":
