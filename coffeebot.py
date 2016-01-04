@@ -27,7 +27,7 @@ TRIGGERS = {}
 
 
 def list_runs(slackclient, user, channel, match):
-  q = Run.query.all()
+  q = Run.query.filter_by(is_open=True).order_by('time').all()
   if not q:
     slackclient.rtm_send_message(channel.id, 'No open runs')
   for run in q:
