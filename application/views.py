@@ -164,7 +164,7 @@ def about_faqs():
 
 @app.route("/run/")
 def view_all_runs():
-    runs = Run.query.order_by(Run.id.desc()).all()
+    runs = Run.query.order_by(Run.time.desc()).all()
     return render_template("viewallruns.html", runs=runs, current_user=current_user)
 
 
