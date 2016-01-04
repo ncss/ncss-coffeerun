@@ -262,8 +262,8 @@ def edit_coffee(coffeeid):
         form.runid.data = coffee.runid
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
-        form.populate_obj(coffee)
-        coffee.coffee = coffeespecs.Coffee(coffee.coffee).toJSON()
+        coffee.coffee = coffeespecs.Coffee(form.data["coffee"]).toJSON()
+        coffee.price = form.data["price"]
         # This line is broken due to datetime comparision
         #coffee.modified = sydney_timezone_now()
         db.session.commit()
