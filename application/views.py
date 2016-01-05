@@ -1,18 +1,19 @@
 
-import requests
-import json
-from datetime import timedelta
 import datetime
+import json
+import logging
 import pytz
+import requests
 
 from flask import render_template, flash, redirect, session, url_for, request, jsonify
 from flask.ext.login import login_required, login_user, current_user, logout_user
 from flask.ext.mail import Message
 from flask_oauthlib.client import OAuth
+
 from application import app, db, lm
-from tasks import send_email
-from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
+from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
+from tasks import send_email
 
 import coffeespecs
 import utils
@@ -38,16 +39,17 @@ def load_user(user_id):
 
 
 def get_user_from_slack_token():
+    logger = logging.getLogger('views.get_user_from_slack_token')
     token = session.get('slack_token')[0]
     resp = requests.get('http://slack.com/api/auth.test', params={'token': token})
     if resp.status_code != 200:
-        print(resp)
+        logger.info('Failed to get user from slack: %s', resp)
         flash('Error retrieving user info')
         return None
 
     content = json.loads(resp.content)
     if not content['ok']:
-        print(content)
+        logger.info('Failed to get user from slack: %s', content)
         flash('Error retrieving user info: ' + content['error'])
         return None
 
@@ -202,6 +204,7 @@ def view_run(runid):
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
 @login_required
 def edit_run(runid):
+    logger = logging.getLogger('views.edit_run')
     run = Run.query.filter_by(id=runid).first_or_404()
     form = RunForm(request.form, obj=run)
     users = User.query.all()
@@ -209,10 +212,11 @@ def edit_run(runid):
     cafes = Cafe.query.all()
     form.cafeid.choices = [(cafe.id, cafe.name) for cafe in cafes]
     if request.method == "GET":
-        print run.time.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+        logger.info('Run time: %s', run.time.strftime('%Y-%m-%d %H:%M:%S %Z%z'))
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
     if request.method == "POST" and form.validate_on_submit():
         person = User.query.filter_by(id=form.data["person"]).first()
+
         run.person = person.id
         run.fetcher = person
         run.cafeid = form.data["cafeid"]
@@ -243,8 +247,9 @@ def next_status_for_run(runid):
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
+    logger = logging.getLogger('views.view_coffee')
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
-    print coffee, coffee.price
+    logging.info('Coffee: %s, %s',  coffee, coffee.price)
     return render_template("viewcoffee.html", coffee=coffee, current_user=current_user)
 
 @app.route("/coffee/<int:coffeeid>/edit/", methods=["GET", "POST"])
@@ -349,7 +354,7 @@ def add_run(cafeid=None):
         if cafeid:
             form.cafe.data = cafeid
         form.person.data = current_user.id
-        form.time.data = sydney_timezone_now() + timedelta(minutes=30)  # strftime("%Y/%m/%d %H:%M:%S")
+        form.time.data = sydney_timezone_now() + datetime.timedelta(minutes=30)  # strftime("%Y/%m/%d %H:%M:%S")
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
         # Add run
@@ -392,6 +397,7 @@ def delete_run(runid):
 @app.route("/coffee/add/", methods=["GET", "POST"])
 @login_required
 def add_coffee(runid=None):
+    logger = logging.getLogger('views.add_coffee')
     runs = Run.query.filter(Run.time >= sydney_timezone_now()).filter_by(is_open=True).all()
     form = CoffeeForm(request.form)
     form.runid.choices = [(-1, '')] + [(r.id, r.prettyprint()) for r in runs]
@@ -410,7 +416,7 @@ def add_coffee(runid=None):
         form.endtime.data = sydney_timezone_now()
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
     if form.validate_on_submit():
-        print form.data
+        logger.info('Form: %s', form.data)
         coffee = Coffee(form.data["coffee"], form.data['price'], form.data['runid'])
         person = User.query.filter_by(id=form.data["person"]).first()
         coffee.personid = person.id
@@ -439,10 +445,11 @@ def add_coffee(runid=None):
 
 @app.route("/_prices_for_run/")
 def prices_for_run():
+    logger = logging.getLogger('views.prices_for_run')
     runid = request.args.get("runid", 0, type=int)
     run = Run.query.filter_by(id=runid).first()
     prices = run.cafe.pricelist
-    print prices
+    logger.info('Prices for cafe: %s', prices)
     jprices = {p.price_key: p.amount for p in prices}
     return jsonify(**jprices)
 
