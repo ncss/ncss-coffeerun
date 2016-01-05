@@ -100,7 +100,7 @@ class Run(db.Model):
 
     def prettyprint(self):
         localtz = pytz.timezone("Australia/Sydney")
-        time = self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        time = self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
         cafe = self.cafe.name
         return time + " to " + cafe
 
