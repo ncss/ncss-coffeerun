@@ -1,5 +1,7 @@
 
 
+import os
+
 from flask import Flask
 from flask.ext.babel import Babel
 from flask.ext.bootstrap import Bootstrap
@@ -10,7 +12,8 @@ from celery import Celery
 
 # Setup app
 app = Flask(__name__)
-app.config.from_object("config.ProdConfig")
+app.config.from_object(
+        os.environ.get("FLASK_CONFIG", "config.DevConfig"))
 Bootstrap(app)
 
 babel = Babel(app)
