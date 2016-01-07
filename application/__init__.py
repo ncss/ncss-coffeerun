@@ -1,16 +1,27 @@
 
 
 from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager
+from flask.ext.babel import Babel
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.login import LoginManager
 from flask.ext.mail import Mail
+from flask.ext.sqlalchemy import SQLAlchemy
 from celery import Celery
 
 # Setup app
 app = Flask(__name__)
 app.config.from_object("config.ProdConfig")
 Bootstrap(app)
+
+babel = Babel(app)
+
+@babel.timezoneselector
+def _timezone():
+    return 'Australia/Sydney'  # There exist other places in the world?
+
+@babel.localeselector
+def _local():
+    return 'en_AU'
 
 db = SQLAlchemy(app)
 
