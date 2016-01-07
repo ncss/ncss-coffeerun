@@ -205,6 +205,9 @@ def handle_message(slackclient, event):
   logger = logging.getLogger('handle_message')
   logger.debug('message event: %s', event)
   channel = slackclient.server.channels.find(event['channel'])
+
+  # If the user edits their message, we treat it as if it were a new
+  # message from that person.
   if 'subtype' in event and event['subtype'] == 'message_changed':
     event = event['message']
   user = slackclient.server.users.find(event['user'])
