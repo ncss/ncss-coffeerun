@@ -158,7 +158,10 @@ def trigger_check(slackclient, user, channel, text):
       msg = random.choice(TRIGGERS[trigger])
       msg = mention(user) + ': ' + msg
       channel.send_message(msg)
-      return
+      return True
+  else:
+    # No triggers matched. Inform our caller so they can decide what to do.
+    return False
 
 
 def mention(user):
@@ -192,13 +195,22 @@ def handle_mention_message(slackclient, user, channel, text):
   """
   clean = clean_text(text)
 
+  message_processed = False
   for order_re in ORDERS_DISPATCH:
     match = order_re.match(clean)
     if match:
       ORDERS_DISPATCH[order_re](slackclient, user, channel, match)
+      message_processed = True
       break
 
-  trigger_check(slackclient, user, channel, clean)
+  if trigger_check(slackclient, user, channel, clean):
+    message_processed = True
+
+  if not message_processed:
+    # We were mentioned, but we don't know what to do... Say
+    # something back to them.
+    channel.send_message('I am sorry {}, I can\'t do that.'.format(
+      mention(user)))
 
 
 def handle_message(slackclient, event):
