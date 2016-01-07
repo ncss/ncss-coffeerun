@@ -50,7 +50,7 @@ def list_runs(slackclient, user, channel, match):
   now = sydney_timezone_now()
   q = Run.query.filter_by(is_open=True).order_by('time').all()
   if not q:
-    slackclient.rtm_send_message(channel.id, 'No open runs')
+    channel.send_message('No open runs')
   for run in q:
     person = User.query.filter_by(id=run.person).first()
     time_to_run = run.time - now
@@ -82,11 +82,12 @@ def order_coffee(slackclient, user, channel, match):
     # Pick a run
     runs = Run.query.filter_by(is_open=True).order_by('time').all()
     if len(runs) > 1:
-      slackclient.rtm_send_message(channel.id, 'More than one open run, please specify by adding run=<id> on the end.')
+      channel.send_message(
+          'More than one open run, please specify by adding run=<id> on the end.')
       list_runs(slackclient, user, channel, match=None)
       return
     if len(runs) == 0:
-      slackclient.rtm_send_message(channel.id, 'No open runs')
+      channel.send_message('No open runs')
       return
     run = runs[0]
 
@@ -111,15 +112,15 @@ def order_coffee(slackclient, user, channel, match):
 
   runuser = User.query.filter_by(id=run.person).first()
 
-  slackclient.rtm_send_message(
-      channel.id, 'That\'s a {} for {} (added to <@{}>\'s run.)'.format(
+  channel.send_message(
+      'That\'s a {} for {} (added to <@{}>\'s run.)'.format(
         coffee.pretty_print(),
         mention(user),
         runuser.slack_user_id))
 
 
 def set_up_orders():
-  ORDERS_DISPATCH[re.compile('(open|list)? ?runs')] = list_runs
+  ORDERS_DISPATCH[re.compile('(?:(?:open|list) )?runs')] = list_runs
   ORDERS_DISPATCH[re.compile('order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
   ORDERS_DISPATCH[re.compile('([^\=]+) (?:plz|please)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
 
@@ -156,7 +157,7 @@ def trigger_check(slackclient, user, channel, text):
     if trigger.match(text):
       msg = random.choice(TRIGGERS[trigger])
       msg = mention(user) + ': ' + msg
-      slackclient.rtm_send_message(channel.id, msg)
+      channel.send_message(msg)
       return
 
 
@@ -217,7 +218,7 @@ def handle_message(slackclient, event):
     handle_mention_message(slackclient, user, channel, text)
   elif ':coffee:' in text:
     msg = 'Mmmm... :coffee:' + ':coffee:' * random.randint(0, 7)
-    slackclient.rtm_send_message(channel.id, msg)
+    channel.send_message(msg)
 
 
 def register_handlers():
