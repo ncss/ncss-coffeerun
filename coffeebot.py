@@ -234,21 +234,20 @@ def main():
   client = SlackClient(TOKEN)
   res = client.rtm_connect()
   logger.debug('Connection result: %r', res)
-  if res:
-    logger.info('Users: %s', client.server.users)
-    logger.info('Channels: %s', client.server.channels)
-    while True:
-      for event in client.rtm_read():
-        logger.debug('Event: %s', event)
-        if 'type' in event:
-          event_type = event['type']
-          logger.debug('Event type: %s', event_type)
-          if event_type in DISPATCH:
-            for handler in DISPATCH[event_type]:
-              handler(client, event)
-      time.sleep(0.1)
-  else:
+  if not res:
     logger.error('Connection Failed.')
+    return
+
+  logger.info('Users: %s', client.server.users)
+  logger.info('Channels: %s', client.server.channels)
+  while True:
+    for event in client.rtm_read():
+      logger.debug('Event: %s', event)
+      if 'type' in event:
+        # Call all handlers for the given event type.
+        for handler in DISPATCH.get(event['type'], []):
+          handler(client, event)
+    time.sleep(0.1)
 
 
 if __name__ == '__main__':
