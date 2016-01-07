@@ -1,6 +1,7 @@
 # vim: set et nosi ai ts=2 sts=2 sw=2:
 # coding: utf-8
 from __future__ import absolute_import, print_function, unicode_literals
+
 import logging
 import pprint
 import random
@@ -11,6 +12,8 @@ from slackclient import SlackClient
 
 from application import app, db
 from application.models import Run, User, Coffee, Event, sydney_timezone_now
+
+from flask.ext import babel
 
 import coffeespecs
 import utils
@@ -44,12 +47,17 @@ def list_runs(slackclient, user, channel, match):
       message was received on.
     match: the object returned by re.match (an _sre.SRE_Match object).
   """
+  now = sydney_timezone_now()
   q = Run.query.filter_by(is_open=True).order_by('time').all()
   if not q:
     slackclient.rtm_send_message(channel.id, 'No open runs')
   for run in q:
     person = User.query.filter_by(id=run.person).first()
-    slackclient.rtm_send_message(channel.id, 'Run {}: {} is going to {} at {}'.format(run.id, person.name, run.cafe.name, run.time))
+    time_to_run = run.time - now
+    channel.send_message(
+        'Run {}: {} is going to {} in {} (at {})'.format(
+          run.id, person.name, run.cafe.name,
+          babel.format_timedelta(time_to_run), run.time))
 
 
 def order_coffee(slackclient, user, channel, match):
@@ -250,4 +258,9 @@ if __name__ == '__main__':
   TEAM_ID = app.config['SLACK_TEAM_ID']
   if not TOKEN or not USER_ID:
     logging.error('Missing slack token or slack user id')
+
+  # FIXME: This is a hack... But I can't think of anything better.
+  # Add a test request context so that babel will work.
+  app.test_request_context().push()
+
   main()
