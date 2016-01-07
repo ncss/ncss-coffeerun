@@ -18,4 +18,4 @@ def get_or_create_user(user_id, team_id, name):
         db.session.commit()
         return user
 
-    raise 'More than one user with the same slack ID - Something is very wrong'
+    assert False, 'More than one user with the same slack ID - Something is very wrong'
