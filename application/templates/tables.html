@@ -16,7 +16,7 @@
             {% if viewperson %}<td><a href="/user/{{ coffee.addict.id }}">{{ coffee.addict.name }}</a></td>{% endif %}
             <td>{{ coffee.pretty_print() }}</td>
             <td>{{ "$%.2f" % coffee.price }}</td>
-            <td>{% if coffee.run %}<a href="/run/{{ coffee.run.id }}/">{{ coffee.run.readtime() }}</a>{% endif %}</td>
+            <td>{% if coffee.run %}<a href="/run/{{ coffee.run.id }}/">{{ coffee.run.time|sydney_time|format_time }}</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -42,7 +42,7 @@
         <tr>
             <td><a href="/run/{{ run.id }}/">{{ run.id }}</a></td>
             {% if viewperson %}<td><a href="/user/{{ run.fetcher.id }}">{{ run.fetcher.name }}</a></td>{% endif %}
-            <td>{{ run.readtime() }}</td>
+            <td>{{ run.time|sydney_time|format_time }}</td>
             <td><a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></td>
             <td>{{ run.pickup }}</td>
             <td>{{ run.is_open }}</td>
@@ -111,8 +111,10 @@
         {% for event in eventset %}
         <tr>
             {% if viewid %}<td>{{ event.id }}</td>{% endif %}
-            <td><a href="/user/{{ event.user.id }}/">{{ event.user.name }}</a> {{ event.action }} a <a href="/{{ event.objtype }}/{{ event.objid }}/">{{ event.objtype }}</a> {{ event.descrobj()|safe }}</td>
-            <td>{{ event.readtime() }}</td>
+            <td><a href="/user/{{ event.user.id }}/">{{ event.user.name }}</a>
+              {{ event.action }} a <a href="/{{ event.objtype }}/{{ event.objid }}/">{{ event.objtype }}</a>
+              {{ event.descrobj()|safe }}</td>
+            <td>{{ event.time|sydney_time|format_time }}</td>
         </tr>
         {% endfor %}
     </tbody>

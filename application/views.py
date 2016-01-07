@@ -12,7 +12,7 @@ from flask_oauthlib.client import OAuth
 
 from application import app, db, lm
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
-from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now
+from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now, sydney_timezone
 from tasks import send_email
 
 import coffeespecs
@@ -55,6 +55,17 @@ def get_user_from_slack_token():
 
     user = utils.get_or_create_user(content['user_id'], content['team_id'], content['user'])
     return user
+
+
+@app.template_filter('sydney_time')
+def _to_sydney_time(t):
+    return sydney_timezone(t)
+
+
+@app.template_filter('format_time')
+def _format_time(t):
+    # Sample: "11:40 AM Thu 07 Jan"
+    return t.strftime("%I:%M %p %a %d %b")
 
 
 @app.route("/")
@@ -211,9 +222,10 @@ def edit_run(runid):
     form.person.choices = [(user.id, user.name) for user in users]
     cafes = Cafe.query.all()
     form.cafeid.choices = [(cafe.id, cafe.name) for cafe in cafes]
+
     if request.method == "GET":
-        logger.info('Run time: %s', run.time.strftime('%Y-%m-%d %H:%M:%S %Z%z'))
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
+
     if request.method == "POST" and form.validate_on_submit():
         person = User.query.filter_by(id=form.data["person"]).first()
 
@@ -221,6 +233,7 @@ def edit_run(runid):
         run.fetcher = person
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
+        run.time = form.data["time"]
 
         db.session.commit()
         write_to_events("updated", "run", run.id)
@@ -231,6 +244,7 @@ def edit_run(runid):
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("runform.html", form=form, formtype="Edit", current_user=current_user)
+
 
 @app.route("/run/<int:runid>/close/")
 @login_required
@@ -244,6 +258,7 @@ def next_status_for_run(runid):
     flash("Run closed", "success")
     return redirect(url_for("view_run", runid=run.id))
 
+
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
@@ -251,6 +266,7 @@ def view_coffee(coffeeid):
     coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
     logging.info('Coffee: %s, %s',  coffee, coffee.price)
     return render_template("viewcoffee.html", coffee=coffee, current_user=current_user)
+
 
 @app.route("/coffee/<int:coffeeid>/edit/", methods=["GET", "POST"])
 @login_required
@@ -262,15 +278,16 @@ def edit_coffee(coffeeid):
     c = coffeespecs.Coffee.fromJSON(coffee.coffee)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
+
     if request.method == "GET":
         form.coffee.data = str(c)
         form.runid.data = coffee.runid
         return render_template("coffeeform.html", form=form, formtype="Edit", price=coffee.price, current_user=current_user)
+
     if request.method == "POST" and form.validate_on_submit():
         coffee.coffee = coffeespecs.Coffee(form.data["coffee"]).toJSON()
         coffee.price = form.data["price"]
-        # This line is broken due to datetime comparision
-        #coffee.modified = sydney_timezone_now()
+        coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
         flash("Coffee edited", "success")
@@ -279,6 +296,7 @@ def edit_coffee(coffeeid):
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
+
 
 @app.route("/coffee/<int:coffeeid>/pay/", methods=["GET"])
 @login_required
@@ -290,10 +308,12 @@ def pay_for_coffee(coffeeid):
     flash("Coffee edited", "success")
     return redirect(url_for("view_coffee", coffeeid=coffee.id))
 
+
 @app.route("/user/", methods=["GET"])
 def get_all_users():
     people = User.query.all()
     return render_template("viewallusers.html", people=people, current_user=current_user)
+
 
 @app.route("/user/<int:userid>/", methods=["GET"])
 @login_required
@@ -316,17 +336,21 @@ def view_debts(userid):
     isowed = Coffee.query.outerjoin(Run, Coffee.runid==Run.id).filter(Run.person==userid).filter(Coffee.person!=userid).filter(Coffee.paid==False).all()
     return render_template("viewdebts.html", user=current_user, owes=owes, isowed=isowed, current_user=current_user)
 
+
 @app.route("/cafe/<int:cafeid>/", methods=["GET"])
 def view_cafe(cafeid):
     cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
     return render_template("viewcafe.html", cafe=cafe, current_user=current_user)
 
+
 @app.route("/cafe/<int:cafeid>/edit/", methods=["GET", "POST"])
 def edit_cafe(cafeid):
     cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
     form = CafeForm(request.form, obj=cafe)
+
     if request.method == "GET":
         return render_template("cafeform.html", form=form, formtype="Edit", current_user=current_user)
+
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(cafe)
         db.session.commit()
@@ -337,6 +361,7 @@ def edit_cafe(cafeid):
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
     return render_template("cafeform.html", form=form, formtype="Edit", current_user=current_user)
+
 
 @app.route("/run/add/", methods=["GET", "POST"])
 @app.route("/cafe/<int:cafeid>/run/add/", methods=["GET", "POST"])
@@ -350,12 +375,14 @@ def add_run(cafeid=None):
         flash("There are no cafes currently configured. Please add one before creating a run", "warning")
         return redirect(url_for("home"))
     form.cafeid.choices = [(cafe.id, cafe.name) for cafe in cafes]
+
     if request.method == "GET":
         if cafeid:
             form.cafe.data = cafeid
         form.person.data = current_user.id
-        form.time.data = sydney_timezone_now() + datetime.timedelta(minutes=30)  # strftime("%Y/%m/%d %H:%M:%S")
+        form.time.data = sydney_timezone_now() + datetime.timedelta(minutes=30)
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
+
     if form.validate_on_submit():
         # Add run
         run = Run(form.data["time"])
@@ -364,8 +391,8 @@ def add_run(cafeid=None):
         run.fetcher = person
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
-        #run.modified = sydney_timezone_now()
         run.modified = sydney_timezone_now()
+
         db.session.add(run)
         db.session.commit()
         write_to_events("created", "run", run.id)
@@ -381,6 +408,7 @@ def add_run(cafeid=None):
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
+
 
 @app.route("/run/<int:runid>/delete/", methods=["GET"])
 @login_required
@@ -410,11 +438,13 @@ def add_coffee(runid=None):
         form.runid.data = runid
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
+
     if request.method == "GET":
         form.person.data = current_user.id
         form.starttime.data = sydney_timezone_now()
         form.endtime.data = sydney_timezone_now()
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
+
     if form.validate_on_submit():
         logger.info('Form: %s', form.data)
         coffee = Coffee(form.data["coffee"], form.data['price'], form.data['runid'])
@@ -475,6 +505,7 @@ def add_cafe():
         return render_template("cafeform.html", form=form, formtype="Add", current_user=current_user)
     return redirect(url_for("home"))
 
+
 @app.route("/price/add/", methods=["GET", "POST"])
 @app.route("/cafe/<int:cafeid>/price/add/", methods=["GET", "POST"])
 def add_cafe_price(cafeid=None):
@@ -490,8 +521,10 @@ def add_cafe_price(cafeid=None):
             return redirect(url_for("home"))
         form.cafeid.choices = [(c.id, c.name) for c in cafes]
         cafe = cafes[0]
+
     if request.method == "GET":
         return render_template("priceform.html", cafe=cafe, form=form, formtype="Add", current_user=current_user)
+
     if request.method == "POST" and form.validate_on_submit():
         cafeid = form.data["cafeid"]
         cafe = Cafe.query.filter_by(id=cafeid).first_or_404()
@@ -511,10 +544,12 @@ def add_cafe_price(cafeid=None):
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
     return render_template("priceform.html", cafe=cafe, form=form, formtype="Add", current_user=current_user)
 
+
 @app.route("/price/<int:priceid>/", methods=["GET"])
 def view_price(priceid):
     price = Price.query.filter_by(id=priceid).first_or_404()
     return render_template("viewprice.html", price=price, current_user=current_user)
+
 
 @app.route("/price/<int:priceid>/edit/", methods=["GET", "POST"])
 def edit_price(priceid):
@@ -522,8 +557,10 @@ def edit_price(priceid):
     form = PriceForm(obj=price)
     form.cafeid.choices = [(price.cafe.id, price.cafe.name)]
     form.cafeid.data = price.cafe.id
+
     if request.method == "GET":
         return render_template("priceform.html", cafe=price.cafe, form=form, formtype="Edit", current_user=current_user)
+
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(price)
         db.session.commit()
@@ -534,6 +571,7 @@ def edit_price(priceid):
         for field, errors in form.errors.items():
             flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
     return render_template("priceform.html", cafe=price.cafe, form=form, formtype="Add", current_user=current_user)
+
 
 @app.route("/price/<int:priceid>/delete/", methods=["GET"])
 def delete_price(priceid):
@@ -548,6 +586,7 @@ def delete_price(priceid):
     flash("Price %d deleted" % priceid, "success")
     return redirect(url_for("view_all_cafes"))
 
+
 @app.route("/coffee/<int:coffeeid>/delete/", methods=["GET"])
 def delete_coffee(coffeeid):
     coffee = Coffee.query.filter_by(id=coffeeid).first_or_404()
@@ -556,6 +595,7 @@ def delete_coffee(coffeeid):
     write_to_events("deleted", "coffee", coffee.id)
     flash("Coffee %d deleted" % coffeeid, "success")
     return redirect(url_for("view_all_coffees"))
+
 
 @app.route("/cafe/<int:cafeid>/delete/", methods=["GET"])
 def delete_cafe(cafeid):
@@ -566,9 +606,11 @@ def delete_cafe(cafeid):
     flash("Cafe %d deleted" % cafeid, "success")
     return redirect(url_for("view_all_cafes"))
 
+
 def next_run():
     run = Run.query.filter_by(is_open=True).order_by(Run.time).first()
     return run
+
 
 def get_person(name):
     person = User.query.filter(User.name.like(name)).first()
@@ -579,13 +621,14 @@ def get_person(name):
         write_to_events("created", "user", person.id, person)
     return person
 
+
 def recur_coffee(coffee, days):
     for i in range(days):
         newcoffee = Coffee(coffee.pretty_print())
         newcoffee.addict = coffee.addict
         newcoffee.person = coffee.person
         newcoffee.price = coffee.price
-        starttime = coffee.starttime.replace(tzinfo=pytz.timezone("Australia/Sydney"))
+        starttime = coffee.starttime
         starttime += datetime.timedelta(days=i+1)
         newcoffee.starttime = starttime
         endtime = coffee.endtime
@@ -595,10 +638,12 @@ def recur_coffee(coffee, days):
         db.session.commit()
         write_to_events("created", "coffee", newcoffee.id)
 
+
 def get_coffees_for_time(time):
     coffees = Coffee.query.filter(Coffee.endtime >= time) \
         .filter(Coffee.starttime <= time).filter(Coffee.expired==False).all()
     return coffees
+
 
 def write_to_events(action, objtype, objid, user=None):
     if user:
@@ -630,14 +675,15 @@ def call_to_pickup(run):
     msg = Message(subject=subject, body=body, recipients=recipients)
     send_email(msg)
 
+
 ## Error handlers
 # Handle 404 errors
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
+
 # Handle 500 errors
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
-

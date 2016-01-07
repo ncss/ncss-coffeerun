@@ -3,11 +3,44 @@ DB models for the ncss-coffeerun app
 Maddy Reid 2014
 """
 
+import logging
+
+import sqlalchemy
+
 from application import db, app
 from datetime import datetime
 import pytz
 
 import coffeespecs
+
+
+class UTCOnlyDateTime(sqlalchemy.types.TypeDecorator):
+    """A wrapper around the sqlachemy DateTime class that stores stuff in UTC.
+
+    Internally, this type uses timezone nieve datetime objects (which
+    we know are actually in UTC). We use this notation, because:
+      a) Not all database backends support datetimes with timezones
+         (aka sqlite),
+      b) You really should not do math with timezone aware datetimes
+         if possible.
+    """
+
+    impl = sqlalchemy.types.DateTime
+
+    def process_bind_param(self, value, dialect):
+        """Convert from a tz aware object to a nieve object [in UTC]."""
+        assert value.tzinfo is not None, (
+                "Time should be tz aware, but is nieve")
+        return value.astimezone(pytz.utc).replace(tzinfo=None)
+
+    def process_result_value(self, value, dialect):
+        """Convert from a tz nieve object [in UTC] to a tz aware object."""
+        logger = logging.getLogger("UTCOnlyDateTime.result_processor")
+        assert value.tzinfo is None, (
+                'Time should be nieve, but had timezone: %s' % value.tzinfo)
+        tz_ = pytz.timezone("Australia/Sydney")
+        return value.replace(tzinfo=pytz.utc).astimezone(tz_)
+
 
 def sydney_timezone_now():
     localtz = pytz.timezone("Australia/Sydney")
@@ -75,13 +108,13 @@ class Run(db.Model):
     __tablename__ = "Runs"
     id = db.Column(db.Integer, primary_key=True)
     person = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    time = db.Column(db.DateTime(timezone=True))
+    time = db.Column(UTCOnlyDateTime(timezone=False))
     cafeid = db.Column(db.Integer, db.ForeignKey("Cafes.id"))
     cafe = db.relationship("Cafe", backref=db.backref("runs", order_by=id))
 
     pickup = db.Column(db.String)
     is_open = db.Column(db.Boolean, default=True)
-    modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    modified = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
 
     fetcher = db.relationship("User", backref=db.backref("runs", order_by=time.desc()))
 
@@ -91,18 +124,10 @@ class Run(db.Model):
     def __repr__(self):
         return "<Run('%s','%s')>" % (self.fetcher.name, self.time)
 
-    def readtime(self):
-        return self.time.strftime("%I:%M %p %a %d %b")
-
-    def readmodified(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
-
     def prettyprint(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        time = self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
+        time_str = sydney_timezone(self.time).strftime("%I:%M %p %a %d %b")
         cafe = self.cafe.name
-        return time + " to " + cafe
+        return time_str + " to " + cafe
 
     def jsondatetime(self, arg):
         tformat = "%Y-%m-%d %H:%M:%S"
@@ -139,7 +164,7 @@ class Coffee(db.Model):
     person = db.Column(db.Integer, db.ForeignKey("Users.id"))
     coffee = db.Column(db.String)  # json field
     runid = db.Column(db.Integer, db.ForeignKey("Runs.id"))
-    modified = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    modified = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
 
     run = db.relationship("Run", backref=db.backref("coffees"))
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
@@ -147,8 +172,8 @@ class Coffee(db.Model):
     price = db.Column(db.Float)  # In Dollars
     paid = db.Column(db.Boolean, default=False)
 
-    starttime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
-    endtime = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    starttime = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
+    endtime = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
     expired = db.Column(db.Boolean, default=False)
 
     def __init__(self, coffee_request, entered_price, runid):
@@ -164,18 +189,6 @@ class Coffee(db.Model):
     def __repr__(self):
         c = coffeespecs.Coffee.fromJSON(self.coffee)
         return "<Coffee(%s, %s,'%s')>" % (self.id, self.person, str(c))
-
-    def readmodified(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        return self.modified.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
-
-    def readstarttime(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        return self.starttime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
-
-    def readendtime(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        return self.endtime.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
 
     def jsondatetime(self, arg):
         if arg == "modified":
@@ -260,7 +273,7 @@ class Event(db.Model):
     action = db.Column(db.String)
     objtype = db.Column(db.String)
     objid = db.Column(db.Integer)
-    time = db.Column(db.DateTime(timezone=True), default=sydney_timezone_now)
+    time = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
 
     user = db.relationship("User", backref=db.backref("events", order_by=id.desc()))
 
@@ -270,20 +283,17 @@ class Event(db.Model):
         self.objtype = objtype
         self.objid = objid
 
-    def readtime(self):
-        localtz = pytz.timezone("Australia/Sydney")
-        return self.time.replace(tzinfo=pytz.utc).astimezone(localtz).strftime("%I:%M %p %a %d %b")
-
     def descrobj(self):
         if self.action != "deleted":
             if self.objtype == "run":
                 run = Run.query.filter_by(id=self.objid).first()
                 if run:
-                    return "for time %s" % run.readtime()
+                    return "for time %s" % run.time
             elif self.objtype == "coffee":
                 coffee = Coffee.query.filter_by(id=self.objid).first()
                 if coffee and coffee.run:
-                    return "for <a href=\"/run/%s/\">run</a> at time %s" % (coffee.run.id, coffee.run.readtime())
+                    return "for <a href=\"/run/%s/\">run</a> at time %s" % (
+                            coffee.run.id, coffee.run.time)
             elif self.objtype == "cafe":
                 cafe = Cafe.query.filter_by(id=self.objid).first()
                 if cafe:

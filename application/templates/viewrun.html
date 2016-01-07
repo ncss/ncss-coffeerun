@@ -12,7 +12,7 @@
 <div class="row">
     <label class="col-sm-2">Time</label>
     <div class="col-sm-10">
-        <p>{{ run.readtime() }}</p>
+        <p>{{ run.time|sydney_time|format_time }}</p>
     </div>
 </div>
 <div class="row">
@@ -36,7 +36,7 @@
 <div class="row">
     <label class="col-sm-2">Modified</label>
     <div class="col-sm-10">
-        <p>{{ run.readmodified() }}</p>
+        <p>{{ run.modified|sydney_time|format_time }}</p>
     </div>
 </div>
 <a href="/run/{{ run.id }}/edit/" class="btn btn-primary">Edit Run</a>

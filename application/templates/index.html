@@ -5,11 +5,13 @@
     <h1>NCSS CoffeeRun</h1>
     {% if run %}
         {% if run.statusid == 3 %}
-        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is now available for pickup{% if run.pickup %} at {{ run.pickup }}{% endif %}.</p>
+        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at
+          <a href="/run/{{ run.id }}">{{ run.time|sydney_time|format_time }}</a> is now available for pickup{% if run.pickup %} at {{ run.pickup }}{% endif %}.</p>
         {% elif run.statusid == 2 %}
-        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> is currently on its way.</p>
+        <p>The run from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a> at <a href="/run/{{ run.id }}">{{ run.time }}</a> is currently on its way.</p>
         {% else %}
-        <p><strong>Next run:</strong> <a href="/run/{{ run.id }}">{{ run.readtime() }}</a> from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></p>
+
+        <p><strong>Next run:</strong> <a href="/run/{{ run.id }}">{{ run.time|sydney_time|format_time }}</a> from <a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></p>
         {% endif %}
     {% else %}
     <p>There are no upcoming runs.</p>

@@ -18,7 +18,7 @@
     <label class="col-sm-1">Run</label>
     <div class="col-sm-11">
         {% if coffee.run %}
-        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.readtime() }}</a> (open={{ coffee.run.is_open }})</p>
+        <p><a href="/run/{{ coffee.run.id }}">{{ coffee.run.time|sydney_time|format_time }}</a> (open={{ coffee.run.is_open }})</p>
         {% endif %}
     </div>
 </div>
@@ -31,13 +31,13 @@
 <div class="row">
     <label class="col-sm-1">Start Time</label>
     <div class="col-sm-11">
-        <p>{{ coffee.readstarttime() }}</p>
+        <p>{{ coffee.starttime|sydney_time|format_time }}</p>
     </div>
 </div>
 <div class="row">
     <label class="col-sm-1">End Time</label>
     <div class="col-sm-11">
-        <p>{{ coffee.readendtime() }}</p>
+        <p>{{ coffee.endtime|sydney_time|format_time }}</p>
     </div>
 </div>
 <div class="row">
@@ -61,7 +61,7 @@
 <div class="row">
     <label class="col-sm-1">Modified</label>
     <div class="col-sm-11">
-        <p>{{ coffee.readmodified() }}</p>
+        <p>{{ coffee.modified|sydney_time|format_time }}</p>
     </div>
 </div>
 <a href="/coffee/{{ coffee.id }}/edit/" class="btn btn-primary">Edit Coffee</a>
