@@ -21,7 +21,7 @@ Are you ok?
 'sup?
 G'day
 
-@@@ .*hot
+@@@ .*hot(?! +cho.*)
 Of course it's hot!
 
 @@@ :?\s*who (made|wrote) you\?
