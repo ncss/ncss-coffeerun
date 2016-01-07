@@ -380,7 +380,17 @@ def add_run(cafeid=None):
         if cafeid:
             form.cafe.data = cafeid
         form.person.data = current_user.id
-        form.time.data = sydney_timezone_now() + datetime.timedelta(minutes=30)
+
+        # Generate a time for the run. The algorithm here is we want the
+        # default run time to be at least 15 minutes in the future, and also a
+        # multiple of 15 minutes (since it look nicer).
+        # This means that by default, the run will be between 15 and 30 minutes
+        # from the current time.
+        t = sydney_timezone_now().replace(second=0, microsecond=0)
+        t += datetime.timedelta(minutes=15)
+        t += datetime.timedelta(minutes=15 - (t.minute % 15))  # truncate up to the nearest 15 minutes
+        form.time.data = t
+
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
 
     if form.validate_on_submit():
