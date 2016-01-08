@@ -33,9 +33,13 @@ class Coffee(object):
           return
       request = request.strip()
 
-  def get_price_key(self):
+  def get_price_key(self, fuzzy=False):
     tokens = []
     for spec in _OUT_ORDER:
+      if spec == 'type' and fuzzy:
+        if self.specs[spec] in ['Cappuccino', 'Latte', 'Mocha', 'Flat White', 'Short Black', 'Long Black', 'Hot Chocolate', 'Chai Latte', 'Macchiato']:
+          tokens.append('Cappuccino')
+          continue
       if spec == 'size' and spec not in self.specs:
         tokens.append('Regular')
       if spec in self.specs:

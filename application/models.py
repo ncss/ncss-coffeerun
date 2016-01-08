@@ -47,6 +47,7 @@ def sydney_timezone_now():
     localdt = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(localtz)
     return localdt
 
+
 def sydney_timezone(time):
     localtz = pytz.timezone("Australia/Sydney")
     localdt = time.astimezone(localtz)
@@ -196,14 +197,20 @@ class Coffee(db.Model):
 
     def lookup_price(self):
         price_key = coffeespecs.Coffee.fromJSON(self.coffee).get_price_key()
-        print 'Price key', price_key
         run = Run.query.filter_by(id=self.runid).first()
         if not run:
             return 0
         price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
-        if not price:
-            return 4.0
-        return price.amount
+
+        if price:
+            return price.amount
+
+        price_key = coffeespecs.Coffee.fromJSON(self.coffee).get_price_key(fuzzy=True)
+        price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
+        if price:
+            return price.amount
+
+        return 4.0
 
     def pretty_print(self):
         return str(coffeespecs.Coffee.fromJSON(self.coffee))
