@@ -384,7 +384,7 @@ def add_run(cafeid=None):
 
     if request.method == "GET":
         if cafeid:
-            form.cafe.data = cafeid
+            form.cafeid.data = cafeid
         form.person.data = current_user.id
 
         # Generate a time for the run. The algorithm here is we want the
