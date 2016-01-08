@@ -307,7 +307,7 @@ def edit_coffee(coffeeid):
 @app.route("/coffee/<int:coffeeid>/pay/", methods=["GET"])
 @login_required
 def pay_for_coffee(coffeeid):
-    coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
+    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
     coffee.paid = True
     db.session.commit()
     write_to_events("updated", "coffee", coffee.id)
