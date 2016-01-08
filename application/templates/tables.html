@@ -20,6 +20,14 @@
         </tr>
         {% endfor %}
     </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="{% if viewperson %}2{% else %}1{% endif %}"></td>
+        <td style="text-align: right">Total:</td>
+        <td>{{ "$%.2f"|format(coffeeset|sum(attribute="price")) }}</td>
+        <td></td>
+      </tr>
+    </tfoot>
 </table>
 {%- endmacro %}
 
