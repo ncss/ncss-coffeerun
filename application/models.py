@@ -87,12 +87,17 @@ class User(db.Model):
 
     def money_owed(self):
         amount = 0
+        for run in Run.query.filter(Run.person == self.id):
+            amount += run.unpaid_amount()
+
         for exchange in MoneyExchange.query.filter_by(payeeid=self.id).all():
             amount += exchange.amount
         return amount
 
     def money_owing(self):
         amount = 0
+        for coffee in Coffee.query.filter_by(person=self.id, paid=False):
+            amount += coffee.price
         for exchange in MoneyExchange.query.filter_by(payerid=self.id).all():
             amount += exchange.amount
         return amount
@@ -141,6 +146,13 @@ class Run(db.Model):
         total = 0
         for coffee in self.coffees:
           total += coffee.price
+        return total
+
+    def unpaid_amount(self):
+        total = 0
+        for coffee in self.coffees:
+          if not coffee.paid:
+            total += coffee.price
         return total
 
     def close_run(self, total_cost):

@@ -8,6 +8,7 @@
         <h2><a href="{{ url_for("view_user", userid=addict.id) }}">{{ addict.name }}</a></h2>
         <p><strong>Coffees:</strong> {{ addict.coffees|length }}<br>
         <strong>Runs:</strong> {{ addict.runs|length }}</p>
+        <p>Balance: {{ "%.2f" % (addict.money_owed() - addict.money_owing()) }} </p>
     </div>
     {% if loop.index is divisibleby 4 %}
     </div>
