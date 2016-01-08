@@ -122,7 +122,7 @@ def order_coffee(slackclient, user, channel, match):
 def set_up_orders():
   ORDERS_DISPATCH[re.compile('(?:(?:open|list) )?runs')] = list_runs
   ORDERS_DISPATCH[re.compile('order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
-  ORDERS_DISPATCH[re.compile('([^\=]+) (?:plz|please)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
+  ORDERS_DISPATCH[re.compile('([^\=]+) (?:plz|pls|please)(?: run=(?P<runid>[0-9]+))?')] = order_coffee
 
 
 def load_triggers(filename):
