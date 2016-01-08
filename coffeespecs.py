@@ -83,7 +83,8 @@ class Coffee(object):
     return ' '.join(tokens)
 
   def toJSON(self):
-    return json.dumps(self.specs)
+    # We sort the keys to give a stable ordering in our database.
+    return json.dumps(self.specs, sort_keys=True)
 
   @staticmethod
   def fromJSON(coffee_json):
