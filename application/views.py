@@ -275,6 +275,12 @@ def edit_coffee(coffeeid):
     form = CoffeeForm(request.form, obj=coffee)
     runs = Run.query.filter_by(is_open=True).all()
     form.runid.choices = [(r.id, r.prettyprint()) for r in runs]
+
+    # Make sure it is possible to edit coffees in a run that has already been
+    # closed. We do this by adding the existing coffee run to the dropdown.
+    if coffee.run and coffee.run.id not in [r.id for r in runs]:
+        form.runid.choices.append((coffee.run.id, coffee.run.prettyprint()))
+
     c = coffeespecs.Coffee.fromJSON(coffee.coffee)
     users = User.query.all()
     form.person.choices = [(user.id, user.name) for user in users]
