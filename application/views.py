@@ -603,10 +603,6 @@ def edit_price(priceid):
 @app.route("/price/<int:priceid>/delete/", methods=["GET"])
 def delete_price(priceid):
     price = Price.query.filter_by(id=priceid).first_or_404()
-    coffees = Coffee.query.filter_by(priceid=priceid).all()
-    for coffee in coffees:
-        coffee.price = None
-        write_to_events("updated", "coffee", coffee.id)
     db.session.delete(price)
     db.session.commit()
     write_to_events("deleted", "price", price.id)
