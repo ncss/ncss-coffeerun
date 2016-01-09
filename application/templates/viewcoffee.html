@@ -65,7 +65,11 @@
     </div>
 </div>
 <a href="/coffee/{{ coffee.id }}/edit/" class="btn btn-primary">Edit Coffee</a>
-<a href="/coffee/{{ coffee.id }}/pay/" class="btn btn-primary">Mark as Paid</a>
+{% if coffee.paid %}
+  <a href="/coffee/{{ coffee.id }}/unpay/" class="btn btn-primary">Mark as not-yet-paid</a>
+{% else %}
+  <a href="/coffee/{{ coffee.id }}/pay/" class="btn btn-primary">Mark as Paid</a>
+{% endif %}
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Coffee

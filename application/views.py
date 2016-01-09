@@ -315,6 +315,17 @@ def pay_for_coffee(coffeeid):
     return redirect(url_for("view_coffee", coffeeid=coffee.id))
 
 
+@app.route("/coffee/<int:coffeeid>/unpay/", methods=["GET"])
+@login_required
+def unpay_for_coffee(coffeeid):
+    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
+    coffee.paid = False
+    db.session.commit()
+    write_to_events("updated", "coffee", coffee.id)
+    flash("Coffee edited", "success")
+    return redirect(url_for("view_coffee", coffeeid=coffee.id))
+
+
 @app.route("/user/", methods=["GET"])
 def get_all_users():
     people = User.query.all()
