@@ -590,6 +590,8 @@ def edit_price(priceid):
 
     if request.method == "POST" and form.validate_on_submit():
         form.populate_obj(price)
+        coffee = coffeespecs.Coffee(form.data["price_key"])
+        price.price_key = coffee.get_price_key()
         db.session.commit()
         write_to_events("updated", "price", price.id)
         flash("Price updated for cafe '%s'" % price.cafe.name, "success")
