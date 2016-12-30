@@ -7,7 +7,7 @@ from datetime import timedelta
 
 class Config(object):
     CSFR_ENABLED = True
-    SECRET_KEY = "HyP0oHYnYeqv47uXohfvOkiv"
+    SECRET_KEY = os.environ.get("SECRET_KEY", "HyP0oHYnYeqv47uXohfvOkiv")
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = "465"
     MAIL_USERNAME = "ncsscoffeerun@gmail.com"
@@ -34,6 +34,7 @@ class DevConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
     CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    SESSION_TYPE = 'sqlalchemy'
 
 
 class TestConfig(Config):
