@@ -3,12 +3,12 @@
 import os
 
 from flask import Flask
-from flask.ext.babel import Babel
-from flask.ext.bootstrap import Bootstrap
-from flask.ext.login import LoginManager
-from flask.ext.mail import Mail
-from flask.ext.session import Session
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_babel import Babel
+from flask_bootstrap import Bootstrap
+from flask_login import LoginManager
+from flask_mail import Mail
+from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 
 # Setup app

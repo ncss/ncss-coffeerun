@@ -6,8 +6,8 @@ import pytz
 import requests
 
 from flask import render_template, flash, redirect, session, url_for, request, jsonify
-from flask.ext.login import login_required, login_user, current_user, logout_user
-from flask.ext.mail import Message
+from flask_login import login_required, login_user, current_user, logout_user
+from flask_mail import Message
 from flask_oauthlib.client import OAuth
 
 from application import app, db, lm

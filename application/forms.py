@@ -11,12 +11,12 @@ See: http://flask.pocoo.org/docs/patterns/wtforms/
 import datetime
 import pytz
 
-from flask.ext.wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, FloatField, BooleanField
 import wtforms.ext.dateutil.fields
 
 
-class CoffeeForm(Form):
+class CoffeeForm(FlaskForm):
     person = SelectField("Addict", coerce=int)
     coffee = TextField("Coffee", [validators.Required()])
     price = FloatField("Price", default=0)
@@ -37,7 +37,7 @@ class CoffeeForm(Form):
     days = IntegerField("Days To Recur", default=0)
 
 
-class RunForm(Form):
+class RunForm(FlaskForm):
     person = SelectField("Person", coerce=int)
     time = wtforms.ext.dateutil.fields.DateTimeField(
             "Time of Run",
@@ -51,17 +51,17 @@ class RunForm(Form):
     addpending = BooleanField("Add All Pending Coffees", default=True)
 
 
-class CafeForm(Form):
+class CafeForm(FlaskForm):
     name = TextField("Name", [validators.Required()])
     location = TextField("Location")
 
 
-class PriceForm(Form):
+class PriceForm(FlaskForm):
     cafeid = SelectField("Cafe", coerce=int)
     price_key = TextField("Coffee (e.g. large cap)")
     amount = FloatField("Amount", [validators.Required()])
 
 
-class TeacherForm(Form):
+class TeacherForm(FlaskForm):
     name = TextField("Username", [validators.Required()])
     email = TextField("Email")

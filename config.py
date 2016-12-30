@@ -21,6 +21,7 @@ class Config(object):
     SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     CELERY_TIMEZONE = 'UTC'
     CELERYBEAT_SCHEDULE = {
         'every-minute': {

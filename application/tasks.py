@@ -7,7 +7,7 @@ Worker methods based on Celery
 
 from application import app, db, celery, mail
 from application.models import Coffee, sydney_timezone_now
-from flask.ext.mail import Message
+from flask_mail import Message
 
 @celery.task
 def send_email(msg):
