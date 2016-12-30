@@ -234,6 +234,7 @@ def edit_run(runid):
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
         run.time = form.data["time"]
+        run.is_open = form.data["is_open"]
 
         db.session.commit()
         write_to_events("updated", "run", run.id)

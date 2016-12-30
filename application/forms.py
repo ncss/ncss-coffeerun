@@ -48,6 +48,7 @@ class RunForm(FlaskForm):
 
     cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")
+    is_open = BooleanField("Currently accepting coffees", default=True)
     addpending = BooleanField("Add All Pending Coffees", default=True)
 
 
