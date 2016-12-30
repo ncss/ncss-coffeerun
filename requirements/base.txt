@@ -8,7 +8,7 @@ Flask-SQLAlchemy==1.0
 Flask-Script==2.0.5
 Flask-WTF==0.9.3
 Flask==0.10.1
-Jinja2==2.7.3
+Jinja2==2.8
 MarkupSafe==0.18
 PyRSS2Gen==1.0.0
 SQLAlchemy==0.8.4
@@ -17,10 +17,10 @@ Werkzeug==0.9.4
 celery==3.1.17
 gunicorn==18.0
 itsdangerous==0.23
-pyOpenSSL==0.15
+pyOpenSSL==16.2
 python-dateutil==1.5
-pytz==2012d
+pytz==2016.10
 requests==2.1.0
-slackclient==0.16
+slackclient==1.0
 sqlalchemy-migrate==0.10.0
 virtualenv==1.10.1
