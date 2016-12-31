@@ -24,7 +24,7 @@ slack_auth = oauth.remote_app(
     'slack',
     consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
     consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
-    request_token_params={'scope': 'identify'},
+    request_token_params={'scope': 'identity.basic', 'team': app.config['SLACK_TEAM_ID']},
     base_url='https://slack.com/api/',
     request_token_url=None,
     access_token_method='POST',
