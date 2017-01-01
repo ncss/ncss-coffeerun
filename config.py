@@ -25,19 +25,10 @@ class Config(object):
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    CELERY_TIMEZONE = 'UTC'
-    CELERYBEAT_SCHEDULE = {
-        'every-minute': {
-            'task': 'application.tasks.expire_coffees',
-            'schedule': timedelta(minutes=2),
-        }
-    }
-
 
 class DevConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'
     SESSION_TYPE = 'sqlalchemy'
 
 
@@ -55,8 +46,4 @@ class ProdConfig(Config):
         SQLALCHEMY_DATABASE_URL = "postgres://pzjpocurmvfdee:_J2pg9gvP0K5SJeMPHjUkERt2J@ec2-54-197-250-52.compute-1.amazonaws.com:5432/d4bnpmfglihmg0"
     else:
         SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    if os.environ.get('REDIS_URL') is None:
-        CELERY_BROKER_URL = 'redis://localhost:6379/0'
-    else:
-        CELERY_BROKER_URL = os.environ['REDIS_URL']
     API_KEY = "AIzaSyDdtXLXJWPJS9bEay-nq0QsAvFxHMvGw3U"

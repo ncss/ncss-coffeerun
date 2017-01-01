@@ -1,5 +1,3 @@
-
-
 import os
 
 from flask import Flask
@@ -11,7 +9,6 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-from celery import Celery
 
 # Setup app
 app = Flask(__name__)
@@ -41,20 +38,6 @@ lm.login_view = "login"
 
 mail = Mail()
 mail.init_app(app)
-
-def make_celery(app):
-    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-    class ContextTask(TaskBase):
-        abstract = True
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    celery.Task = ContextTask
-    return celery
-
-celery = make_celery(app)
 
 
 from application import views, models

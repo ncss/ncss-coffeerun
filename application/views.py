@@ -13,7 +13,6 @@ from flask_oauthlib.client import OAuth
 from application import app, db, lm
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
 from models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
-from tasks import send_email
 
 import coffeespecs
 import utils
@@ -528,8 +527,6 @@ def add_coffee(runid=None):
         db.session.add(coffee)
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
-        if form.data["runid"] != -1:
-            notify_run_owner_of_coffee(run.fetcher, person, coffee)
         flash("Coffee order added", "success")
         if form.data["recurring"]:
             recur_coffee(coffee, form.data["days"])
@@ -719,26 +716,6 @@ def write_to_events(action, objtype, objid, user=None):
     db.session.add(event)
     db.session.commit()
     return event.id
-
-# Mail helpers
-
-def notify_run_owner_of_coffee(owner, addict, coffee):
-    if owner.alerts:
-        recipients = [owner.email]
-        run = coffee.run
-        subject = "Alert: coffee added for run to %s at %s" % (run.cafe.name, run.readtime())
-        body = "%s has requested a coffee for run %d. See the NCSS Coffeerun site for details." % (addict.name, run.id)
-        msg = Message(subject, recipients)
-        msg.body = body
-        send_email(msg)
-
-
-def call_to_pickup(run):
-    recipients = [c.addict.email for c in run.coffees if c.addict.alerts]
-    subject = "Alert: your coffee is ready to pickup!"
-    body = "%s has taken your coffee to %s. Please go fetch and pay.\nRegards, your favourite Coffee Bot!" % (run.fetcher.name, run.pickup)
-    msg = Message(subject=subject, body=body, recipients=recipients)
-    send_email(msg)
 
 
 ## Error handlers
