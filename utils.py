@@ -12,7 +12,7 @@ def get_or_create_user(user_id, team_id, name):
         user = User(name)
         user.slack_user_id = user_id
         user.slack_team_id = team_id
-        user.tutor = team_id == 'T0FGHB4TZ'
+        user.tutor = team_id == app.config['SLACK_TEAM_ID']
         user.teacher = not user.tutor
         db.session.add(user)
         db.session.commit()
