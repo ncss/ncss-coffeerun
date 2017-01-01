@@ -5,6 +5,9 @@ Maddy Reid 2014"""
 import os
 from datetime import timedelta
 
+from os.path import abspath, dirname, join
+current_dir = dirname(abspath(__file__))
+
 class Config(object):
     CSFR_ENABLED = True
     SECRET_KEY = os.environ.get("SECRET_KEY", "HyP0oHYnYeqv47uXohfvOkiv")
@@ -20,7 +23,7 @@ class Config(object):
     SLACK_TEAM_ID = os.environ.get('SLACK_TEAM_ID')
     SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
-    SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CELERY_TIMEZONE = 'UTC'
     CELERYBEAT_SCHEDULE = {
@@ -33,7 +36,7 @@ class Config(object):
 
 class DevConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-dev.db"
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
     CELERY_BROKER_URL = 'redis://localhost:6379/0'
     SESSION_TYPE = 'sqlalchemy'
 
@@ -41,10 +44,11 @@ class DevConfig(Config):
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-test.db"
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-test.db')
 
 
 class ProdConfig(Config):
-    SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-prod.db"
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-prod.db')
     DEBUG = True
     if os.environ.get('DATABASE_URL') is None:
         SQLALCHEMY_DATABASE_URL = "postgres://pzjpocurmvfdee:_J2pg9gvP0K5SJeMPHjUkERt2J@ec2-54-197-250-52.compute-1.amazonaws.com:5432/d4bnpmfglihmg0"

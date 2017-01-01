@@ -12,7 +12,7 @@ from flask_oauthlib.client import OAuth
 
 from application import app, db, lm
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
-from models import User, Run, Coffee, Cafe, Price, Event, sydney_timezone_now, sydney_timezone
+from models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
 from tasks import send_email
 
 import coffeespecs
@@ -20,11 +20,23 @@ import utils
 
 oauth = OAuth(app)
 
-slack_auth = oauth.remote_app(
-    'slack',
+slack_user_auth = oauth.remote_app(
+    'slack-user',
     consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
     consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
     request_token_params={'scope': 'identity.basic', 'team': app.config['SLACK_TEAM_ID']},
+    base_url='https://slack.com/api/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://slack.com/api/oauth.access',
+    authorize_url='https://slack.com/oauth/authorize'
+)
+
+slack_team_auth = oauth.remote_app(
+    'slack-team',
+    consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
+    consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
+    request_token_params={'scope': 'chat:write:bot incoming-webhook', 'team': app.config['SLACK_TEAM_ID']},
     base_url='https://slack.com/api/',
     request_token_url=None,
     access_token_method='POST',
@@ -76,6 +88,33 @@ def home():
     return render_template("index.html", run=run, events=events, current_user=current_user)
 
 
+@app.route('/team-auth/')
+def team_auth_start():
+  return slack_team_auth.authorize(callback=url_for('team_auth_done', _external=True))
+
+
+@app.route('/team-auth-done/')
+def team_auth_done():
+  resp = slack_team_auth.authorized_response()
+  if resp is None:
+    return 'Access denied: reason=%s error=%s' % (
+        request.args['error'],
+        request.args['error_description']
+    )
+  if not resp.get('ok', False):
+    return 'There was an error: ' + resp['error']
+
+  access_token = resp['access_token']
+  # Store access token in the DB
+  access_token_entry = SlackTeamAccessToken.query.get(app.config['SLACK_TEAM_ID'])
+  if access_token_entry is None:
+      access_token_entry = SlackTeamAccessToken()
+      access_token_entry.team_id = app.config['SLACK_TEAM_ID']
+  access_token_entry.access_token = access_token
+  db.session.add(access_token_entry)
+  db.session.commit()
+  return 'Access token stored in db'
+
 @app.route("/slacklogin/")
 def slacklogin():
   if 'slack_token' in session:
@@ -83,12 +122,12 @@ def slacklogin():
     if user:
       login_user(user)
       return redirect(request.args.get("next") or url_for("home"))
-  return slack_auth.authorize(callback=url_for('authorized', _external=True))
+  return slack_user_auth.authorize(callback=url_for('authorized', _external=True))
 
 
 @app.route('/login/authorized')
 def authorized():
-    resp = slack_auth.authorized_response()
+    resp = slack_user_auth.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
             request.args['error'],
@@ -104,7 +143,7 @@ def authorized():
     return redirect(request.args.get("next") or url_for("home"))
 
 
-@slack_auth.tokengetter
+@slack_user_auth.tokengetter
 def get_slack_token():
     token = session.get('slack_token')
     return token

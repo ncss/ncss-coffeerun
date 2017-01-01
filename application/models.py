@@ -130,6 +130,11 @@ class User(db.Model):
         return amount
 
 
+class SlackTeamAccessToken(db.Model):
+    team_id = db.Column(db.String, primary_key=True)
+    access_token = db.Column(db.String)
+
+
 class MoneyExchange(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     payerid = db.Column(db.Integer, db.ForeignKey("Users.id"))

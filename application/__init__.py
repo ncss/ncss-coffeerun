@@ -9,6 +9,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 from celery import Celery
 
 # Setup app
@@ -29,6 +31,9 @@ def _local():
     return 'en_AU'
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+manager = Manager(app)
+manager.add_command('db', MigrateCommand)
 
 lm = LoginManager()
 lm.init_app(app)
