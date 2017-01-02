@@ -137,9 +137,10 @@ def authorized():
 
     session['slack_token'] = (resp['access_token'], '')
     user = get_user_from_slack_token()
-    login_user(user)
-
-    return redirect(request.args.get("next") or url_for("home"))
+    if user:
+        login_user(user)
+        return redirect(request.args.get("next") or url_for("home"))
+    return redirect(url_for("home"))
 
 
 @slack_user_auth.tokengetter
