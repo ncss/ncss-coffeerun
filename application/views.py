@@ -10,7 +10,7 @@ from flask_login import login_required, login_user, current_user, logout_user
 from flask_mail import Message
 from flask_oauthlib.client import OAuth
 
-from application import app, db, lm
+from application import app, db, events, lm
 from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
 from models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
 
@@ -293,8 +293,19 @@ def next_status_for_run(runid):
     # Create Money exchanges to pay for the purchased coffees.
     db.session.add(run)
     db.session.commit()
+    events.run_closed(runid)
     write_to_events("updated", "run", run.id)
     flash("Run closed", "success")
+    return redirect(url_for("view_run", runid=run.id))
+
+
+@app.route("/run/<int:runid>/ping/")
+@login_required
+def ping_addicts_for_run(runid):
+    run = Run.query.filter_by(id=runid).first_or_404()
+    # Create Money exchanges to pay for the purchased coffees.
+    events.run_delivered(runid)
+    flash("The coffee addicts in this run have been notified.", "success")
     return redirect(url_for("view_run", runid=run.id))
 
 
@@ -461,6 +472,7 @@ def add_run(cafeid=None):
 
         db.session.add(run)
         db.session.commit()
+        events.run_created(run.id)
         write_to_events("created", "run", run.id)
         if form.data["addpending"]:
             coffees = get_coffees_for_time(sydney_timezone_now())
@@ -527,6 +539,8 @@ def add_coffee(runid=None):
         db.session.add(coffee)
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
+        if form.data["runid"] != -1:
+            events.coffee_added(coffee.runid, coffee.id)
         flash("Coffee order added", "success")
         if form.data["recurring"]:
             recur_coffee(coffee, form.data["days"])

@@ -85,6 +85,9 @@ class User(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+    def get_slack_mention(self):
+        return '<@{}|{}>'.format(self.slack_user_id, self.name)
+
     def money_owed(self):
         coffee_money_owed = sqlalchemy.sql.select(
                 [sqlalchemy.sql.functions.sum(Coffee.price).label('total')],
@@ -163,7 +166,7 @@ class Run(db.Model):
         return "<Run('%s','%s')>" % (self.fetcher.name, self.time)
 
     def prettyprint(self):
-        time_str = sydney_timezone(self.time).strftime("%I:%M %p %a %d %b")
+        time_str = sydney_timezone(self.time).strftime("%I:%M %p (%a)")
         cafe = self.cafe.name
         return time_str + " to " + cafe
 

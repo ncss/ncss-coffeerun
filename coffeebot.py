@@ -10,7 +10,7 @@ import time
 
 from slackclient import SlackClient
 
-from application import app, db
+from application import app, db, events
 from application.models import Run, User, Coffee, Event, sydney_timezone_now
 
 from flask.ext import babel
@@ -102,6 +102,7 @@ def order_coffee(slackclient, user, channel, match):
   coffee.person = dbuser.id
   db.session.add(coffee)
   db.session.commit()
+  events.coffee_added(run.id, coffee.id)
 
   # Write the event
   event = Event(coffee.person, "created", "coffee", coffee.id)
@@ -111,7 +112,6 @@ def order_coffee(slackclient, user, channel, match):
   logger.info('Parsed coffee: %s', coffee)
 
   runuser = User.query.filter_by(id=run.person).first()
-
   channel.send_message(
       'That\'s a {} for {} (added to <@{}>\'s run.)'.format(
         coffee.pretty_print(),
@@ -222,6 +222,9 @@ def handle_message(slackclient, event):
   # message from that person.
   if 'subtype' in event and event['subtype'] == 'message_changed':
     event = event['message']
+  if 'user' not in event:
+    # Ignore events from non-users (i.e. coffebot app messages)
+    return
   user = slackclient.server.users.find(event['user'])
   text = event['text']
 

@@ -43,6 +43,8 @@
 {% if run.is_open %}<a href="/run/{{ run.id }}/close/" class="btn btn-primary">Close Run</a>
 <a href="/run/{{ run.id }}/addcoffee/" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span>Add Coffee</a>
 {% endif %}
+{% if not run.is_open %}<a href="/run/{{ run.id }}/ping/" class="btn btn-primary">Announce Delivery</a>
+{% endif %}
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Run
