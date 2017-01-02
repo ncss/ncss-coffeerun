@@ -23,7 +23,6 @@ class Config(object):
     SLACK_TEAM_ID = os.environ.get('SLACK_TEAM_ID')
     SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class DevConfig(Config):
@@ -39,11 +38,7 @@ class TestConfig(Config):
 
 
 class ProdConfig(Config):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-prod.db')
-    SESSION_TYPE = 'sqlalchemy'
-    DEBUG = True
-    if os.environ.get('DATABASE_URL') is None:
-        SQLALCHEMY_DATABASE_URL = "postgres://pzjpocurmvfdee:_J2pg9gvP0K5SJeMPHjUkERt2J@ec2-54-197-250-52.compute-1.amazonaws.com:5432/d4bnpmfglihmg0"
-    else:
-        SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     API_KEY = "AIzaSyDdtXLXJWPJS9bEay-nq0QsAvFxHMvGw3U"
+    DEBUG = True
+    SESSION_TYPE = 'sqlalchemy'
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
