@@ -3,6 +3,7 @@
 Configuration objects for the ncss-coffee Flask app
 Maddy Reid 2014"""
 import os
+import base64
 from datetime import timedelta
 
 from os.path import abspath, dirname, join
@@ -10,7 +11,8 @@ current_dir = dirname(abspath(__file__))
 
 class Config(object):
     CSFR_ENABLED = True
-    SECRET_KEY = os.environ.get("SECRET_KEY", "HyP0oHYnYeqv47uXohfvOkiv")
+    SECRET_KEY = base64.b64decode(
+            os.environ.get("SECRET_KEY", "SHlQMG9IWW5ZZXF2NDd1WG9oZnZPa2l2"))
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = "465"
     MAIL_USERNAME = "ncsscoffeerun@gmail.com"
