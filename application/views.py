@@ -23,7 +23,7 @@ slack_user_auth = oauth.remote_app(
     'slack-user',
     consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
     consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
-    request_token_params={'scope': 'identity.basic', 'team': app.config['SLACK_TEAM_ID']},
+    request_token_params={'scope': 'identify', 'team': app.config['SLACK_TEAM_ID']},
     base_url='https://slack.com/api/',
     request_token_url=None,
     access_token_method='POST',
@@ -35,7 +35,7 @@ slack_team_auth = oauth.remote_app(
     'slack-team',
     consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
     consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
-    request_token_params={'scope': 'chat:write:bot incoming-webhook identify', 'team': app.config['SLACK_TEAM_ID']},
+    request_token_params={'scope': 'chat:write:bot incoming-webhook', 'team': app.config['SLACK_TEAM_ID']},
     base_url='https://slack.com/api/',
     request_token_url=None,
     access_token_method='POST',
@@ -51,7 +51,7 @@ def load_user(user_id):
 
 def get_user_from_slack_token():
     logger = logging.getLogger('views.get_user_from_slack_token')
-    token = SlackTeamAccessToken.query.get(app.config['SLACK_TEAM_ID'])
+    token = session.get('slack_token')[0]
     resp = requests.get('http://slack.com/api/auth.test', params={'token': token})
     if resp.status_code != 200:
         logger.info('Failed to get user from slack: %s', resp)
