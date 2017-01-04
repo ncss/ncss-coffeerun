@@ -49,7 +49,7 @@ def process_event(event):
 
   if event_type == EventType.RUN_CREATED:
     run = Run.query.get(event['run_id'])
-    msg = 'Want a coffee? {} is making a run at {} (pickup: {}).'.format(run.fetcher.get_slack_mention(), run.prettyprint(), run.pickup)
+    msg = '<!channel> Want a coffee? {} is making a run at {} (pickup: {}).'.format(run.fetcher.get_slack_mention(), run.prettyprint(), run.pickup)
     notify_channel(msg)
 
   elif event_type == EventType.RUN_CLOSED:
