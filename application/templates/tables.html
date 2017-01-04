@@ -37,6 +37,8 @@
         <tr>
             <th>Qty</th>
             <th>Type</th>
+            <th>Item price</th>
+            <th>Subtotal</th>
         </tr>
     </thead>
     <tbody>
@@ -44,6 +46,8 @@
         <tr>
             <td>{{ coffees|length }}</td>
             <td>{{ coffees[0].pretty_print() }}</td>
+            <td>${{ '%.2f'|format(coffees[0].price) }}</td>
+            <td>${{ '%.2f'|format(coffees[0].price * coffees|length) }}</td>           
         </tr>
         {% endfor %}
     </tbody>
