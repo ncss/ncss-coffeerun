@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block subcontent %}
+<h2>Run <a href="/run/{{ run.id }}/">{{ run.id }}</a></h2>
+<div class="row">
+    <label class="col-sm-2">Coffee Fetcher</label>
+    <div class="col-sm-10">
+        <p><a href="/user/{{ run.person }}/">{{ run.fetcher.name }}</a></p>
+    </div>
+</div>
+<div class="row">
+    <label class="col-sm-2">Cafe</label>
+    <div class="col-sm-10">
+        <p><a href="/cafe/{{ run.cafe.id }}/">{{ run.cafe.name }}</a></p>
+    </div>
+</div>
+
+<h2>Coffees</h2>
+{% from "tables.html" import ordercoffeetable as order_table %}
+{{ order_table(run.coffees) }}
+
+{% endblock %}

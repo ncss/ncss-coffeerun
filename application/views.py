@@ -253,6 +253,12 @@ def view_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     return render_template("viewrun.html", run=run, current_user=current_user)
 
+@app.route("/order/<int:runid>/")
+@login_required
+def view_order(runid):
+    run = Run.query.filter_by(id=runid).first_or_404()
+    return render_template("orderrun.html", run=run, current_user=current_user)
+
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
 @login_required
