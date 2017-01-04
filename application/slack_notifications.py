@@ -10,9 +10,10 @@ logger = logging.getLogger('slack-integration')
 
 API_URL = 'https://slack.com/api/chat.postMessage'
 DEFAULT_PARAMS = {
-    'username': 'coffeebot',
     'as_user': False,
-    'icon_emoji': ':coffee:'
+    'icon_emoji': ':coffee:',
+    'parse': 'none',
+    'username': 'coffeebot',
 }
 
 
@@ -35,7 +36,7 @@ def notify_channel(message):
 def notify_user(message, user):
   params = get_params()
   params['text'] = message
-  params['channel'] = '@' + user.name
+  params['channel'] = user.slack_user_id
   resp = requests.get(API_URL, params=params)
   content = json.loads(resp.content)
   logger.info('Posted to user %s: response:%s, content:%s', user.id, resp.status_code, content)

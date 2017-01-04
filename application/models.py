@@ -86,7 +86,7 @@ class User(db.Model):
         return unicode(self.id)
 
     def get_slack_mention(self):
-        return '<@{}|{}>'.format(self.slack_user_id, self.name)
+        return '<@{}>'.format(self.slack_user_id)
 
     def money_owed(self):
         coffee_money_owed = sqlalchemy.sql.select(
