@@ -43,4 +43,4 @@ class ProdConfig(Config):
     API_KEY = "AIzaSyDdtXLXJWPJS9bEay-nq0QsAvFxHMvGw3U"
     DEBUG = True
     SESSION_TYPE = 'sqlalchemy'
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
