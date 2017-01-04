@@ -42,7 +42,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for grouper, coffees in coffeeset|sort(attribute="coffee")|groupby("coffee") %}
+        {% for group_key, coffees in coffeeset|sort_and_group_coffees %}
         <tr>
             <td>{{ coffees|length }}</td>
             <td>{{ coffees[0].pretty_print() }}</td>

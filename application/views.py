@@ -4,6 +4,7 @@ import json
 import logging
 import pytz
 import requests
+import itertools
 
 from flask import render_template, flash, redirect, session, url_for, request, jsonify
 from flask_login import login_required, login_user, current_user, logout_user
@@ -80,6 +81,24 @@ def _to_sydney_time(t):
 def _format_time(t):
     # Sample: "11:40 AM Thu 07 Jan"
     return t.strftime("%I:%M %p %a %d %b")
+
+
+@app.template_filter('sort_and_group_coffees')
+def _sort_coffees(coffees):
+    # This is a giant hack to group the coffees together, sorted by the
+    # arbitary ordering below.
+    coffees = list(coffees)
+    logger = logging.getLogger('sort_coffees')
+    def _key_for_coffee(coffee_model):
+        coffee_spec = json.loads(coffee_model.coffee)
+        SPEC_ORDERING = ['iced', 'type', 'size', 'decaf', 'strength', 'milk', 'sugar']
+        spec_result = tuple(coffee_spec.get(spec, '') for spec in SPEC_ORDERING)
+        return spec_result
+    coffees.sort(key=_key_for_coffee)
+
+    return ((group_key, list(group_iter))
+            for group_key, group_iter in itertools.groupby(
+                coffees, lambda x: json.loads(x.coffee)))
 
 
 @app.route("/")
