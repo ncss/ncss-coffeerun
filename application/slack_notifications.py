@@ -29,7 +29,7 @@ def notify_channel(message):
   params['channel'] = '#coffee'
   resp = requests.get(API_URL, params=params)
   content = json.loads(resp.content)
-  logger.info('Posted to channel: response:{}, content:{}', resp.status_code, content)
+  logger.info('Posted to channel: response:%s, content:%s', resp.status_code, content)
 
 
 def notify_user(message, user):
@@ -38,7 +38,7 @@ def notify_user(message, user):
   params['channel'] = '@' + user.name
   resp = requests.get(API_URL, params=params)
   content = json.loads(resp.content)
-  logger.info('Posted to user {}: response:{}, content:{}', user.id, resp.status_code, content)
+  logger.info('Posted to user %s: response:%s, content:%s', user.id, resp.status_code, content)
 
 
 def process_event(event):
