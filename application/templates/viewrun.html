@@ -45,6 +45,7 @@
 {% endif %}
 {% if not run.is_open %}<a href="/run/{{ run.id }}/ping/" class="btn btn-primary">Announce Delivery</a>
 {% endif %}
+<a href="/order/{{ run.id }}/" class="btn btn-primary">Simplified Order</a>
 
 <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
     Delete Run
