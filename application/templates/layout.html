@@ -2,6 +2,13 @@
 
 {% block title %}NCSS CoffeeRun{% endblock %}
 
+{% block metas -%}
+<link rel="icon" type="image/png" href="{{ url_for('.static', filename='icon64.png') }}" sizes="64x64">
+<link rel="icon" type="image/png" href="{{ url_for('.static', filename='icon192.png') }}" sizes="192x192">
+<link rel="icon" type="image/png" href="{{ url_for('.static', filename='icon512.png') }}" sizes="512x512">
+{{ super() }}
+{%- endblock %}
+
 {% block styles %}
     {{ super() }}
     <!--<link href="{{ url_for('.static', filename='css/footer.css') }}" rel="stylesheet">-->
