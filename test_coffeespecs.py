@@ -22,7 +22,7 @@ class TestCoffeeValidation(unittest.TestCase):
 class TestParser(unittest.TestCase):
   def test_get_tokens(self):
     tokens = get_all_tokens()
-    self.assertEqual('2 extra-shots', tokens[0])
+    self.assertEqual('piccolo latte', tokens[0])
 
   def test_parse(self):
     c = Coffee('Large Cap')
@@ -116,6 +116,11 @@ class TestParser(unittest.TestCase):
     self.assertEquals(c.specs['type'], 'Latte')
     self.assertEquals(c.specs['sugar'], '2 Sugars')
     self.assertEquals(c.specs['decaf'], 'Decaf')
+    self.assertEquals(c.specs['milk'], 'Soy')
+
+    c = Coffee('yfw')
+    self.assertTrue(c.validate())
+    self.assertEquals(c.specs['type'], 'Flat White')
     self.assertEquals(c.specs['milk'], 'Soy')
 
 

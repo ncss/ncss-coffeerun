@@ -144,7 +144,7 @@ def get_all_tokens():
   for spec in COFFEE_SPECS:
     tokens.update(COFFEE_SPECS[spec].get_tokens())
   tokens = list(tokens)
-  tokens.sort(key=lambda x: len(x), reverse=True)
+  tokens.sort(key=(lambda x: (len(x), x)), reverse=True)
   return tokens
 
 
@@ -161,6 +161,7 @@ COFFEE_SPECS['type'].add_option('Flat White', ['FW'])
 COFFEE_SPECS['type'].add_option('Affogato', ['Af'])
 COFFEE_SPECS['type'].add_option('Hot Chocolate', ['hc', 'hot c', 'choc', 'chocolate', 'hot choc', 'hotchoc'])
 COFFEE_SPECS['type'].add_option('Babyccino', ['Frothaccino', 'babycino'])
+COFFEE_SPECS['type'].add_option('Piccolo Latte', ['Piccolo'])
 COFFEE_SPECS['type'].add_option('Tea', [])
 
 COFFEE_SPECS['iced'] = CoffeeSpec('iced', 'Iced or normal?', required=False, options={
@@ -197,5 +198,5 @@ COFFEE_SPECS['strength'] = CoffeeSpec('strength', 'What strength?', required=Fal
 COFFEE_SPECS['milk'] = CoffeeSpec('milk', 'What type of milk?', required=False, options={
     'Fullcream': ['normal'],
     'Skim': ['skinny', 'lite', 'light', 'sk'],
-    'Soy': [],
+    'Soy': ['y'],
 })
