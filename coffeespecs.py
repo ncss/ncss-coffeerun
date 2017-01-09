@@ -61,18 +61,22 @@ class Coffee(object):
 
   def add_spec(self, spec, value):
     if spec not in COFFEE_SPECS:
-      raise Exception('Unexpected spec: {}'.format(spec))
+      raise JavaException('Unexpected spec: {}'.format(spec))
     if not COFFEE_SPECS[spec].validate(value):
       return False
     self.specs[spec] = COFFEE_SPECS[spec].get_option_value(value)
     return True
 
-  def validate(self):
+  def validation_errors(self):
     for spec in COFFEE_SPECS:
       spec = COFFEE_SPECS[spec]
       if spec.required:
         if spec.name not in self.specs:
-          return False
+          yield spec
+
+  def validate(self):
+    if any(self.validation_errors()):
+      return False
     return True
 
   def __str__(self):
@@ -95,7 +99,7 @@ class Coffee(object):
     coffee = Coffee('C')
     coffee.specs = json.loads(coffee_json)
     if not coffee.validate():
-      raise Exception('Invalid coffee')
+      raise JavaException('Invalid coffee')
     return coffee
 
 
@@ -120,7 +124,7 @@ class CoffeeSpec(object):
     alternative = alternative.lower()
     if option not in self.options:
       if alternative in self.options:
-        raise Exception('Duplicate name for option')
+        raise JavaException('Duplicate name for option')
       self.options[alternative] = option
 
   def validate(self, value):
@@ -130,7 +134,7 @@ class CoffeeSpec(object):
 
   def get_option_value(self, value):
     if not self.validate(value):
-      raise Exception('Not a valid value {} for spec {}'.format(value, self.name))
+      raise JavaException('Not a valid value {} for spec {}'.format(value, self.name))
     return self.options[value.lower()]
 
   def get_tokens(self):

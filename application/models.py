@@ -225,7 +225,10 @@ class Coffee(db.Model):
     expired = db.Column(db.Boolean, default=False)
 
     def __init__(self, coffee_request, entered_price, runid):
-        c = coffeespecs.Coffee(coffee_request)
+        if isinstance(coffee_request, coffeespecs.Coffee):
+            c = coffee_request
+        else:
+            c = coffeespecs.Coffee(coffee_request)
         self.coffee = c.toJSON()
         if runid != -1:
             self.runid = runid

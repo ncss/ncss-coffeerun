@@ -92,7 +92,17 @@ def order_coffee(slackclient, user, channel, match):
     run = runs[0]
 
   # Create the coffee
-  coffee = Coffee(match.group(1), 0, run.id)
+  c = coffeespecs.Coffee(match.group(1))
+  validation_errors = list(c.validation_errors())
+  if validation_errors:
+    channel.send_message(
+        'That coffee is not valid missing the following specs: {}. Got: {}'.format(
+          ', '.join(spec.name for spec in validation_errors),
+          c,
+          ))
+    return
+  coffee = Coffee(c, 0, run.id)
+
 
   # Find the user that requested this
   dbuser = utils.get_or_create_user(user.id, TEAM_ID, user.name)
