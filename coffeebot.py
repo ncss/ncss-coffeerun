@@ -112,11 +112,15 @@ def order_coffee(slackclient, user, channel, match):
   logger.info('Parsed coffee: %s', coffee)
 
   runuser = User.query.filter_by(id=run.person).first()
+  if runuser.slack_user_id:
+    mention_runner = '<@{}>'.format(runuser.slack_user_id)
+  else:
+    mention_runner = runuser.name
   channel.send_message(
-      'That\'s a {} for {} (added to <@{}>\'s run.)'.format(
+      'That\'s a {} for {} (added to {}\'s run.)'.format(
         coffee.pretty_print(),
         mention(user),
-        runuser.slack_user_id))
+        mention_runner))
 
 
 def set_up_orders():
