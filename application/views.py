@@ -92,7 +92,7 @@ def _sort_coffees(coffees):
     def _key_for_coffee(coffee_model):
         coffee_spec = json.loads(coffee_model.coffee)
         # XXX: Giant hack to deal with the fact that some caffes only have 2 sizes.
-        if coffee_spec.get('size') == 'Small':
+        if coffee_spec.get('size', 'Small') == 'Small':
             coffee_spec['size'] = 'Regular'
         SPEC_ORDERING = ['size', 'iced', 'type', 'decaf', 'strength', 'milk', 'sugar']
         spec_result = tuple(coffee_spec.get(spec, '') for spec in SPEC_ORDERING)
