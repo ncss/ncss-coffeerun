@@ -22,7 +22,7 @@ class TestCoffeeValidation(unittest.TestCase):
 class TestParser(unittest.TestCase):
   def test_get_tokens(self):
     tokens = get_all_tokens()
-    self.assertEqual('piccolo latte', tokens[0])
+    self.assertEqual('iced chocolate', tokens[0])
 
   def test_parse(self):
     c = Coffee('Large Cap')
@@ -122,6 +122,16 @@ class TestParser(unittest.TestCase):
     self.assertTrue(c.validate())
     self.assertEquals(c.specs['type'], 'Flat White')
     self.assertEquals(c.specs['milk'], 'Soy')
+
+    c = Coffee('Soy Iced Coffee')
+    self.assertTrue(c.validate())
+    self.assertEquals(c.specs['type'], 'Iced Coffee')
+    self.assertEquals(c.specs['milk'], 'Soy')
+
+    c = Coffee('Skim Iced Chocolate')
+    self.assertTrue(c.validate())
+    self.assertEquals(c.specs['type'], 'Iced Chocolate')
+    self.assertEquals(c.specs['milk'], 'Skim')
 
 
 class TestPrettyPrint(unittest.TestCase):
