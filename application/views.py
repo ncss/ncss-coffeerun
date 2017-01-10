@@ -94,7 +94,7 @@ def _sort_coffees(coffees):
         # XXX: Giant hack to deal with the fact that some caffes only have 2 sizes.
         if coffee_spec.get('size') == 'Small':
             coffee_spec['size'] = 'Regular'
-        SPEC_ORDERING = ['iced', 'type', 'size', 'decaf', 'strength', 'milk', 'sugar']
+        SPEC_ORDERING = ['size', 'iced', 'type', 'decaf', 'strength', 'milk', 'sugar']
         spec_result = tuple(coffee_spec.get(spec, '') for spec in SPEC_ORDERING)
         return spec_result
     coffees.sort(key=_key_for_coffee)
