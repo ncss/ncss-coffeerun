@@ -17,9 +17,17 @@ DEFAULT_PARAMS = {
 }
 
 
+class SlackNotificationException(Exception):
+    pass
+
+
 def get_params():
   params = dict(DEFAULT_PARAMS)
   token = SlackTeamAccessToken.query.get(app.config['SLACK_TEAM_ID'])
+  if not token or not token.access_token :
+      raise SlackNotificationException(
+              'Access token for team {} is not configured.'.format(
+                  app.config['SLACK_TEAM_ID']))
   params['token'] = token.access_token
   return params
 

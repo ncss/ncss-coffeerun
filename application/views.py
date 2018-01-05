@@ -1,10 +1,11 @@
 
+import cgi
 import datetime
+import itertools
 import json
 import logging
 import pytz
 import requests
-import itertools
 
 from flask import render_template, flash, redirect, session, url_for, request, jsonify
 from flask_login import login_required, login_user, current_user, logout_user
@@ -504,7 +505,12 @@ def add_run(cafeid=None):
 
         db.session.add(run)
         db.session.commit()
-        events.run_created(run.id)
+        try:
+            events.run_created(run.id)
+        except Exception as e:
+            logging.exception('Error while trying to send notifications.')
+            flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
+                cgi.escape(str(e), quote=True)))
         write_to_events("created", "run", run.id)
         if form.data["addpending"]:
             coffees = get_coffees_for_time(sydney_timezone_now())
