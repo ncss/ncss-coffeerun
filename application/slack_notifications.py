@@ -34,7 +34,7 @@ def get_params():
 
 def notify_channel(message):
   params = get_params()
-  params['text'] = message
+  params['text'] = message.encode('utf-8')
   params['channel'] = '#coffee'
   resp = requests.get(API_URL, params=params)
   content = json.loads(resp.content)
@@ -43,7 +43,7 @@ def notify_channel(message):
 
 def notify_user(message, user):
   params = get_params()
-  params['text'] = message
+  params['text'] = message.encode('utf-8')
   params['channel'] = user.slack_user_id
   resp = requests.get(API_URL, params=params)
   content = json.loads(resp.content)
