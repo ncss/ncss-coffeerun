@@ -58,23 +58,23 @@ def process_event(event):
 
   if event_type == EventType.RUN_CREATED:
     run = Run.query.get(event['run_id'])
-    msg = '<!channel> Want a coffee? {} is making a run at {} (pickup: {}).'.format(run.fetcher.get_slack_mention(), run.prettyprint(), run.pickup)
+    msg = u'<!channel> Want a coffee? {} is making a run at {} (pickup: {}).'.format(run.fetcher.get_slack_mention(), run.prettyprint(), run.pickup)
     notify_channel(msg)
 
   elif event_type == EventType.RUN_CLOSED:
     run = Run.query.get(event['run_id'])
-    msg = 'No more coffees can be added to {}\'s run. (pickup will be at: {}).'.format(run.fetcher.get_slack_mention(), run.pickup)
+    msg = u'No more coffees can be added to {}\'s run. (pickup will be at: {}).'.format(run.fetcher.get_slack_mention(), run.pickup)
     notify_channel(msg)
 
   elif event_type == EventType.RUN_DELIVERED:
     run = Run.query.get(event['run_id'])
     for coffee in Coffee.query.filter_by(run=run):
-      msg = 'Your {} has arrived at {} (thanks to {}!).'.format(coffee.pretty_print(), run.pickup, run.fetcher.name)
+      msg = u'Your {} has arrived at {} (thanks to {}!).'.format(coffee.pretty_print(), run.pickup, run.fetcher.name)
       notify_user(msg, coffee.addict)
 
   elif event_type == EventType.COFFEE_ADDED:
     run = Run.query.get(event['run_id'])
     coffee = Coffee.query.get(event['coffee_id'])
-    msg = '{} added a {} to your run.'.format(coffee.addict.name, coffee.pretty_print())
+    msg = u'{} added a {} to your run.'.format(coffee.addict.name, coffee.pretty_print())
 
     notify_user(msg, run.fetcher)
