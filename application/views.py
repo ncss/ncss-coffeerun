@@ -510,7 +510,7 @@ def add_run(cafeid=None):
         except Exception as e:
             logging.exception('Error while trying to send notifications.')
             flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
-                cgi.escape(str(e), quote=True)))
+                cgi.escape(str(e), quote=True)), "failure")
         write_to_events("created", "run", run.id)
         if form.data["addpending"]:
             coffees = get_coffees_for_time(sydney_timezone_now())
@@ -578,7 +578,12 @@ def add_coffee(runid=None):
         db.session.commit()
         write_to_events("created", "coffee", coffee.id)
         if form.data["runid"] != -1:
-            events.coffee_added(coffee.runid, coffee.id)
+            try:
+                events.coffee_added(coffee.runid, coffee.id)
+            except Exception as e:
+                logging.exception('Error while trying to send notifications.')
+                flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
+                    cgi.escape(str(e), quote=True)), "failure")
         flash("Coffee order added", "success")
         if form.data["recurring"]:
             recur_coffee(coffee, form.data["days"])
