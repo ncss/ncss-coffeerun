@@ -90,10 +90,14 @@ def _sort_coffees(coffees):
     # arbitary ordering below.
     coffees = list(coffees)
     logger = logging.getLogger('sort_coffees')
-    def _key_for_coffee(coffee_model):
+    def _normalize_coffee_spec(coffee_model):
         coffee_spec = json.loads(coffee_model.coffee)
+        coffee_spec['size'] = coffee_spec.get('size', 'Regular')
+        return coffee_spec
+    def _key_for_coffee(coffee_model):
+        coffee_spec = _normalize_coffee_spec(coffee_model)
         # XXX: Giant hack to deal with the fact that some caffes only have 2 sizes.
-        if coffee_spec.get('size', 'Small') == 'Small':
+        if coffee_spec['size'] == 'Small':
             coffee_spec['size'] = 'Regular'
         SPEC_ORDERING = ['size', 'iced', 'type', 'decaf', 'strength', 'milk', 'sugar']
         spec_result = tuple(coffee_spec.get(spec, '') for spec in SPEC_ORDERING)
@@ -102,8 +106,7 @@ def _sort_coffees(coffees):
 
     return ((group_key, list(group_iter))
             for group_key, group_iter in itertools.groupby(
-                coffees, lambda x: json.loads(x.coffee)))
-
+                coffees, _normalize_coffee_spec))
 
 @app.route("/")
 @login_required
