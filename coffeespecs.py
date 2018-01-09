@@ -10,6 +10,9 @@ _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 
 ALLOW_TOKENS = ['with', 'please', 'i would like', 'would like', 'can i have', 'may i have', 'thanks', 'a', 'me', 'order', 'mine', 'for', 'the', 'like', 'want']
 
+class JavaException(Exception):
+  pass
+
 
 class Coffee(object):
   def __init__(self, request):
