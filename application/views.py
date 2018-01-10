@@ -277,7 +277,16 @@ def view_activity():
 @login_required
 def view_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
-    return render_template("viewrun.html", run=run, current_user=current_user)
+    filtered_run = []
+    for coffee in run:
+        try:
+            coffeespecs.Coffee.fromJSON(coffee.spec)
+            filtered_runs.append(coffee)
+        except coffeespecs.JavaException as e:
+            flash('Failed to parse coffee for {}. Error: {}'.format(
+                cgi.escape(coffee.addict.name), cgi.escape(str(e))), 'failure')
+            logging.exception('Failed to parse coffee: %s.', coffee)
+    return render_template("viewrun.html", run=filtered_run, current_user=current_user)
 
 @app.route("/order/<int:runid>/")
 @login_required
