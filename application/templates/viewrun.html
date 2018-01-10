@@ -59,7 +59,7 @@
         <h4 class="modal-title" id="myModalLabel">Delete Run</h4>
       </div>
       <div class="modal-body">
-          {% if run.coffees %}
+          {% if coffees %}
           <p>You cannot delete a run with associated coffees.</p>
           {% else %}
           <p>Are you sure?</p>
@@ -67,7 +67,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        {% if not run.coffees %}<a href="/run/{{ run.id }}/delete/" class="btn btn-danger">Delete Run</a>{% endif %}
+        {% if not coffees %}<a href="/run/{{ run.id }}/delete/" class="btn btn-danger">Delete Run</a>{% endif %}
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -75,6 +75,6 @@
 
 <h2>Coffees</h2>
 {% from "tables.html" import coffeetable as table %}
-{{ table(run.coffees) }}
+{{ table(coffees) }}
 
 {% endblock %}

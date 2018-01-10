@@ -50,7 +50,6 @@ slack_team_auth = oauth.remote_app(
 def load_user(user_id):
     return User.query.get(user_id)
 
-
 def get_user_from_slack_token():
     logger = logging.getLogger('views.get_user_from_slack_token')
     token = session.get('slack_token')[0]
@@ -107,6 +106,20 @@ def _sort_coffees(coffees):
     return ((group_key, list(group_iter))
             for group_key, group_iter in itertools.groupby(
                 coffees, _normalize_coffee_spec))
+
+
+def _filter_coffees(coffee_list):
+    ret = []
+    for coffee in coffee_list:
+        try:
+            coffeespecs.Coffee.fromJSON(coffee.coffee)
+            ret.append(coffee)
+        except coffeespecs.JavaException as e:
+            flash('Failed to parse coffee for {}. Error: {}'.format(
+                cgi.escape(coffee.addict.name), cgi.escape(str(e))), 'failure')
+            logging.exception('Failed to parse coffee: %s.', coffee)
+    return ret
+
 
 @app.route("/")
 @login_required
@@ -276,17 +289,16 @@ def view_activity():
 @app.route("/run/<int:runid>/")
 @login_required
 def view_run(runid):
-    run = Run.query.filter_by(id=runid).first_or_404()
-    filtered_run = []
-    for coffee in run:
-        try:
-            coffeespecs.Coffee.fromJSON(coffee.spec)
-            filtered_runs.append(coffee)
-        except coffeespecs.JavaException as e:
-            flash('Failed to parse coffee for {}. Error: {}'.format(
-                cgi.escape(coffee.addict.name), cgi.escape(str(e))), 'failure')
-            logging.exception('Failed to parse coffee: %s.', coffee)
-    return render_template("viewrun.html", run=filtered_run, current_user=current_user)
+    try:
+        run = Run.query.filter_by(id=runid).first_or_404()
+    except coffeespecs.JavaException as e:
+        flash('Something went wrong...')
+        logging.exception('Welp...')
+    return render_template(
+            "viewrun.html",
+            run=run,
+            coffees=_filter_coffees(run.coffees),
+            current_user=current_user)
 
 @app.route("/order/<int:runid>/")
 @login_required
@@ -431,7 +443,12 @@ def get_all_users():
 @login_required
 def view_user(userid):
     user = User.query.filter(User.id==userid).first_or_404()
-    return render_template("viewuser.html", user=user, current_user=current_user)
+    return render_template(
+            "viewuser.html",
+            user=user,
+            coffees=_filter_coffees(user.coffees),
+            current_user=current_user,
+            )
 
 
 @app.route("/user/<int:userid>/debts/", methods=["GET", "POST"])
