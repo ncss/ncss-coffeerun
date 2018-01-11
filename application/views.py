@@ -350,7 +350,12 @@ def next_status_for_run(runid):
     # Create Money exchanges to pay for the purchased coffees.
     db.session.add(run)
     db.session.commit()
-    events.run_closed(runid)
+    try:
+        events.run_closed(runid)
+    except Exception as e:
+        logging.exception('Error while trying to send notifications.')
+        flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
+            cgi.escape(str(e), quote=True)), "failure")
     write_to_events("updated", "run", run.id)
     flash("Run closed", "success")
     return redirect(url_for("view_run", runid=run.id))
@@ -361,8 +366,14 @@ def next_status_for_run(runid):
 def ping_addicts_for_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     # Create Money exchanges to pay for the purchased coffees.
-    events.run_delivered(runid)
-    flash("The coffee addicts in this run have been notified.", "success")
+    try:
+        events.run_delivered(runid)
+    except Exception as e:
+        logging.exception('Error while trying to send notifications.')
+        flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
+            cgi.escape(str(e), quote=True)), "failure")
+    else:
+        flash("The coffee addicts in this run have been notified.", "success")
     return redirect(url_for("view_run", runid=run.id))
 
 
