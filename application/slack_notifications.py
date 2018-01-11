@@ -69,8 +69,12 @@ def process_event(event):
   elif event_type == EventType.RUN_DELIVERED:
     run = Run.query.get(event['run_id'])
     for coffee in Coffee.query.filter_by(run=run):
-      msg = u'Your {} has arrived at {} (thanks to {}!).'.format(coffee.pretty_print(), run.pickup, run.fetcher.name)
-      notify_user(msg, coffee.addict)
+      try:
+        msg = u'Your {} has arrived at {} (thanks to {}!).'.format(coffee.pretty_print(), run.pickup, run.fetcher.name)
+      except:
+        pass
+      else:
+        notify_user(msg, coffee.addict)
 
   elif event_type == EventType.COFFEE_ADDED:
     run = Run.query.get(event['run_id'])
