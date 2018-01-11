@@ -117,7 +117,7 @@ def _filter_coffees(coffee_list):
         except coffeespecs.JavaException as e:
             flash('Failed to parse coffee for {}. Error: {}'.format(
                 cgi.escape(coffee.addict.name), cgi.escape(str(e))), 'failure')
-            logging.exception('Failed to parse coffee: %s.', coffee)
+            logging.exception('Failed to parse coffee: %s for %s', coffee.coffee, coffee.addict.name)
     return ret
 
 
