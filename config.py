@@ -30,6 +30,7 @@ class Config(object):
 class DevConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', SQLALCHEMY_DATABASE_URI)
     SESSION_TYPE = 'sqlalchemy'
 
 
