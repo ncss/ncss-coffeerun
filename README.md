@@ -1,6 +1,6 @@
-#NCSS CoffeeRun by Maddy
+# NCSS CoffeeRun by Maddy
 
-##Running Locally
+## Running Locally
 * Create a virtual environment:
   `virtualenv2 --python=`which python2` ~/.virtualenvs/coffeerun`
 * Activate the virutal enviroment:
@@ -14,7 +14,7 @@
   * coffeebot.py (for the slack bot)
 * Open the browser at localhost:5000
 
-##Running On The Website
+## Running On The Website
 * Push changes to the site using git push heroku master
 * The program is started by this
 * There's no DB migration, manually do any changes before you push the dependent changes
