@@ -289,11 +289,7 @@ def view_activity():
 @app.route("/run/<int:runid>/")
 @login_required
 def view_run(runid):
-    try:
-        run = Run.query.filter_by(id=runid).first_or_404()
-    except coffeespecs.JavaException as e:
-        flash('Something went wrong...')
-        logging.exception('Welp...')
+    run = Run.query.filter_by(id=runid).first_or_404()
     return render_template(
             "viewrun.html",
             run=run,
@@ -304,7 +300,11 @@ def view_run(runid):
 @login_required
 def view_order(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
-    return render_template("orderrun.html", run=run, current_user=current_user)
+    return render_template(
+            "orderrun.html",
+            run=run,
+            coffees=_filter_coffees(run.coffees),
+            current_user=current_user)
 
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
