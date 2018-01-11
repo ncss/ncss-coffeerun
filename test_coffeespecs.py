@@ -172,3 +172,6 @@ class TestPrettyPrint(unittest.TestCase):
 
     c = Coffee('Soy decaf latte with 2 sugars')
     self.assertEquals('Regular Soy Decaf Latte with 2 Sugars', str(c))
+
+if __name__ == '__main__':
+  unittest.main()
