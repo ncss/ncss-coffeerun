@@ -67,6 +67,13 @@ class Coffee(object):
           size = 'Regular'
         tokens.append(size)
         continue
+      if spec == 'strength':
+        strength = self.specs.get(spec, 'Normal')
+        if fuzzy and strength == 'Weak':
+          strength = 'Normal'
+        if strength != 'Normal':
+          tokens.append(strength)
+        continue
       if spec in self.specs:
         if spec == 'sugar':
           # Assume no one charges for sugar
