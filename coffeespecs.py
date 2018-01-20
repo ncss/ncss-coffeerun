@@ -21,6 +21,7 @@ _CAPPUCCINO_EQUIV = {
     'Long Black',
     'Macchiato',
     'Mocha',
+    'Piccolo Latte',
     'Short Black',
 }
 
