@@ -58,10 +58,17 @@ class Coffee(object):
         if self.specs[spec] in _CAPPUCCINO_EQUIV:
           tokens.append('Cappuccino')
           continue
-      if spec == 'size' and spec not in self.specs:
-        tokens.append('Regular')
+      if spec == 'size':
+        # Default to regular size if not specified.
+        size = self.specs.get(spec, 'Regular')
+        # If fuzzy matching, consider small and regular to be the same.
+        if fuzzy and size == 'Small':
+          size = 'Regular'
+        tokens.append(size)
+        continue
       if spec in self.specs:
         if spec == 'sugar':
+          # Assume no one charges for sugar
           continue
         if spec == 'milk':
           # Only output the milk if it's soy
