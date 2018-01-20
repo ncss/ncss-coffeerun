@@ -10,6 +10,21 @@ _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 
 ALLOW_TOKENS = ['with', 'please', 'i would like', 'would like', 'can i have', 'may i have', 'thanks', 'a', 'me', 'order', 'mine', 'for', 'the', 'like', 'want']
 
+# When looking at pricing, we consider the following to be all the
+# same price (the price of a Cappuccino).
+_CAPPUCCINO_EQUIV = {
+    'Cappuccino',
+    'Chai Latte',
+    'Flat White',
+    'Hot Chocolate',
+    'Latte',
+    'Long Black',
+    'Macchiato',
+    'Mocha',
+    'Short Black',
+}
+
+
 class JavaException(Exception):
   pass
 
@@ -40,7 +55,7 @@ class Coffee(object):
     tokens = []
     for spec in _OUT_ORDER:
       if spec == 'type' and fuzzy:
-        if self.specs[spec] in ['Cappuccino', 'Latte', 'Mocha', 'Flat White', 'Short Black', 'Long Black', 'Hot Chocolate', 'Chai Latte', 'Macchiato']:
+        if self.specs[spec] in _CAPPUCCINO_EQUIV:
           tokens.append('Cappuccino')
           continue
       if spec == 'size' and spec not in self.specs:
