@@ -172,6 +172,7 @@ COFFEE_SPECS['type'].add_option('Iced Coffee', [])
 COFFEE_SPECS['type'].add_option('Babyccino', ['Frothaccino', 'babycino'])
 COFFEE_SPECS['type'].add_option('Piccolo Latte', ['Piccolo'])
 COFFEE_SPECS['type'].add_option('Cold Drip', ['cd', 'cold brew', 'cb'])
+COFFEE_SPECS['type'].add_option('Filtered', [])
 COFFEE_SPECS['type'].add_option('Tea', [])
 
 COFFEE_SPECS['iced'] = CoffeeSpec('iced', 'Iced or normal?', required=False, options={
