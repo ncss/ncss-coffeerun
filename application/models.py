@@ -245,22 +245,27 @@ class Coffee(db.Model):
         if arg == "modified":
             return self.modified.strftime("%Y-%m-%d %H:%M:%S")
 
-    def lookup_price(self):
-        price_key = coffeespecs.Coffee.fromJSON(self.coffee).get_price_key()
+    def lookup_price(self, default_price=4.0):
         run = Run.query.filter_by(id=self.runid).first()
         if not run:
             return 0
-        price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
 
-        if price:
-            return price.amount
+        # Lookup all prices at the same time, then determine which one to use.
+        price_keys = coffeespecs.Coffee.fromJSON(self.coffee).get_ordered_price_keys()
+        prices = Price.query.filter(
+                sqlalchemy.sql.and_(
+                    Price.price_key.in_(price_keys),
+                    Price.cafeid == run.cafeid)).all()
 
-        price_key = coffeespecs.Coffee.fromJSON(self.coffee).get_price_key(fuzzy=True)
-        price = Price.query.filter_by(price_key=price_key, cafeid=run.cafeid).first()
-        if price:
-            return price.amount
-
-        return 4.0
+        if not prices:
+            return default_price
+        result_map = {price.price_key:price for price in prices}
+        for price_key in price_keys:
+            if price_key not in result_map:
+                continue
+            return result_map[price_key].amount
+        else:
+            assert False
 
     def pretty_print(self):
         return str(coffeespecs.Coffee.fromJSON(self.coffee))

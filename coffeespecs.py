@@ -86,6 +86,17 @@ class Coffee(object):
         tokens.append(self.specs[spec])
     return ' '.join(tokens)
 
+  def get_ordered_price_keys(self):
+    """Return an ordered list of pricing keys.
+
+    The first thing in the list is the list is the most specific, then
+    later items are less specific.
+    """
+    return [
+        self.get_price_key(),
+        self.get_price_key(fuzzy=True),
+    ]
+
   def add_token(self, token):
     for spec in _PRECEDENCE:
       if COFFEE_SPECS[spec].validate(token) and spec not in self.specs:
