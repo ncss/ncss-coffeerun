@@ -46,7 +46,7 @@ def notify_user(message, user):
   params['text'] = message.encode('utf-8')
   params['channel'] = user.slack_user_id
   resp = requests.get(API_URL, params=params)
-  content = json.loads(resp.content)
+  content = json.loads(resp.content.decode('utf-8'))
   logger.info('Posted to user %s: response:%s, content:%s', user.id, resp.status_code, content)
 
 

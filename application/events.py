@@ -26,5 +26,5 @@ def coffee_added(run_id, coffee_id):
 
 
 def dispatchEvent(payload):
-  from slack_notifications import process_event
+  from .slack_notifications import process_event
   process_event(payload)

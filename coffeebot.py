@@ -13,7 +13,7 @@ from slackclient import SlackClient
 from application import app, db, events
 from application.models import Run, User, Coffee, Event, sydney_timezone_now
 
-from flask.ext import babel
+import flask_babel
 
 import coffeespecs
 import utils
@@ -57,7 +57,7 @@ def list_runs(slackclient, user, channel, match):
     channel.send_message(
         'Run {}: {} is going to {} in {} (at {})'.format(
           run.id, person.name, run.cafe.name,
-          babel.format_timedelta(time_to_run), run.time))
+          flask_babel.format_timedelta(time_to_run), run.time))
 
 
 def order_coffee(slackclient, user, channel, match):

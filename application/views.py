@@ -13,8 +13,8 @@ from flask_mail import Message
 from flask_oauthlib.client import OAuth
 
 from application import app, db, events, lm
-from forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
-from models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
+from .forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
+from .models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
 
 import coffeespecs
 import utils
