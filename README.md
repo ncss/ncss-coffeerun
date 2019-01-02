@@ -2,21 +2,21 @@
 
 ## Running Locally
 * Create a virtual environment:
-  `virtualenv2 --python="$(which python2)" ~/.virtualenvs/coffeerun`
+  `virtualenv --python="$(which python2)" env`
 * Activate the virtual enviroment:
-  `source ~/.virtualenvs/coffeerun/bin/activate`
+  `source env/bin/activate`
 * install requirements:
   `pip install -r requirements/dev.txt`
-* Change application/\_\_init\_\_.py to use the dev config with a sqlite3 database
 * Create the database and tables and a default user with create\_db.py
+  `python2 create_db.py`
 * Run on command line:
-  * run.py (for the web ui)
-  * coffeebot.py (for the slack bot)
-* Open the browser at http://localhost:5000
+  * `python2 run.py` (for the web ui)
+  * `python2 coffeebot.py` (for the slack bot)
+* Open the browser at http://localhost:5000 (note: Use localhost, not 127.0.0.1)
 
 ## Running tests locally
  * Activate the virtual enviroment:
-   `source ~/.virtualenvs/coffeerun/bin/activate`
+   `source env/bin/activate`
  * Run the coffeespec tests:
    `python test_coffeespecs.py`
 
