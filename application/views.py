@@ -257,30 +257,35 @@ def about_faqs():
 
 
 @app.route("/run/")
+@login_required
 def view_all_runs():
     runs = Run.query.order_by(Run.time.desc()).all()
     return render_template("viewallruns.html", runs=runs, current_user=current_user)
 
 
 @app.route("/coffee/")
+@login_required
 def view_all_coffees():
     coffees = Coffee.query.order_by(Coffee.id.desc()).all()
     return render_template("viewallcoffees.html", coffees=coffees, current_user=current_user)
 
 
 @app.route("/cafe/")
+@login_required
 def view_all_cafes():
     cafes = Cafe.query.order_by(Cafe.name).all()
     return render_template("viewallcafes.html", cafes=cafes, current_user=current_user)
 
 
 @app.route("/price/")
+@login_required
 def view_all_prices():
     prices = Price.query.order_by(Price.cafeid, Price.amount).all()
     return render_template("viewallprices.html", prices=prices, current_user=current_user)
 
 
 @app.route("/activity/", methods=["GET"])
+@login_required
 def view_activity():
     events = Event.query.order_by(Event.time.desc()).all()
     return render_template("viewallactivity.html", events=events, current_user=current_user)
@@ -445,6 +450,7 @@ def unpay_for_coffee(coffeeid):
 
 
 @app.route("/user/", methods=["GET"])
+@login_required
 def get_all_users():
     people = User.query.all()
     return render_template("viewallusers.html", people=people, current_user=current_user)
@@ -478,12 +484,14 @@ def view_debts(userid):
 
 
 @app.route("/cafe/<int:cafeid>/", methods=["GET"])
+@login_required
 def view_cafe(cafeid):
     cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
     return render_template("viewcafe.html", cafe=cafe, current_user=current_user)
 
 
 @app.route("/cafe/<int:cafeid>/edit/", methods=["GET", "POST"])
+@login_required
 def edit_cafe(cafeid):
     cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
     form = CafeForm(request.form, obj=cafe)
@@ -635,6 +643,7 @@ def add_coffee(runid=None):
 
 
 @app.route("/_prices_for_run/")
+@login_required
 def prices_for_run():
     logger = logging.getLogger('views.prices_for_run')
     runid = request.args.get("runid", 0, type=int)
@@ -646,6 +655,7 @@ def prices_for_run():
 
 
 @app.route("/cafe/add/", methods=["GET", "POST"])
+@login_required
 def add_cafe():
     form = CafeForm(request.form)
     if request.method == "GET":
@@ -669,6 +679,7 @@ def add_cafe():
 
 @app.route("/price/add/", methods=["GET", "POST"])
 @app.route("/cafe/<int:cafeid>/price/add/", methods=["GET", "POST"])
+@login_required
 def add_cafe_price(cafeid=None):
     form = PriceForm()
     if cafeid:
@@ -707,12 +718,14 @@ def add_cafe_price(cafeid=None):
 
 
 @app.route("/price/<int:priceid>/", methods=["GET"])
+@login_required
 def view_price(priceid):
     price = Price.query.filter_by(id=priceid).first_or_404()
     return render_template("viewprice.html", price=price, current_user=current_user)
 
 
 @app.route("/price/<int:priceid>/edit/", methods=["GET", "POST"])
+@login_required
 def edit_price(priceid):
     price = Price.query.filter_by(id=priceid).first_or_404()
     form = PriceForm(obj=price)
@@ -737,6 +750,7 @@ def edit_price(priceid):
 
 
 @app.route("/price/<int:priceid>/delete/", methods=["GET"])
+@login_required
 def delete_price(priceid):
     price = Price.query.filter_by(id=priceid).first_or_404()
     db.session.delete(price)
@@ -747,6 +761,7 @@ def delete_price(priceid):
 
 
 @app.route("/coffee/<int:coffeeid>/delete/", methods=["GET"])
+@login_required
 def delete_coffee(coffeeid):
     coffee = Coffee.query.filter_by(id=coffeeid).first_or_404()
     db.session.delete(coffee)
@@ -757,6 +772,7 @@ def delete_coffee(coffeeid):
 
 
 @app.route("/cafe/<int:cafeid>/delete/", methods=["GET"])
+@login_required
 def delete_cafe(cafeid):
     cafe = Cafe.query.filter_by(id=cafeid).first_or_404()
     db.session.delete(cafe)
