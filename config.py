@@ -36,7 +36,6 @@ class DevConfig(Config):
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///coffeerun-test.db"
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-test.db')
 
 
