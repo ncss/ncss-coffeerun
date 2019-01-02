@@ -17,7 +17,8 @@ app.config.from_object(
 Bootstrap(app)
 
 babel = Babel(app)
-Session(app)
+session = Session(app)
+session.app.session_interface.db.create_all()
 
 @babel.timezoneselector
 def _timezone():

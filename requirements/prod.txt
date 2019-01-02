@@ -3,3 +3,5 @@
 # Tested with the 2.7 series. If you upgrade the major version, then run a
 # quick smoke test.
 psycopg2>=2.7.3.2,<2.8
+
+gunicorn==19.9
