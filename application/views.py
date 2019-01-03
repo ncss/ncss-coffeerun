@@ -59,7 +59,7 @@ def get_user_from_slack_token():
         flash('Error retrieving user info')
         return None
 
-    content = json.loads(resp.content)
+    content = json.loads(resp.content.decode('utf-8'))
     if not content['ok']:
         logger.info('Failed to get user from slack: %s', content)
         flash('Error retrieving user info: ' + content['error'])
