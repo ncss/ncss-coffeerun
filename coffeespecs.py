@@ -8,7 +8,23 @@ _PRECEDENCE = ['size', 'type', 'milk', 'strength', 'iced', 'decaf', 'sugar']
 
 _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 
-ALLOW_TOKENS = ['with', 'please', 'i would like', 'would like', 'can i have', 'may i have', 'thanks', 'a', 'me', 'order', 'mine', 'for', 'the', 'like', 'want']
+ALLOW_TOKENS = {
+    'a',
+    'can i have',
+    'for',
+    'i would like',
+    'like',
+    'may i have',
+    'me',
+    'mine',
+    'order',
+    'please',
+    'thanks',
+    'the',
+    'want',
+    'with',
+    'would like',
+}
 
 # When looking at pricing, we consider the following to be all the
 # same price (the price of a Cappuccino).
