@@ -268,5 +268,5 @@ COFFEE_SPECS['milk'] = CoffeeSpec('milk', 'What type of milk?', required=False, 
     'Fullcream': ['normal'],
     'Skim': ['skinny', 'lite', 'light', 'sk'],
     'Soy': ['y'],
-    'Lactose Free': ['lf'],
+    'Lactose Free': [],
 })
