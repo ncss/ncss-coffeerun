@@ -13,7 +13,7 @@ from flask_mail import Message
 from flask_oauthlib.client import OAuth
 
 from application import app, db, events, lm
-from .forms import CoffeeForm, RunForm, CafeForm, PriceForm, TeacherForm
+from .forms import CoffeeForm, RunForm, CafeForm, PriceForm
 from .models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
 
 import coffeespecs
@@ -189,43 +189,6 @@ def authorized():
 def get_slack_token():
     token = session.get('slack_token')
     return token
-
-
-@app.route("/teacher/register/", methods=["GET","POST"])
-def register_teachers():
-    form = TeacherForm()
-    if request.method == "GET":
-        return render_template('teacherlogin.html', form=form, register=True)
-    if request.method == "POST" and form.validate_on_submit():
-        user = User()
-        user.name = form.data["name"]
-        user.email = form.data["email"]
-        user.teacher = True
-        db.session.add(user)
-        db.session.commit()
-        write_to_events("created", "user", user.id, user)
-        login_user(user)
-        return redirect(url_for("home"))
-    else:
-        for field, errors in form.errors.items():
-            flash("Error in %s: %s" % (field, "; ".join(errors)), "danger")
-        return render_template("teacherlogin.html", form=form, register=True)
-
-@app.route("/teacher/login/", methods=["GET", "POST"])
-def login_teachers():
-    form = TeacherForm()
-    if request.method == "GET":
-        return render_template('teacherlogin.html', form=form, register=False)
-    if request.method == "POST" and form.validate_on_submit():
-        user = db.session.query(User).filter_by(name=form.data["name"]).first()
-        if user and login_user(user):
-            flash("You are now logged in.", "success")
-            return redirect(request.args.get("next") or url_for("home"))
-        else:
-            flash("Login unsuccessful.", "danger")
-            return render_template('teacherlogin.html', form=form, register=False)
-    else:
-        return render_template('teacherlogin.html', form=form, register=False)
 
 
 @app.route("/login/", methods=["GET","POST"])
@@ -427,28 +390,6 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
 
 
-@app.route("/coffee/<int:coffeeid>/pay/", methods=["GET"])
-@login_required
-def pay_for_coffee(coffeeid):
-    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
-    coffee.paid = True
-    db.session.commit()
-    write_to_events("updated", "coffee", coffee.id)
-    flash("Coffee edited", "success")
-    return redirect(url_for("view_coffee", coffeeid=coffee.id))
-
-
-@app.route("/coffee/<int:coffeeid>/unpay/", methods=["GET"])
-@login_required
-def unpay_for_coffee(coffeeid):
-    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
-    coffee.paid = False
-    db.session.commit()
-    write_to_events("updated", "coffee", coffee.id)
-    flash("Coffee edited", "success")
-    return redirect(url_for("view_coffee", coffeeid=coffee.id))
-
-
 @app.route("/user/", methods=["GET"])
 @login_required
 def get_all_users():
@@ -538,6 +479,7 @@ def add_run(cafeid=None):
         t += datetime.timedelta(minutes=15)
         t += datetime.timedelta(minutes=15 - (t.minute % 15))  # truncate up to the nearest 15 minutes
         form.time.data = t
+        form.is_open.data = True
 
         return render_template("runform.html", form=form, formtype="Add", current_user=current_user)
 
@@ -550,6 +492,7 @@ def add_run(cafeid=None):
         run.cafeid = form.data["cafeid"]
         run.pickup = form.data["pickup"]
         run.modified = sydney_timezone_now()
+        run.is_open = form.data["is_open"]
 
         db.session.add(run)
         db.session.commit()
@@ -560,12 +503,6 @@ def add_run(cafeid=None):
             flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
                 cgi.escape(str(e), quote=True)), "failure")
         write_to_events("created", "run", run.id)
-        if form.data["addpending"]:
-            coffees = get_coffees_for_time(sydney_timezone_now())
-            for coffee in coffees:
-                coffee.runid = run.id
-                db.session.add(coffee)
-            db.session.commit()
         flash("Run added", "success")
         return redirect(url_for("view_run", runid=run.id))
     else:
@@ -605,8 +542,6 @@ def add_coffee(runid=None):
 
     if request.method == "GET":
         form.person.data = current_user.id
-        form.starttime.data = sydney_timezone_now()
-        form.endtime.data = sydney_timezone_now()
         return render_template("coffeeform.html", form=form, formtype="Add", current_user=current_user)
 
     if form.validate_on_submit():
@@ -633,8 +568,6 @@ def add_coffee(runid=None):
                 flash('Error occurred while trying to send notifications. Please tell Maddy, Elmo, or Katie.\n{}'.format(
                     cgi.escape(str(e), quote=True)), "failure")
         flash("Coffee order added", "success")
-        if form.data["recurring"]:
-            recur_coffee(coffee, form.data["days"])
         return redirect(url_for("view_coffee", coffeeid=coffee.id))
     else:
         for field, errors in form.errors.items():
@@ -795,29 +728,6 @@ def get_person(name):
         db.session.commit()
         write_to_events("created", "user", person.id, person)
     return person
-
-
-def recur_coffee(coffee, days):
-    for i in range(days):
-        newcoffee = Coffee(coffee.pretty_print())
-        newcoffee.addict = coffee.addict
-        newcoffee.person = coffee.person
-        newcoffee.price = coffee.price
-        starttime = coffee.starttime
-        starttime += datetime.timedelta(days=i+1)
-        newcoffee.starttime = starttime
-        endtime = coffee.endtime
-        endtime += datetime.timedelta(days=i+1)
-        newcoffee.endtime = endtime
-        db.session.add(newcoffee)
-        db.session.commit()
-        write_to_events("created", "coffee", newcoffee.id)
-
-
-def get_coffees_for_time(time):
-    coffees = Coffee.query.filter(Coffee.endtime >= time) \
-        .filter(Coffee.starttime <= time).filter(Coffee.expired==False).all()
-    return coffees
 
 
 def write_to_events(action, objtype, objid, user=None):

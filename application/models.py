@@ -91,58 +91,33 @@ class User(db.Model):
     def money_owed(self):
         coffee_money_owed = sqlalchemy.sql.select(
                 [sqlalchemy.sql.functions.sum(Coffee.price).label('total')],
-                sqlalchemy.sql.and_(
-                    Run.person == self.id,
-                    Coffee.paid != True),
+                Run.person == self.id,
                 from_obj=sqlalchemy.sql.join(Run, Coffee))
-
-        other_money_owed = sqlalchemy.sql.select(
-                [sqlalchemy.sql.functions.sum(MoneyExchange.amount).label('total')],
-                    MoneyExchange.payeeid==self.id,
-                from_obj=MoneyExchange)
 
         # NOTE: We may end up performing a sum of 0 rows... Which is
         # Null/None. This is why we need to do 'or 0'.
         amount = 0
         amount += (
                 db.engine.execute(coffee_money_owed).first().total or 0)
-        amount += (
-                db.engine.execute(other_money_owed).first().total or 0)
         return amount
 
     def money_owing(self):
         coffee_money_owing = sqlalchemy.sql.select(
                 [sqlalchemy.sql.functions.sum(Coffee.price).label('total')],
-                sqlalchemy.sql.and_(
-                    Coffee.person == self.id,
-                    Coffee.paid != True),
+                Coffee.person == self.id,
                 from_obj=Coffee)
-
-        other_money_owing = sqlalchemy.sql.select(
-                [sqlalchemy.sql.functions.sum(MoneyExchange.amount).label('total')],
-                    MoneyExchange.payerid==self.id,
-                from_obj=MoneyExchange)
 
         # NOTE: We may end up performing a sum of 0 rows... Which is
         # Null/None. This is why we need to do 'or 0'.
         amount = 0
         amount += (
                 db.engine.execute(coffee_money_owing).first().total or 0)
-        amount += (
-                db.engine.execute(other_money_owing).first().total or 0)
         return amount
 
 
 class SlackTeamAccessToken(db.Model):
     team_id = db.Column(db.String, primary_key=True)
     access_token = db.Column(db.String)
-
-
-class MoneyExchange(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    payerid = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    payeeid = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    amount = db.Column(db.Integer)
 
 
 class Run(db.Model):
@@ -218,7 +193,6 @@ class Coffee(db.Model):
     addict = db.relationship("User", backref=db.backref("coffees", order_by="Coffee.id"))
 
     price = db.Column(db.Float)  # In Dollars
-    paid = db.Column(db.Boolean, default=False)
 
     starttime = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
     endtime = db.Column(UTCOnlyDateTime(timezone=False), default=sydney_timezone_now)
@@ -282,21 +256,6 @@ class Coffee(db.Model):
         }
 
 
-class RegistrationID(db.Model):
-    __tablename__ = "RegistrationIDs"
-    userid = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
-    regid = db.Column(db.String, primary_key=True)
-
-    user = db.relationship("User", backref=db.backref("regids", order_by="RegistrationID.regid"))
-
-    def __init__(self, userid, regid):
-        self.userid = userid
-        self.regid = regid
-
-    def __repr__(self):
-        return "<RegistrationID(%d,'%s')>" % (self.userid, self.regid)
-
-
 class Cafe(db.Model):
     __tablename__ = "Cafes"
     id = db.Column(db.Integer, primary_key=True)
@@ -327,6 +286,7 @@ class Price(db.Model):
 
     def __repr__(self):
         return "<Price(%d,'%s','%f')>" % (self.cafeid, self.price_key, self.amount)
+
 
 class Event(db.Model):
     __tablename__ = "Events"

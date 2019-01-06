@@ -21,20 +21,6 @@ class CoffeeForm(FlaskForm):
     coffee = TextField("Coffee", [validators.Required()])
     price = FloatField("Price", default=0)
     runid = SelectField("Run", coerce=int)
-    starttime = wtforms.ext.dateutil.fields.DateTimeField(
-            "Start Time",
-            [validators.Required()],
-            # Ensure the time has a timezone attached (note numerical format
-            # works, the name does not).
-            display_format="%Y/%m/%d %H:%M %z")
-    endtime = wtforms.ext.dateutil.fields.DateTimeField(
-            "End Time",
-            [validators.Required()],
-            # Ensure the time has a timezone attached (note numerical format
-            # works, the name does not).
-            display_format="%Y/%m/%d %H:%M %z")
-    recurring = BooleanField("Recurring", default=False)
-    days = IntegerField("Days To Recur", default=0)
 
 
 class RunForm(FlaskForm):
@@ -48,8 +34,7 @@ class RunForm(FlaskForm):
 
     cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")
-    is_open = BooleanField("Currently accepting coffees", default=True)
-    addpending = BooleanField("Add All Pending Coffees", default=True)
+    is_open = BooleanField("Currently accepting coffees")
 
 
 class CafeForm(FlaskForm):
@@ -61,8 +46,3 @@ class PriceForm(FlaskForm):
     cafeid = SelectField("Cafe", coerce=int)
     price_key = TextField("Coffee (e.g. large cap)")
     amount = FloatField("Amount", [validators.Required()])
-
-
-class TeacherForm(FlaskForm):
-    name = TextField("Username", [validators.Required()])
-    email = TextField("Email")
