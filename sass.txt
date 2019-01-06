@@ -5,12 +5,6 @@ It's not Autumn, this is not America and I am not a Starbucks.
 I don't see any knee-high uggs or yoga pants, so no.
 The spice must flow!
 
-@@@ .*decaf
-Clearly you need less sleep.
-What's the point of drinking coffee then??
-Well... I guess it had better taste good then.
-mutter... waste of good coffee beans... mutter...
-
 @@@ :?\s*(hi|hello|g'day|greetings|hey)
 Hey
 Yo.
