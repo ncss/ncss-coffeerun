@@ -27,121 +27,188 @@ class TestParser(unittest.TestCase):
   def test_parse(self):
     c = Coffee('Large Cap')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Large')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Large',
+        })
 
     c = Coffee('LC')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Large')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Large',
+        })
 
     c = Coffee('SC')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Small')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Small',
+        })
 
     c = Coffee('Large Cap 2 Sugars')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Large')
-    self.assertEqual(c.specs['sugar'], '2 Sugars')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Large',
+        'sugar': '2 Sugars',
+        })
 
     c = Coffee('Small strong cap')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Small')
-    self.assertEqual(c.specs['strength'], 'Extra-shot')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Small',
+        'strength': 'Extra-shot',
+        })
 
     c = Coffee('Small doubleshot cap')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Small')
-    self.assertEqual(c.specs['strength'], 'Extra-shot')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Small',
+        'strength': 'Extra-shot',
+        })
 
     c = Coffee('Small Latte')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['size'], 'Small')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'size': 'Small',
+        })
 
     c = Coffee('SL')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['size'], 'Small')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'size': 'Small',
+        })
 
     c = Coffee('RegL')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['size'], 'Regular')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'size': 'Regular',
+        })
 
     c = Coffee('LL')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['size'], 'Large')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'size': 'Large',
+        })
 
     c = Coffee('CL')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Large')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Large',
+        })
 
     c = Coffee('CL 2S')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['size'], 'Large')
-    self.assertEqual(c.specs['sugar'], '2 Sugars')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Cappuccino',
+        'size': 'Large',
+        'sugar': '2 Sugars',
+        })
 
     c = Coffee('Large Iced Latte')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['size'], 'Large')
-    self.assertEqual(c.specs['iced'], 'Iced')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'size': 'Large',
+        'iced': 'Iced',
+        })
 
     c = Coffee('Large Flat white')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Flat White')
-    self.assertEqual(c.specs['size'], 'Large')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Flat White',
+        'size': 'Large',
+        })
 
     c = Coffee('Large FW 3 Sugars')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Flat White')
-    self.assertEqual(c.specs['size'], 'Large')
-    self.assertEqual(c.specs['sugar'], '3 Sugars')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Flat White',
+        'size': 'Large',
+        'sugar': '3 Sugars',
+        })
 
     c = Coffee('Regular Flat White')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Flat White')
-    self.assertEqual(c.specs['size'], 'Regular')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Flat White',
+        'size': 'Regular',
+        })
 
     c = Coffee('Soy decaf latte with 2 sugars')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Latte')
-    self.assertEqual(c.specs['sugar'], '2 Sugars')
-    self.assertEqual(c.specs['decaf'], 'Decaf')
-    self.assertEqual(c.specs['milk'], 'Soy')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Latte',
+        'sugar': '2 Sugars',
+        'decaf': 'Decaf',
+        'milk': 'Soy',
+        })
 
     c = Coffee('yfw')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Flat White')
-    self.assertEqual(c.specs['milk'], 'Soy')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Flat White',
+        'milk': 'Soy',
+        })
 
     c = Coffee('Soy Iced Coffee')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Iced Coffee')
-    self.assertEqual(c.specs['milk'], 'Soy')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Iced Coffee',
+        'milk': 'Soy',
+        })
 
     c = Coffee('Skim Iced Chocolate')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Iced Chocolate')
-    self.assertEqual(c.specs['milk'], 'Skim')
+    self.assertEqual(c.specs,
+        {
+        'type': 'Iced Chocolate',
+        'milk': 'Skim',
+        })
 
     c = Coffee('Lactose Free Cap')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Cappuccino')
-    self.assertEqual(c.specs['milk'], 'Lactose Free')
+    self.assertEqual(c.specs,
+        {
+          'type': 'Cappuccino',
+          'milk': 'Lactose Free',
+        })
 
     c = Coffee('lfw')
     self.assertTrue(c.validate())
-    self.assertEqual(c.specs['type'], 'Flat White')
-
+    self.assertEqual(c.specs,
+        {
+          'type': 'Flat White',
+          'size': 'Large',
+        })
+ 
 
 class TestPrettyPrint(unittest.TestCase):
 
