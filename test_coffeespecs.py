@@ -133,6 +133,16 @@ class TestParser(unittest.TestCase):
     self.assertEqual(c.specs['type'], 'Iced Chocolate')
     self.assertEqual(c.specs['milk'], 'Skim')
 
+    c = Coffee('Lactose Free Cap')
+    self.assertTrue(c.validate())
+    self.assertEqual(c.specs['type'], 'Cappuccino')
+    self.assertEqual(c.specs['milk'], 'Lactose Free')
+
+    c = Coffee('lf Cap')
+    self.assertTrue(c.validate())
+    self.assertEqual(c.specs['type'], 'Cappuccino')
+    self.assertEqual(c.specs['milk'], 'Lactose Free')
+
 
 class TestPrettyPrint(unittest.TestCase):
 

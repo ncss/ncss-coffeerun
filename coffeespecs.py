@@ -97,7 +97,7 @@ class Coffee(object):
           continue
         if spec == 'milk':
           # Only output the milk if it's soy
-          if self.specs[spec] == 'Soy':
+          if self.specs[spec] in {'Soy', 'Lactose Free'}:
             tokens.append('Soy')
           continue
         tokens.append(self.specs[spec])
@@ -268,4 +268,5 @@ COFFEE_SPECS['milk'] = CoffeeSpec('milk', 'What type of milk?', required=False, 
     'Fullcream': ['normal'],
     'Skim': ['skinny', 'lite', 'light', 'sk'],
     'Soy': ['y'],
+    'Lactose Free': ['lf'],
 })

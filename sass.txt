@@ -15,6 +15,9 @@ Are you ok?
 'sup?
 G'day
 
+@@@ :?.*[lL]actose.*[fF]ree
+Hey, just a warning. Coffeebot does not know which places have Lactose Free milk. If this place does not this milk, we won't order this coffee (sorry).
+
 @@@ .*hot(?! +cho.*)
 Of course it's hot!
 
