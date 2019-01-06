@@ -11,6 +11,7 @@ _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 ALLOW_TOKENS = {
     'a',
     'can i have',
+    'can i please',
     'for',
     'i would like',
     'like',
