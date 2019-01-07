@@ -69,10 +69,12 @@ class Coffee(object):
           return
       request = request.strip()
 
-  def get_price_key(self, fuzzy=False):
+  def get_price_key(self, fuzzy_fields=None):
+    if fuzzy_fields is None:
+      fuzzy_fields = {}
     tokens = []
     for spec in _OUT_ORDER:
-      if spec == 'type' and fuzzy:
+      if spec == 'type' and spec in fuzzy_fields:
         if self.specs[spec] in _CAPPUCCINO_EQUIV:
           tokens.append('Cappuccino')
           continue
@@ -80,13 +82,13 @@ class Coffee(object):
         # Default to regular size if not specified.
         size = self.specs.get(spec, 'Regular')
         # If fuzzy matching, consider small and regular to be the same.
-        if fuzzy and size == 'Small':
+        if spec in fuzzy_fields and size == 'Small':
           size = 'Regular'
         tokens.append(size)
         continue
       if spec == 'strength':
         strength = self.specs.get(spec, 'Normal')
-        if fuzzy and strength == 'Weak':
+        if spec in fuzzy_fields and strength == 'Weak':
           strength = 'Normal'
         if strength != 'Normal':
           tokens.append(strength)
@@ -111,7 +113,9 @@ class Coffee(object):
     """
     return [
         self.get_price_key(),
-        self.get_price_key(fuzzy=True),
+        self.get_price_key(fuzzy_fields={'type'}),
+        self.get_price_key(fuzzy_fields={'type', 'size'}),
+        self.get_price_key(fuzzy_fields={'type', 'size', 'strength'}),
     ]
 
   def add_token(self, token):

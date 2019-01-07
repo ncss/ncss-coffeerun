@@ -1,2 +1,5 @@
 # Just the base requirements
 -r base.txt
+
+# To get "simple" flag parsing for the reprice script
+absl-py
