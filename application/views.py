@@ -137,6 +137,7 @@ def team_auth_start():
 @app.route('/team-auth-done/')
 def team_auth_done():
   resp = slack_team_auth.authorized_response()
+  logging.info('team auth completed, got response: %r', resp)
   if resp is None:
     return 'Access denied: reason=%s error=%s' % (
         request.args['error'],
@@ -145,16 +146,25 @@ def team_auth_done():
   if not resp.get('ok', False):
     return 'There was an error: ' + resp['error']
 
+  # Things we may care about in the response:
+  # - access_token: The token needed for us to talk to slack
+  # - user_id: The user id of who performed the team-auth (aka, who added us to
+  #   the workspace)..
+  # - team_id: The team id of the workspace
+  # - team_name: The "friendly" name of the workspace
   access_token = resp['access_token']
   # Store access token in the DB
-  access_token_entry = SlackTeamAccessToken.query.get(app.config['SLACK_TEAM_ID'])
+
+  access_token_entry = SlackTeamAccessToken.query.get(resp['team_id'])
   if access_token_entry is None:
-      access_token_entry = SlackTeamAccessToken()
-      access_token_entry.team_id = app.config['SLACK_TEAM_ID']
+    access_token_entry = SlackTeamAccessToken()
+    access_token_entry.team_id = resp['team_id']
+    access_token_entry.workspace_name = resp['team_name']
+    db.session.add(access_token_entry)
   access_token_entry.access_token = access_token
-  db.session.add(access_token_entry)
   db.session.commit()
   return 'Access token stored in db'
+
 
 @app.route("/slacklogin/")
 def slacklogin():
