@@ -6,6 +6,7 @@ import logging
 import pprint
 import random
 import re
+import threading
 import time
 
 from slackclient import SlackClient
@@ -283,6 +284,7 @@ class WrappedSlackBot:
 
 
 def main():
+  threads = []
   for slack_workspace in models.SlackTeamAccessToken.query.filter(
       models.SlackTeamAccessToken.coffee_bot_slack_access_token != None,
   ):
@@ -291,7 +293,15 @@ def main():
         slack_workspace.coffee_bot_slack_user_id,
         slack_workspace.team_id,
     )
-    sb.loop(sb.client)
+    threads.append(
+        threading.Thread(
+          target=sb.loop, args=(sb.client,)))
+  # Start all threads
+  for thread in threads:
+    thread.start()
+  # Wait for all threads to finish.
+  for thread in threads:
+    thread.join()
 
 
 if __name__ == '__main__':
