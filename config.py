@@ -20,8 +20,6 @@ class Config(object):
     MAIL_DEFAULT_SENDER = ("NCSS Coffeebot", "ncsscoffeerun@gmail.com")
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
-    SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN')
-    SLACK_BOT_USER_ID = os.environ.get('SLACK_BOT_USER_ID')
     SLACK_TEAM_ID = os.environ.get('SLACK_TEAM_ID')
     SLACK_OAUTH_CLIENT_ID = os.environ.get('SLACK_OAUTH_CLIENT_ID')
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')

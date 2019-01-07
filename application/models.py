@@ -117,7 +117,27 @@ class User(db.Model):
 
 class SlackTeamAccessToken(db.Model):
     team_id = db.Column(db.String, primary_key=True)
+    # OAuth token granted to us. This token is used to:
+    #  - Log people into the coffeerun site (identity), and
+    #  - Post notifications to the #coffee channel.
     access_token = db.Column(db.String)
+
+    # The name of the workspace we were added to.
+    workspace_name = db.Column(db.String)
+
+    # The channel id to post read messages from, and to reply to.
+    coffee_slack_channel = db.Column(db.String, nullable=True)
+    # OAuth token for the chat bot (actually a different slack app to the one
+    # above).
+    coffee_bot_slack_access_token = db.Column(db.String, nullable=True)
+    coffee_bot_slack_user_id = db.Column(db.String, nullable=True)
+
+    # Should we send announcements to this slack workspace (broadcasts/etc).
+    wants_slack_notifications = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Config to ensure that we do not allow people to accidently sign in from a
+    # slack workspace that is not associated with NCSS.
+    allow_login = db.Column(db.Boolean, default=False, nullable=False)
 
 
 class Run(db.Model):

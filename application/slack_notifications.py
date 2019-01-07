@@ -1,8 +1,10 @@
-import logging
+import collections
 import json
+import logging
 import requests
+import typing
 
-from application import app, db
+from application import app, db, models
 from application.models import Run, User, Coffee, SlackTeamAccessToken
 from application.events import EventType
 
@@ -21,50 +23,69 @@ class SlackNotificationException(Exception):
     pass
 
 
-def get_params():
-  params = dict(DEFAULT_PARAMS)
-  token = SlackTeamAccessToken.query.get(app.config['SLACK_TEAM_ID'])
-  if not token or not token.access_token :
+class SlackDetails(collections.namedtuple('SlackDetails', ['token', 'team_id'])):
+  pass
+
+
+class SlackNotifier:
+  def __init__(self):
+    self._workspaces = {}
+    for workspace in models.SlackTeamAccessToken.query.filter(
+        models.SlackTeamAccessToken.wants_slack_notifications == True,
+        models.SlackTeamAccessToken.access_token != None,
+    ):
+      details = SlackDetails(
+          workspace.access_token, workspace.team_id)
+      self._workspaces[details.team_id] = details
+
+  def get_params_for_workspace(self, team_id: typing.Text):
+    params = dict(DEFAULT_PARAMS)
+    details = self._workspaces.get(team_id)
+    if not details or not details.token:
       raise SlackNotificationException(
-              'Access token for team {} is not configured.'.format(
-                  app.config['SLACK_TEAM_ID']))
-  params['token'] = token.access_token
-  return params
+          'Access token for team {} is not configured.'.format(team_id))
+    params['token'] = details.token
+    return params
 
+  def notify_channel(self, message: typing.Text, team_id: typing.Text):
+    params = self.get_params_for_workspace(team_id)
+    params['text'] = message.encode('utf-8')
+    params['channel'] = '#coffee'
+    resp = requests.get(API_URL, params=params)
+    content = json.loads(resp.content.decode('utf-8'))
+    logger.info('Posted to channel: response:%s, content:%s', resp.status_code, content)
 
-def notify_channel(message):
-  params = get_params()
-  params['text'] = message.encode('utf-8')
-  params['channel'] = '#coffee'
-  resp = requests.get(API_URL, params=params)
-  content = json.loads(resp.content)
-  logger.info('Posted to channel: response:%s, content:%s', resp.status_code, content)
+  def notify_channels(self, message: typing.Text):
+    for team_id in self._workspaces:
+      self.notify_channel(message, team_id)
 
-
-def notify_user(message, user):
-  params = get_params()
-  params['text'] = message.encode('utf-8')
-  params['channel'] = user.slack_user_id
-  resp = requests.get(API_URL, params=params)
-  content = json.loads(resp.content.decode('utf-8'))
-  logger.info('Posted to user %s: response:%s, content:%s', user.id, resp.status_code, content)
+  def notify_single_user(self, message: typing.Text, user: models.User):
+    assert user.slack_team_id is not None
+    params = self.get_params_for_workspace(user.slack_team_id)
+    params['text'] = message.encode('utf-8')
+    params['channel'] = user.slack_user_id
+    resp = requests.get(API_URL, params=params)
+    content = json.loads(resp.content.decode('utf-8'))
+    logger.info('Posted to user %s: response:%s, content:%s', user.id, resp.status_code, content)
 
 
 def process_event(event):
   '''
   Events come as dictionaries in the form {type: TYPE_ENUM, <additional type-specific info>}
   '''
+  notifier = SlackNotifier()
+
   event_type = event['type']
 
   if event_type == EventType.RUN_CREATED:
     run = Run.query.get(event['run_id'])
     msg = u'<!channel> Want a coffee? {} is making a run at {} (pickup: {}).'.format(run.fetcher.get_slack_mention(), run.prettyprint(), run.pickup)
-    notify_channel(msg)
+    notifier.notify_channels(msg)
 
   elif event_type == EventType.RUN_CLOSED:
     run = Run.query.get(event['run_id'])
     msg = u'No more coffees can be added to {}\'s run. (pickup will be at: {}).'.format(run.fetcher.get_slack_mention(), run.pickup)
-    notify_channel(msg)
+    notifier.notify_channels(msg)
 
   elif event_type == EventType.RUN_DELIVERED:
     run = Run.query.get(event['run_id'])
@@ -74,11 +95,11 @@ def process_event(event):
       except:
         pass
       else:
-        notify_user(msg, coffee.addict)
+        notifier.notify_single_user(msg, coffee.addict)
 
   elif event_type == EventType.COFFEE_ADDED:
     run = Run.query.get(event['run_id'])
     coffee = Coffee.query.get(event['coffee_id'])
     msg = u'{} added a {} to your run.'.format(coffee.addict.name, coffee.pretty_print())
 
-    notify_user(msg, run.fetcher)
+    notifier.notify_single_user(msg, run.fetcher)
