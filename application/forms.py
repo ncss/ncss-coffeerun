@@ -8,12 +8,10 @@ See: http://flask.pocoo.org/docs/patterns/wtforms/
 
 """
 
-import datetime
-import pytz
-
 from flask_wtf import FlaskForm
-from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, BooleanField, DecimalField
-import wtforms.ext.dateutil.fields
+
+from wtforms import BooleanField, DecimalField, SelectField, TextField, validators
+from wtforms.ext.dateutil.fields import DateTimeField
 
 
 class CoffeeForm(FlaskForm):
@@ -25,12 +23,12 @@ class CoffeeForm(FlaskForm):
 
 class RunForm(FlaskForm):
     person = SelectField("Person", coerce=int)
-    time = wtforms.ext.dateutil.fields.DateTimeField(
-            "Time of Run",
-            [validators.Required()],
-            # Ensure the time has a timezone attached (note numerical format
-            # works, the name does not).
-            display_format="%Y/%m/%d %H:%M %z")
+    time = DateTimeField(
+        "Time of Run",
+        [validators.Required()],
+        # Ensure the time has a timezone attached (note numerical format
+        # works, the name does not).
+        display_format="%Y/%m/%d %H:%M %z")
 
     cafeid = SelectField("Cafe", coerce=int)
     pickup = TextField("Pickup Location")

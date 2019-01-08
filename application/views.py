@@ -1,23 +1,27 @@
-
 import cgi
 import datetime
 import itertools
 import json
 import logging
-import pytz
-import requests
-
-from flask import render_template, flash, redirect, session, url_for, request, jsonify
-from flask_login import login_required, login_user, current_user, logout_user
-from flask_mail import Message
-from flask_oauthlib.client import OAuth
 
 from application import app, db, events, lm
-from .forms import CoffeeForm, RunForm, CafeForm, PriceForm
-from .models import User, Run, Coffee, Cafe, Price, Event, SlackTeamAccessToken, sydney_timezone_now, sydney_timezone
+from application.forms import CafeForm, CoffeeForm, PriceForm, RunForm
+from application.models import Cafe, Coffee, Event, Price, Run, SlackTeamAccessToken, User, sydney_timezone, sydney_timezone_now
 
 import coffeespecs
+
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
+
+from flask_login import current_user, login_required, login_user, logout_user
+
+from flask_oauthlib.client import OAuth
+
+import pytz
+
+import requests
+
 import utils
+
 
 oauth = OAuth(app)
 
@@ -38,8 +42,8 @@ slack_team_auth = oauth.remote_app(
     consumer_key=app.config['SLACK_OAUTH_CLIENT_ID'],
     consumer_secret=app.config['SLACK_OAUTH_CLIENT_SECRET'],
     request_token_params={
-      'scope': 'chat:write:bot incoming-webhook',
-###      'team': app.config['SLACK_TEAM_ID'],
+        'scope': 'chat:write:bot incoming-webhook',
+        # 'team': app.config['SLACK_TEAM_ID'],
     },
     base_url='https://slack.com/api/',
     request_token_url=None,
@@ -52,6 +56,7 @@ slack_team_auth = oauth.remote_app(
 @lm.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
 
 def get_user_from_slack_token():
     logger = logging.getLogger('views.get_user_from_slack_token')
@@ -91,11 +96,12 @@ def _sort_coffees(coffees):
     # This is a giant hack to group the coffees together, sorted by the
     # arbitary ordering below.
     coffees = list(coffees)
-    logger = logging.getLogger('sort_coffees')
+
     def _normalize_coffee_spec(coffee_model):
         coffee_spec = json.loads(coffee_model.coffee)
         coffee_spec['size'] = coffee_spec.get('size', 'Regular')
         return coffee_spec
+
     def _key_for_coffee(coffee_model):
         coffee_spec = _normalize_coffee_spec(coffee_model)
         # XXX: Giant hack to deal with the fact that some caffes only have 2 sizes.
@@ -104,6 +110,7 @@ def _sort_coffees(coffees):
         SPEC_ORDERING = ['size', 'iced', 'type', 'decaf', 'strength', 'milk', 'sugar']
         spec_result = tuple(coffee_spec.get(spec, '') for spec in SPEC_ORDERING)
         return spec_result
+
     coffees.sort(key=_key_for_coffee)
 
     return ((group_key, list(group_iter))
@@ -134,49 +141,49 @@ def home():
 
 @app.route('/team-auth/')
 def team_auth_start():
-  return slack_team_auth.authorize(callback=url_for('team_auth_done', _external=True))
+    return slack_team_auth.authorize(callback=url_for('team_auth_done', _external=True))
 
 
 @app.route('/team-auth-done/')
 def team_auth_done():
-  resp = slack_team_auth.authorized_response()
-  logging.info('team auth completed, got response: %r', resp)
-  if resp is None:
-    return 'Access denied: reason=%s error=%s' % (
-        request.args['error'],
-        request.args['error_description']
-    )
-  if not resp.get('ok', False):
-    return 'There was an error: ' + resp['error']
+    resp = slack_team_auth.authorized_response()
+    logging.info('team auth completed, got response: %r', resp)
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+                request.args['error'],
+                request.args['error_description']
+        )
+    if not resp.get('ok', False):
+        return 'There was an error: ' + resp['error']
 
-  # Things we may care about in the response:
-  # - access_token: The token needed for us to talk to slack
-  # - user_id: The user id of who performed the team-auth (aka, who added us to
-  #   the workspace)..
-  # - team_id: The team id of the workspace
-  # - team_name: The "friendly" name of the workspace
-  access_token = resp['access_token']
-  # Store access token in the DB
+    # Things we may care about in the response:
+    # - access_token: The token needed for us to talk to slack
+    # - user_id: The user id of who performed the team-auth (aka, who added us to
+    #     the workspace)..
+    # - team_id: The team id of the workspace
+    # - team_name: The "friendly" name of the workspace
+    access_token = resp['access_token']
+    # Store access token in the DB
 
-  access_token_entry = SlackTeamAccessToken.query.get(resp['team_id'])
-  if access_token_entry is None:
-    access_token_entry = SlackTeamAccessToken()
-    access_token_entry.team_id = resp['team_id']
-    access_token_entry.workspace_name = resp['team_name']
-    db.session.add(access_token_entry)
-  access_token_entry.access_token = access_token
-  db.session.commit()
-  return 'Access token stored in db'
+    access_token_entry = SlackTeamAccessToken.query.get(resp['team_id'])
+    if access_token_entry is None:
+        access_token_entry = SlackTeamAccessToken()
+        access_token_entry.team_id = resp['team_id']
+        access_token_entry.workspace_name = resp['team_name']
+        db.session.add(access_token_entry)
+    access_token_entry.access_token = access_token
+    db.session.commit()
+    return 'Access token stored in db'
 
 
 @app.route("/slacklogin/")
 def slacklogin():
-  if 'slack_token' in session:
-    user = get_user_from_slack_token()
-    if user:
-      login_user(user)
-      return redirect(request.args.get("next") or url_for("home"))
-  return slack_user_auth.authorize(callback=url_for('authorized', _external=True))
+    if 'slack_token' in session:
+        user = get_user_from_slack_token()
+        if user:
+            login_user(user)
+            return redirect(request.args.get("next") or url_for("home"))
+    return slack_user_auth.authorize(callback=url_for('authorized', _external=True))
 
 
 @app.route('/login/authorized')
@@ -204,7 +211,7 @@ def get_slack_token():
     return token
 
 
-@app.route("/login/", methods=["GET","POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     return render_template("login.html")
 
@@ -272,26 +279,28 @@ def view_activity():
 def view_run(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     return render_template(
-            "viewrun.html",
-            run=run,
-            coffees=_filter_coffees(run.coffees),
-            current_user=current_user)
+        "viewrun.html",
+        run=run,
+        coffees=_filter_coffees(run.coffees),
+        current_user=current_user,
+    )
+
 
 @app.route("/order/<int:runid>/")
 @login_required
 def view_order(runid):
     run = Run.query.filter_by(id=runid).first_or_404()
     return render_template(
-            "orderrun.html",
-            run=run,
-            coffees=_filter_coffees(run.coffees),
-            current_user=current_user)
+        "orderrun.html",
+        run=run,
+        coffees=_filter_coffees(run.coffees),
+        current_user=current_user,
+    )
 
 
 @app.route("/run/<int:runid>/edit/", methods=["GET", "POST"])
 @login_required
 def edit_run(runid):
-    logger = logging.getLogger('views.edit_run')
     run = Run.query.filter_by(id=runid).first_or_404()
     form = RunForm(request.form, obj=run)
     users = User.query.all()
@@ -361,16 +370,15 @@ def ping_addicts_for_run(runid):
 @app.route("/coffee/<int:coffeeid>/")
 @login_required
 def view_coffee(coffeeid):
-    logger = logging.getLogger('views.view_coffee')
-    coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
-    logging.info('Coffee: %s, %s',  coffee, coffee.price)
+    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
+    logging.info('Coffee: %s, %s', coffee, coffee.price)
     return render_template("viewcoffee.html", coffee=coffee, current_user=current_user)
 
 
 @app.route("/coffee/<int:coffeeid>/edit/", methods=["GET", "POST"])
 @login_required
 def edit_coffee(coffeeid):
-    coffee = Coffee.query.filter(Coffee.id==coffeeid).first_or_404()
+    coffee = Coffee.query.filter(Coffee.id == coffeeid).first_or_404()
     form = CoffeeForm(request.form, obj=coffee)
     runs = Run.query.filter_by(is_open=True).all()
     form.runid.choices = [(r.id, r.prettyprint()) for r in runs]
@@ -413,13 +421,13 @@ def get_all_users():
 @app.route("/user/<int:userid>/", methods=["GET"])
 @login_required
 def view_user(userid):
-    user = User.query.filter(User.id==userid).first_or_404()
+    user = User.query.filter(User.id == userid).first_or_404()
     return render_template(
-            "viewuser.html",
-            user=user,
-            coffees=_filter_coffees(user.coffees),
-            current_user=current_user,
-            )
+        "viewuser.html",
+        user=user,
+        coffees=_filter_coffees(user.coffees),
+        current_user=current_user,
+    )
 
 
 @app.route("/user/<int:userid>/debts/", methods=["GET", "POST"])
@@ -429,25 +437,33 @@ def view_debts(userid):
         flash("You can only view your own debts!", "danger")
         return redirect(url_for("view_user", userid=userid))
     owes = []
-    owedtotal = 0.0
     isowed = []
-    isowedtotal = 0.0
-    owes = Coffee.query.filter(Coffee.person==userid).filter_by(paid=False).outerjoin(Run, Coffee.runid==Run.id).filter(Run.person!=userid).all()
-    isowed = Coffee.query.outerjoin(Run, Coffee.runid==Run.id).filter(Run.person==userid).filter(Coffee.person!=userid).filter(Coffee.paid==False).all()
+    owes = Coffee.query \
+        .filter(Coffee.person == userid) \
+        .filter_by(paid=False) \
+        .outerjoin(Run, Coffee.runid == Run.id) \
+        .filter(Run.person != userid) \
+        .all()
+    isowed = Coffee.query \
+        .outerjoin(Run, Coffee.runid == Run.id) \
+        .filter(Run.person == userid) \
+        .filter(Coffee.person != userid) \
+        .filter(Coffee.paid == False) \
+        .all()  # noqa: E711. `== False` is needed for SQLAlchemy operator binding magic. `is False` does not work.
     return render_template("viewdebts.html", user=current_user, owes=owes, isowed=isowed, current_user=current_user)
 
 
 @app.route("/cafe/<int:cafeid>/", methods=["GET"])
 @login_required
 def view_cafe(cafeid):
-    cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
+    cafe = Cafe.query.filter(Cafe.id == cafeid).first_or_404()
     return render_template("viewcafe.html", cafe=cafe, current_user=current_user)
 
 
 @app.route("/cafe/<int:cafeid>/edit/", methods=["GET", "POST"])
 @login_required
 def edit_cafe(cafeid):
-    cafe = Cafe.query.filter(Cafe.id==cafeid).first_or_404()
+    cafe = Cafe.query.filter(Cafe.id == cafeid).first_or_404()
     form = CafeForm(request.form, obj=cafe)
 
     if request.method == "GET":
@@ -754,7 +770,7 @@ def write_to_events(action, objtype, objid, user=None):
     return event.id
 
 
-## Error handlers
+# Error handlers
 # Handle 404 errors
 @app.errorhandler(404)
 def page_not_found(e):

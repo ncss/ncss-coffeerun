@@ -1,13 +1,13 @@
-#!/bin/python
 """config.py
 Configuration objects for the ncss-coffee Flask app
 Maddy Reid 2014"""
-import os
 import base64
-from datetime import timedelta
+import os
+import os.path
 
-from os.path import abspath, dirname, join
-current_dir = dirname(abspath(__file__))
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class Config(object):
     CSFR_ENABLED = True
@@ -25,16 +25,18 @@ class Config(object):
     SLACK_OAUTH_CLIENT_SECRET = os.environ.get('SLACK_OAUTH_CLIENT_SECRET')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+
 class DevConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-dev.db')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(CURRENT_DIR, 'application', 'coffeerun-dev.db')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', SQLALCHEMY_DATABASE_URI)
     SESSION_TYPE = 'sqlalchemy'
 
 
 class TestConfig(Config):
+    CSRF_ENABLED = False
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(current_dir, 'application', 'coffeerun-test.db')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(CURRENT_DIR, 'application', 'coffeerun-test.db')
 
 
 class ProdConfig(Config):

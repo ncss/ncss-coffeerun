@@ -3,3 +3,7 @@
 
 # To get "simple" flag parsing for the reprice script
 absl-py
+
+# Linting.
+flake8
+flake8-import-order

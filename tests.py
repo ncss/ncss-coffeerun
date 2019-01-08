@@ -2,20 +2,18 @@
 Unittesting module for the NCSS Coffeerun web app
 Maddy Reid 2014"""
 
-from application import app, db
-from application.models import User, Run, Coffee, Cafe, Price
-import config
 import unittest
-from flask.ext.testing import TestCase
-
 from datetime import datetime
 
+from application import app, db
+from application.models import Cafe, Coffee, Price, Run, User
+
+from flask_testing import TestCase
+
+
 class UserModelTest(TestCase):
-    
     def create_app(self):
-        app.config["TESTING"] = True
-        app.config['CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///coffeerun-test.db'
+        app.config.from_object('config.TestConfig')
         return app
 
     def setUp(self):
@@ -29,14 +27,14 @@ class UserModelTest(TestCase):
         user = User()
         db.session.add(user)
         db.session.commit()
-        assert user in db.session
-        assert user.is_authenticated() == True
-        assert user.is_active() == True
-        assert user.is_anonymous() == False
-        assert unicode(user.id) == user.get_id()
+        self.assertIn(user, db.session)
+        self.assertTrue(user.is_authenticated())
+        self.assertTrue(user.is_active())
+        self.assertFalse(user.is_anonymous())
+        self.assertEqual(str(user.id), user.get_id())
         db.session.delete(user)
         db.session.commit()
-        assert user not in db.session
+        self.assertNotIn(user, db.session)
 
     def test_user_attributes(self):
         user = User("Maddy")
@@ -46,7 +44,7 @@ class UserModelTest(TestCase):
         db.session.add(user)
         db.session.commit()
         assert user in db.session
-    
+
     def test_user_has_runs(self):
         user = User()
         db.session.add(user)
@@ -160,12 +158,10 @@ class UserModelTest(TestCase):
     def test_user_is_owed_person(self):
         pass
 
+
 class RunModelTest(TestCase):
-    
     def create_app(self):
-        app.config["TESTING"] = True
-        app.config['CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///coffeerun-test.db'
+        app.config.from_object('config.TestConfig')
         return app
 
     def setUp(self):
@@ -247,12 +243,10 @@ class RunModelTest(TestCase):
 
     # Test timezone and datetime fun
 
+
 class CoffeeModelTest(TestCase):
-    
     def create_app(self):
-        app.config["TESTING"] = True
-        app.config['CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///coffeerun-test.db'
+        app.config.from_object('config.TestConfig')
         return app
 
     def setUp(self):
@@ -280,12 +274,10 @@ class CoffeeModelTest(TestCase):
         db.session.commit()
         assert coffee in run.coffees
 
-def CafeTestModel(TestCase):
 
+def CafeTestModel(TestCase):
     def create_app(self):
-        app.config["TESTING"] = True
-        app.config['CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///coffeerun-test.db'
+        app.config.from_object('config.TestConfig')
         return app
 
     def setUp(self):
@@ -306,4 +298,5 @@ def CafeTestModel(TestCase):
 
 
 if __name__ == "__main__":
+
     unittest.main()

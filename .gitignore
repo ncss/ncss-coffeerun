@@ -1,6 +1,6 @@
-
-
 env
+venv
+ve
 *.pyc
 *.db
 *.swp

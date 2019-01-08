@@ -2,16 +2,15 @@
 DB models for the ncss-coffeerun app
 Maddy Reid 2014
 """
-
-import logging
-
-import sqlalchemy
-
-from application import db, app
 from datetime import datetime
-import pytz
+
+from application import db
 
 import coffeespecs
+
+import pytz
+
+import sqlalchemy
 
 
 class UTCOnlyDateTime(sqlalchemy.types.TypeDecorator):
@@ -35,7 +34,6 @@ class UTCOnlyDateTime(sqlalchemy.types.TypeDecorator):
 
     def process_result_value(self, value, dialect):
         """Convert from a tz nieve object [in UTC] to a tz aware object."""
-        logger = logging.getLogger("UTCOnlyDateTime.result_processor")
         assert value.tzinfo is None, (
                 'Time should be nieve, but had timezone: %s' % value.tzinfo)
         tz_ = pytz.timezone("Australia/Sydney")
@@ -175,14 +173,14 @@ class Run(db.Model):
     def calculateTotalRunCost(self):
         total = 0
         for coffee in self.coffees:
-          total += coffee.price
+            total += coffee.price
         return total
 
     def unpaid_amount(self):
         total = 0
         for coffee in self.coffees:
-          if not coffee.paid:
-            total += coffee.price
+            if not coffee.paid:
+                total += coffee.price
         return total
 
     def close_run(self, total_cost):
@@ -253,7 +251,7 @@ class Coffee(db.Model):
 
         if not prices:
             return default_price
-        result_map = {price.price_key:price for price in prices}
+        result_map = {price.price_key: price for price in prices}
         for price_key in price_keys:
             if price_key not in result_map:
                 continue

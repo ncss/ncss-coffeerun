@@ -1,5 +1,5 @@
 from application import app, db
-from application.models import Run, User, Coffee
+from application.models import User
 
 
 def get_or_create_user(user_id, team_id, name):
