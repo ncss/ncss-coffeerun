@@ -14,6 +14,8 @@ import coffeespecs
 
 import flask_babel
 
+import sentry_sdk
+
 from slackclient import SlackClient
 
 import utils
@@ -318,6 +320,7 @@ def main():
 
 
 if __name__ == '__main__':
+    sentry_sdk.init("https://a4ba88dce1234b4ea13f5c3111a67efa@sentry.io/1366725")
     logging.basicConfig(level=logging.DEBUG)
 
     # FIXME: This is a hack... But I can't think of anything better.
