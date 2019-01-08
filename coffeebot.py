@@ -1,9 +1,11 @@
 import logging
+import os
 import pprint
 import random
 import re
 import threading
 import time
+import typing
 
 from application import app, db, events, models
 from application.models import Coffee, Event, Run, User, sydney_timezone_now
@@ -253,6 +255,11 @@ class WrappedSlackBot:
             channel.send_message(msg)
 
     def loop(self, client):
+        # FIXME(tsukasa-au): This is a hack... But I can't think of anything
+        # better.
+        # Add a test request context so that babel will work.
+        app.test_request_context().push()
+
         logger = logging.getLogger('loop')
         res = client.rtm_connect()
         logger.debug('Connection result: %r', res)
@@ -272,6 +279,23 @@ class WrappedSlackBot:
             time.sleep(0.1)
 
 
+def _die_on_exception_wrapper(f: typing.Callable):
+    '''Wrapper that kills the current process if an exception is thrown.
+
+    This function is used to make sure that we restart the chatbot on any
+    errors. This is a temporary hack.
+    '''
+    def _wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception:
+            logging.exception(
+                'One of the connections had an error, killing the entire '
+                'process to allow heroku to restart it.')
+            os.kill(os.getpid(), 9)
+    return _wrapper
+
+
 def main():
     threads = []
     for slack_workspace in models.SlackTeamAccessToken.query.filter(
@@ -284,7 +308,7 @@ def main():
         )
         threads.append(
                 threading.Thread(
-                    target=sb.loop, args=(sb.client,)))
+                    target=_die_on_exception_wrapper(sb.loop), args=(sb.client,)))
     # Start all threads
     for thread in threads:
         thread.start()
@@ -295,9 +319,6 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-
-    # if not TOKEN or not USER_ID:
-    #     logging.error('Missing slack token or slack user id')
 
     # FIXME: This is a hack... But I can't think of anything better.
     # Add a test request context so that babel will work.
