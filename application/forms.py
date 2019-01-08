@@ -12,14 +12,14 @@ import datetime
 import pytz
 
 from flask_wtf import FlaskForm
-from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, FloatField, BooleanField
+from wtforms import validators, SelectField, TextField, IntegerField, DateTimeField, BooleanField, DecimalField
 import wtforms.ext.dateutil.fields
 
 
 class CoffeeForm(FlaskForm):
     person = SelectField("Addict", coerce=int)
     coffee = TextField("Coffee", [validators.Required()])
-    price = FloatField("Price", default=0)
+    price = DecimalField("Price", default=0)
     runid = SelectField("Run", coerce=int)
 
 
@@ -45,4 +45,4 @@ class CafeForm(FlaskForm):
 class PriceForm(FlaskForm):
     cafeid = SelectField("Cafe", coerce=int)
     price_key = TextField("Coffee (e.g. large cap)")
-    amount = FloatField("Amount", [validators.Required()])
+    amount = DecimalField("Amount", [validators.Required()])
