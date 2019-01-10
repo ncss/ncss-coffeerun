@@ -176,13 +176,6 @@ class Run(db.Model):
             total += coffee.price
         return total
 
-    def unpaid_amount(self):
-        total = 0
-        for coffee in self.coffees:
-            if not coffee.paid:
-                total += coffee.price
-        return total
-
     def close_run(self, total_cost):
         self.is_open = False
         # TODO: Enter all the money exchanges
