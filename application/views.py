@@ -440,7 +440,6 @@ def view_debts(userid):
     isowed = []
     owes = Coffee.query \
         .filter(Coffee.person == userid) \
-        .filter_by(paid=False) \
         .outerjoin(Run, Coffee.runid == Run.id) \
         .filter(Run.person != userid) \
         .all()
@@ -448,8 +447,7 @@ def view_debts(userid):
         .outerjoin(Run, Coffee.runid == Run.id) \
         .filter(Run.person == userid) \
         .filter(Coffee.person != userid) \
-        .filter(Coffee.paid == False) \
-        .all()  # noqa: E711. `== False` is needed for SQLAlchemy operator binding magic. `is False` does not work.
+        .all()
     return render_template("viewdebts.html", user=current_user, owes=owes, isowed=isowed, current_user=current_user)
 
 
