@@ -1,28 +1,9 @@
 import json
 
 COFFEE_SPECS = {}
-_PRECEDENCE = ['size', 'type', 'milk', 'strength', 'iced', 'decaf', 'sugar']
+_PRECEDENCE = ['type', 'size', 'milk', 'strength', 'iced', 'decaf', 'sugar']
 
 _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
-
-ALLOW_TOKENS = {
-    'a',
-    'can i have',
-    'can i please',
-    'for',
-    'i would like',
-    'like',
-    'may i have',
-    'me',
-    'mine',
-    'order',
-    'please',
-    'thanks',
-    'the',
-    'want',
-    'with',
-    'would like',
-}
 
 # When looking at pricing, we consider the following to be all the
 # same price (the price of a Cappuccino).
@@ -46,25 +27,35 @@ class JavaException(Exception):
 
 class Coffee(object):
     def __init__(self, request):
-        tokens = get_all_tokens()
-        self.specs = {}
         request = request.lower().strip()
-        while request:
-            found = False
-            for token in tokens:
-                if request.startswith(token):
-                    if token not in ALLOW_TOKENS:
-                        self.add_token(token)
-                    request = request[len(token):]
-                    found = True
-                    break
-            if not found:
-                space = request.find(' ')
-                if space != -1:
-                    request = request[space:]
-                else:
-                    return
-            request = request.strip()
+        request_tokens = request.split()
+        request_bigrams = [' '.join(x) for x in zip(request_tokens, request_tokens[1:])]
+
+        tokens = get_all_word_tokens()
+
+        # Start of coffee spec gathering
+        self.specs = {}
+
+        unparsed_tokens = set(request_tokens)
+        for bigram in request_bigrams:
+            if bigram in tokens:
+                self.add_token(bigram)
+                word1, word2 = bigram.split()
+                unparsed_tokens.remove(word1)
+                unparsed_tokens.remove(word2)
+
+        for request_token in set(unparsed_tokens):
+            if request_token in tokens:
+                self.add_token(request_token)
+                unparsed_tokens.remove(request_token)
+
+        all_abbreviation_tokens_by_spec = get_all_abbreviation_tokens_by_spec()
+        for token in set(unparsed_tokens):
+            result = parse_abbreviation(all_abbreviation_tokens_by_spec, token, tuple(_PRECEDENCE))
+            if result:
+                for spec, matched_token in result:
+                    self.add_spec(spec, matched_token)
+                unparsed_tokens.remove(token)
 
     def get_price_key(self, fuzzy_fields=None):
         if fuzzy_fields is None:
@@ -165,109 +156,182 @@ class Coffee(object):
         return coffee
 
 
+def parse_abbreviation(all_abbreviation_tokens_by_spec, token_input, remaining_specs):
+    for spec in remaining_specs:
+        if token_input in all_abbreviation_tokens_by_spec[spec]:
+            return ((spec, token_input), )
+
+    for spec in remaining_specs:
+        for token in all_abbreviation_tokens_by_spec[spec]:
+            if token_input.startswith(token):
+                copy_of_remaining_specs = list(remaining_specs)
+                copy_of_remaining_specs.remove(spec)
+                remainder = token_input[len(token):]
+                remainder_result = parse_abbreviation(all_abbreviation_tokens_by_spec, remainder, copy_of_remaining_specs)
+                if remainder_result is not None:
+                    return ((spec, token),) + remainder_result
+    return None
+
+
+class CoffeeSpecOption(object):
+    def __init__(self, specname, name, abbreviations, word_tokens):
+        self.specname = specname
+        self.name = name
+        self.word_tokens = [x.lower() for x in word_tokens]
+        self.abbreviations = [x.lower() for x in abbreviations]
+        if self.name.lower() not in self.word_tokens:
+            self.word_tokens.append(self.name.lower())
+
+    def __hash__(self):
+        return hash(self.specname + ':' + self.name)
+
+    def ___eq___(self, other):
+        return self.specname == other.specname and self.name == other.name
+
+
 class CoffeeSpec(object):
     def __init__(self, name, question, required=False, default=None, options=None):
         self.name = name
         self.question = question
         self.required = required
         self.default = default
-        self.options = {}
+        self.word_tokens = {}
+        self.abbreviation_tokens = {}
+        self.options = set()
         if options is None:
-            options = {}
+            options = []
         for option in options:
-            self.add_option(option, options[option])
+            self.add_option(option)
 
-    def add_option(self, option, alternatives):
-        self.add_option_alternative(option, option)
-        for alt in alternatives:
-            self.add_option_alternative(option, alt)
+    def create_option(self, name, abbreviation_tokens, word_tokens):
+        # 'Latte', ['l'], ['Lat']
+        option = CoffeeSpecOption(self.name, name, abbreviation_tokens, word_tokens)
+        self.add_option(option)
 
-    def add_option_alternative(self, option, alternative):
-        alternative = alternative.lower()
-        if option not in self.options:
-            if alternative in self.options:
-                raise JavaException('Duplicate name for option')
-            self.options[alternative] = option
+    def add_option(self, option):
+        self.options.add(option)
+        self.add_word_tokens(option)
+        self.add_abbreviations(option)
+
+    def add_word_tokens(self, option):
+        for token in option.word_tokens:
+            token = token.lower()
+            if token in self.word_tokens:
+                raise JavaException(f'Duplicate word token for option {option.name}.')
+            self.word_tokens[token] = option
+
+    def add_abbreviations(self, option):
+        for abb in option.abbreviations:
+            abb = abb.lower()
+            if abb in self.abbreviation_tokens:
+                raise JavaException(f'Duplicate abbreviation token {abb} for option {option.name}.')
+            self.abbreviation_tokens[abb] = option
 
     def validate(self, value):
-        if value.lower() not in self.options:
-            return False
-        return True
+        value = value.lower()
+        if value in self.word_tokens:
+            return True
+        if value in self.abbreviation_tokens:
+            return True
+        return False
 
     def get_option_value(self, value):
+        value = value.lower()
         if not self.validate(value):
             raise JavaException('Not a valid value {} for spec {}'.format(value, self.name))
-        return self.options[value.lower()]
+        if value in self.word_tokens:
+            return self.word_tokens[value].name
+        if value in self.abbreviation_tokens:
+            return self.abbreviation_tokens[value].name
 
-    def get_tokens(self):
-        tokens = set(self.options)
-        return tokens
+    def get_word_tokens(self):
+        out = set()
+        for opt in self.options:
+            for word_token in opt.word_tokens:
+                out.add(word_token)
+        return out
+
+    def get_abbreviation_tokens(self):
+        out = set()
+        for opt in self.options:
+            for abb_token in opt.abbreviations:
+                out.add(abb_token)
+        return out
 
 
-def get_all_tokens():
-    tokens = set(ALLOW_TOKENS)
-
+def get_all_word_tokens():
+    tokens = set()
     for spec in COFFEE_SPECS:
-        tokens.update(COFFEE_SPECS[spec].get_tokens())
+        tokens.update(COFFEE_SPECS[spec].get_word_tokens())
     tokens = list(tokens)
     tokens.sort(key=(lambda x: (len(x), x)), reverse=True)
     return tokens
 
 
+def get_all_abbreviation_tokens_by_spec():
+    abbreviation_tokens_by_spec = {}
+    for spec in _PRECEDENCE:
+        abbreviation_tokens_by_spec[spec] = set(COFFEE_SPECS[spec].get_abbreviation_tokens())
+    return abbreviation_tokens_by_spec
+
+
 COFFEE_SPECS['type'] = CoffeeSpec('type', 'What type of coffee?', required=True)
-COFFEE_SPECS['type'].add_option('Cappuccino', ['Cap', 'C'])
-COFFEE_SPECS['type'].add_option('Latte', ['Lat', 'L'])
-COFFEE_SPECS['type'].add_option('Mocha', ['M'])
-COFFEE_SPECS['type'].add_option('Espresso', ['E', 'Es'])
-COFFEE_SPECS['type'].add_option('Short Black', ['sb'])
-COFFEE_SPECS['type'].add_option('Long Black', ['lb'])
-COFFEE_SPECS['type'].add_option('Chai Latte', ['Chai'])
-COFFEE_SPECS['type'].add_option('Macchiato', ['Mac', 'Macc'])
-COFFEE_SPECS['type'].add_option('Flat White', ['FW'])
-COFFEE_SPECS['type'].add_option('Affogato', ['Af'])
-COFFEE_SPECS['type'].add_option('Hot Chocolate', ['hc', 'hot c', 'choc', 'chocolate', 'hot choc', 'hotchoc'])
-COFFEE_SPECS['type'].add_option('Iced Chocolate', [])
-COFFEE_SPECS['type'].add_option('Iced Coffee', [])
-COFFEE_SPECS['type'].add_option('Babyccino', ['Frothaccino', 'babycino'])
-COFFEE_SPECS['type'].add_option('Piccolo Latte', ['Piccolo'])
-COFFEE_SPECS['type'].add_option('Cold Drip', ['cd', 'cold brew', 'cb'])
-COFFEE_SPECS['type'].add_option('Filtered', [])
-COFFEE_SPECS['type'].add_option('Tea', [])
+COFFEE_SPECS['type'].create_option('Cappuccino', ['c', 'cap'], ['Cap', 'capp'])
+COFFEE_SPECS['type'].create_option('Latte', ['l', 'lat'], ['Lat', 'lattee'])
+COFFEE_SPECS['type'].create_option('Mocha', [], ['Moch'])
+COFFEE_SPECS['type'].create_option('Espresso', ['Es'], [])
+COFFEE_SPECS['type'].create_option('Short Black', ['sb'], [])
+COFFEE_SPECS['type'].create_option('Long Black', ['lb'], [])
+COFFEE_SPECS['type'].create_option('Chai Latte', [], ['Chai'])
+COFFEE_SPECS['type'].create_option('Macchiato', [], ['Mac', 'Macc'])
+COFFEE_SPECS['type'].create_option('Flat White', ['FW'], [])
+COFFEE_SPECS['type'].create_option('Affogato', ['Af'], [])
+COFFEE_SPECS['type'].create_option('Hot Chocolate', ['hc'], ['hot c', 'choc', 'chocolate', 'hot choc', 'hotchoc'])
+COFFEE_SPECS['type'].create_option('Iced Chocolate', [], [])
+COFFEE_SPECS['type'].create_option('Iced Coffee', [], [])
+COFFEE_SPECS['type'].create_option('Babyccino', [], ['Frothaccino', 'babycino'])
+COFFEE_SPECS['type'].create_option('Piccolo Latte', [], ['Piccolo'])
+COFFEE_SPECS['type'].create_option('Cold Drip', ['cd', 'cb'], ['cold brew'])
+COFFEE_SPECS['type'].create_option('Filtered', [], [])
+COFFEE_SPECS['type'].create_option('Tea', [], [])
 
 COFFEE_SPECS['iced'] = CoffeeSpec('iced', 'Iced or normal?', required=False, options={
-    'Iced': ['ice'],
-    'normal': ['hot'],
+    CoffeeSpecOption('iced', 'Iced', [], ['ice']),
+    CoffeeSpecOption('iced', 'normal', [], ['hot'])
 })
 
 COFFEE_SPECS['sugar'] = CoffeeSpec('sugar', 'How many sugars?', required=False, options={
-    'No sugar': ['0S', '0sugar', '+0', 'no sugars'],
-    '1 Sugar': ['with 1', '+1', '1S', '1sugar', 'sugar', 'sugars'],
+    CoffeeSpecOption('sugar', 'No sugar', ['0S', '+0'], ['0sugar']),
+    CoffeeSpecOption('sugar', '1 Sugar', ['+1', '1', '1s'], ['with 1', '1sugar', 'sugar']),
 })
 
 for i in range(2, 12):
     i = str(i)
-    COFFEE_SPECS['sugar'].add_option('{} Sugars'.format(i), ['with ' + i, i + 'S', i + 'sugar', i + ' sugar', '+' + i])
+    COFFEE_SPECS['sugar'].create_option(
+        '{} Sugars'.format(i),
+        [i + 'S', '+' + i, i],
+        [i + 'sugar'])
 
 COFFEE_SPECS['decaf'] = CoffeeSpec('decaf', 'Decaf?', required=False, options={
-    'Decaf': ['dec', 'lame'],
+    CoffeeSpecOption('decaf', 'Decaf', [], ['dec'])
 })
 
 COFFEE_SPECS['size'] = CoffeeSpec('size', 'What size (S/L)?', required=False, options={
-    'Small': ['s', 'sm'],
-    'Regular': ['reg', 'r', 'rg'],
-    'Large': ['L', 'lge', 'lg'],
+    CoffeeSpecOption('size', 'Small', ['s', 'sm'], ['smol']),
+    CoffeeSpecOption('size', 'Regular', ['r'], ['reg']),
+    CoffeeSpecOption('size', 'Large', ['l', 'lg'], ['lge', 'lg', 'lrg']),
 })
 
-COFFEE_SPECS['strength'] = CoffeeSpec('strength', 'What strength?', required=False, options={
-    'Weak': ['w', 'half'],
-    'Extra-shot': ['strong', 'double', 'doubleshot', 'double-shot', 'x'],
-    '2 Extra-shots': ['xx', 'triple', 'tripleshot', 'triple-shot'],
-    'Normal': ['standard']
-})
+COFFEE_SPECS['strength'] = CoffeeSpec('strength', 'What strength?', required=False, options=[
+    CoffeeSpecOption('strength', 'Weak', ['w'], ['half', 'half-strength']),
+    CoffeeSpecOption('strength', 'Extra-shot', ['x', 'st'], ['strong', 'double', 'doubleshot', 'double-shot']),
+    CoffeeSpecOption('strength', '2 Extra-shots', ['xx'], ['triple', 'tripleshot', 'triple-shot']),
+    CoffeeSpecOption('strength', 'Normal', [], ['standard'])
+])
 
 COFFEE_SPECS['milk'] = CoffeeSpec('milk', 'What type of milk?', required=False, options={
-    'Fullcream': ['normal'],
-    'Skim': ['skinny', 'lite', 'light', 'sk'],
-    'Soy': ['y'],
-    'Lactose Free': [],
+    CoffeeSpecOption('milk', 'Fullcream', [], ['normal']),
+    CoffeeSpecOption('milk', 'Skim', ['sk'], ['skinny', 'lite', 'light', 'sk']),
+    CoffeeSpecOption('milk', 'Soy', ['y'], []),
+    CoffeeSpecOption('milk', 'Lactose Free', ['lf'], []),
 })
