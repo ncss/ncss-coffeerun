@@ -400,6 +400,8 @@ def edit_coffee(coffeeid):
     if request.method == "POST" and form.validate_on_submit():
         coffee.coffee = coffeespecs.Coffee(form.data["coffee"]).toJSON()
         coffee.price = form.data["price"]
+        coffee.runid = form.data['runid']
+        coffee.person = form.data['person']
         coffee.modified = sydney_timezone_now()
         db.session.commit()
         write_to_events("updated", "coffee", coffee.id)
