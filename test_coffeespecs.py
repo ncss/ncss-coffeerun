@@ -214,6 +214,18 @@ class TestParser(unittest.TestCase):
         self.assertEqual(str(Coffee('shc')), 'Small Hot Chocolate')
         self.assertEqual(str(Coffee('lhc')), 'Large Hot Chocolate')
 
+    def test_punctuation(self):
+        self.assertEqual(str(Coffee('LC!')), 'Large Cappuccino')
+        self.assertEqual(str(Coffee('Double-shot, soy, latte!')), 'Regular Soy Extra-shot Latte')
+        self.assertEqual(str(Coffee('Double-shot, soy, latte!')), 'Regular Soy Extra-shot Latte')
+
+    def test_iced_choc_vs_iced_hot_choc(self):
+        self.assertEqual(str(Coffee('icy choc')), 'Regular Iced Chocolate')
+        self.assertEqual(str(Coffee('chocolate iced')), 'Regular Iced Hot Chocolate')
+        self.assertEqual(str(Coffee('icy cold chocolate')), 'Regular Iced Hot Chocolate')
+        self.assertEqual(str(Coffee('iced chocco')), 'Regular Iced Chocolate')
+        self.assertEqual(str(Coffee('hot chocco')), 'Regular Hot Chocolate')
+
 
 class TestWeirdCoffeeInput(unittest.TestCase):
     def test_joel(self):
@@ -258,6 +270,18 @@ class TestWeirdCoffeeInput(unittest.TestCase):
     def test_jackson(self):
         c = Coffee('bestow upon me thy chocolated fount in the morrow, i\'m ploxed to request this of you')
         self.assertFalse(c.validate())
+
+    def test_ben(self):
+        c = Coffee('hit me up with a delicious cold brew, please destroy me with the bean')
+        self.assertEqual(c.specs, {
+            'type': 'Cold Drip'
+        })
+
+    def test_jack(self):
+        c = Coffee('Gimmie one of them icy chocco bois please')
+        self.assertEqual(c.specs, {
+            'type': 'Iced Chocolate',
+        })
 
 
 class TestPrettyPrint(unittest.TestCase):

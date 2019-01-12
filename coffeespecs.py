@@ -1,7 +1,10 @@
 import json
+import re
 
 COFFEE_SPECS = {}
 _PRECEDENCE = ['type', 'size', 'milk', 'strength', 'iced', 'decaf', 'sugar']
+
+CHOCOLATE_WORDS = ['chocco', 'chocie', 'choccie', 'choccy', 'chockie', 'chocky', 'choc', 'chocc']
 
 _OUT_ORDER = ['size', 'iced', 'milk', 'strength', 'decaf', 'type', 'sugar']
 
@@ -28,6 +31,11 @@ class JavaException(Exception):
 class Coffee(object):
     def __init__(self, request):
         request = request.lower().strip()
+        # Strip punctuation except for '-' which is used in some tokens.
+        # Most get replaced with space but apostrophes are just removed.
+        request = re.sub('[\']', '', request)
+        request = re.sub('[\'"!#$%&()*+,./:;<=>?@\\[\\]\\\\\\^_`{|}~]', ' ', request)
+
         request_tokens = request.split()
         request_bigrams = [' '.join(x) for x in zip(request_tokens, request_tokens[1:])]
 
@@ -286,8 +294,8 @@ COFFEE_SPECS['type'].create_option('Chai Latte', [], ['Chai'])
 COFFEE_SPECS['type'].create_option('Macchiato', [], ['Mac', 'Macc'])
 COFFEE_SPECS['type'].create_option('Flat White', ['FW'], [])
 COFFEE_SPECS['type'].create_option('Affogato', ['Af'], [])
-COFFEE_SPECS['type'].create_option('Hot Chocolate', ['hc'], ['hot c', 'choc', 'chocolate', 'hot choc', 'hotchoc'])
-COFFEE_SPECS['type'].create_option('Iced Chocolate', [], [])
+COFFEE_SPECS['type'].create_option('Hot Chocolate', ['hc'], ['hot c', 'choc', 'chocolate'] + ['hot ' + word for word in CHOCOLATE_WORDS])
+COFFEE_SPECS['type'].create_option('Iced Chocolate', [], ['iced ' + word for word in CHOCOLATE_WORDS] + ['icy ' + word for word in CHOCOLATE_WORDS] + ['icey ' + word for word in CHOCOLATE_WORDS])
 COFFEE_SPECS['type'].create_option('Iced Coffee', [], [])
 COFFEE_SPECS['type'].create_option('Babyccino', [], ['Frothaccino', 'babycino'])
 COFFEE_SPECS['type'].create_option('Piccolo Latte', [], ['Piccolo'])
@@ -296,7 +304,7 @@ COFFEE_SPECS['type'].create_option('Filtered', [], [])
 COFFEE_SPECS['type'].create_option('Tea', [], [])
 
 COFFEE_SPECS['iced'] = CoffeeSpec('iced', 'Iced or normal?', required=False, options={
-    CoffeeSpecOption('iced', 'Iced', [], ['ice']),
+    CoffeeSpecOption('iced', 'Iced', [], ['ice', 'icy', 'icey']),
     CoffeeSpecOption('iced', 'normal', [], ['hot'])
 })
 
