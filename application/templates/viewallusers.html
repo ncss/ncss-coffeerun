@@ -2,13 +2,18 @@
 
 {% block subcontent %}
 <h1>Coffee Addicts</h1>
+
+<div class="btn-group" role="group">
+  <a class="btn btn-primary" href="{{ url_for("download_reconcile_csv") }}">Download reconciliation CSV</a>
+</div>
+
 <div class="row">
     {% for addict in people %}
     <div class="col-xs-6 col-sm-3">
         <h2><a href="{{ url_for("view_user", userid=addict.id) }}">{{ addict.name }}</a></h2>
         <p><strong>Coffees:</strong> {{ addict.coffees|length }}<br>
         <strong>Runs:</strong> {{ addict.runs|length }}</p>
-        <p>Balance: {{ "%.2f" % (addict.money_owed() - addict.money_owing()) }} </p>
+        <p>Balance: {{ "%.2f" % (addict.get_balance()) }} </p>
     </div>
     {% if loop.index is divisibleby 4 %}
     </div>

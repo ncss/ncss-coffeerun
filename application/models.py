@@ -80,6 +80,9 @@ class User(db.Model):
     def is_anonymous(self):
         return False
 
+    def get_balance(self):
+        return self.money_owed() - self.money_owing()
+
     def get_id(self):
         return str(self.id)
 

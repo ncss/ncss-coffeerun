@@ -1,5 +1,7 @@
 import cgi
+import csv
 import datetime
+import io
 import itertools
 import json
 import logging
@@ -10,7 +12,7 @@ from application.models import Cafe, Coffee, Event, Price, Run, SlackTeamAccessT
 
 import coffeespecs
 
-from flask import flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Response, flash, jsonify, redirect, render_template, request, session, url_for
 
 from flask_login import current_user, login_required, login_user, logout_user
 
@@ -415,9 +417,27 @@ def edit_coffee(coffeeid):
 
 @app.route("/user/", methods=["GET"])
 @login_required
-def get_all_users():
-    people = User.query.all()
+def view_all_users():
+    people = User.query.order_by(User.name)
     return render_template("viewallusers.html", people=people, current_user=current_user)
+
+
+@app.route("/reconcile/csv/", methods=["GET"])
+@login_required
+def download_reconcile_csv():
+    file = io.StringIO()
+    writer = csv.DictWriter(file, ('Name', 'Balance'))
+    writer.writeheader()
+    for addict in User.query.order_by(User.name):
+        row = {
+            'Name': addict.name,
+            'Balance': f'{addict.get_balance():.2f}',
+        }
+        writer.writerow(row)
+
+    return Response(file.getvalue().encode('utf-8'), content_type='text/csv; charset=utf-8', headers={
+        'Content-Disposition': f'attachment; filename=coffee-reconcile.{datetime.date.today().isoformat()}.csv',
+    })
 
 
 @app.route("/user/<int:userid>/", methods=["GET"])
