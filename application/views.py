@@ -22,6 +22,8 @@ import pytz
 
 import requests
 
+import sqlalchemy
+
 import utils
 
 
@@ -418,8 +420,81 @@ def edit_coffee(coffeeid):
 @app.route("/user/", methods=["GET"])
 @login_required
 def view_all_users():
-    people = User.query.order_by(User.name)
-    return render_template("viewallusers.html", people=people, current_user=current_user)
+    # Infomation about what each person is owed by the system (aka information
+    # about run owners).
+    coffee_money_owed = sqlalchemy.sql.select(
+            [
+                Run.person.label('personid'),
+                sqlalchemy.sql.functions.sum(Coffee.price).label('total'),
+                sqlalchemy.sql.functions.count(Run.id.distinct()).label('num_runs'),
+            ],
+            from_obj=sqlalchemy.sql.join(Run, Coffee),
+    ).group_by(Run.person).alias('owed')
+
+    # Infomation about what each person owes the system (aka information about
+    # coffee drinkers).
+    coffee_money_owing = sqlalchemy.sql.select(
+            [
+                Coffee.person.label('personid'),
+                sqlalchemy.sql.functions.sum(Coffee.price).label('total'),
+                sqlalchemy.sql.functions.count(Coffee.id).label('num_coffees'),
+            ]
+    ).group_by(Coffee.person).alias('owing')
+
+    # We insert these directly into the query, rather than via a param. They
+    # will never change (they are used to convert nulls into a zero).
+    zero_float = sqlalchemy.sql.literal_column('0.0')
+    zero_int = sqlalchemy.sql.literal_column('0')
+
+    coffee_summary_join = sqlalchemy.sql.join(
+            coffee_money_owed, coffee_money_owing,
+            isouter=True, full=True,
+            onclause=(coffee_money_owed.c.personid == coffee_money_owing.c.personid))
+
+    # We use coalesce here to ensure that we always have a zero value (rather
+    # than a null). The important thing to remember about why we have nulls
+    # here (and everywhere) are because:
+    # - SUM of an empty set is null (not zero), and
+    # - We are performing both full-outer and left-outer joins to construct
+    #   this data.
+
+    # We need to use these coalesced values multiple times, so store their
+    # definition here (this does not change the query).
+    owed_by_system = sqlalchemy.sql.functions.coalesce(
+            coffee_money_owed.c.total, zero_float)
+    owed_to_system = sqlalchemy.sql.functions.coalesce(
+            coffee_money_owing.c.total, zero_float)
+
+    # Bring everything together.
+    money_by_person = sqlalchemy.sql.select(
+            [
+                User.id.label('personid'),
+                User.name,
+                owed_by_system.label('owed_by_system'),
+                owed_to_system.label('owed_to_system'),
+                sqlalchemy.sql.functions.coalesce(
+                    coffee_money_owed.c.num_runs, zero_int).label(
+                        'num_runs_performed'),
+                sqlalchemy.sql.functions.coalesce(
+                    coffee_money_owing.c.num_coffees, zero_int).label(
+                        'num_coffees_ordered'),
+                (owed_by_system - owed_to_system).label('summary'),
+            ],
+            from_obj=sqlalchemy.sql.join(
+                User, coffee_summary_join,
+                isouter=True,
+                onclause=(
+                    # NOTE: At most on of these may be empty (due to the outer
+                    # join that creates coffee_summary_join).
+                    sqlalchemy.sql.functions.coalesce(
+                        coffee_money_owed.c.personid,
+                        coffee_money_owing.c.personid) == User.id)),
+    ).order_by(User.name)
+
+    user_summary = db.engine.execute(money_by_person)
+    return render_template(
+            "viewallusers.html",
+            user_summary=user_summary, current_user=current_user)
 
 
 @app.route("/reconcile/csv/", methods=["GET"])

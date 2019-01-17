@@ -8,12 +8,12 @@
 </div>
 
 <div class="row">
-    {% for addict in people %}
+    {% for addict_summary in user_summary %}
     <div class="col-xs-6 col-sm-3">
-        <h2><a href="{{ url_for("view_user", userid=addict.id) }}">{{ addict.name }}</a></h2>
-        <p><strong>Coffees:</strong> {{ addict.coffees|length }}<br>
-        <strong>Runs:</strong> {{ addict.runs|length }}</p>
-        <p>Balance: {{ "%.2f" % (addict.get_balance()) }} </p>
+        <h2><a href="{{ url_for("view_user", userid=addict_summary.personid) }}">{{ addict_summary.name }}</a></h2>
+        <p><strong>Coffees:</strong> {{ addict_summary.num_coffees_ordered }}<br>
+        <strong>Runs:</strong> {{ addict_summary.num_runs_performed }}</p>
+        <p>Balance: {{ "%.2f" % (addict_summary.summary) }} </p>
     </div>
     {% if loop.index is divisibleby 4 %}
     </div>
