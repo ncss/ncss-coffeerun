@@ -14,6 +14,8 @@ import coffeespecs
 
 from flask import Response, flash, jsonify, redirect, render_template, request, session, url_for
 
+from flask_babel import numbers
+
 from flask_login import current_user, login_required, login_user, logout_user
 
 from flask_oauthlib.client import OAuth
@@ -417,9 +419,7 @@ def edit_coffee(coffeeid):
         return render_template("coffeeform.html", form=form, formtype="Edit", current_user=current_user)
 
 
-@app.route("/user/", methods=["GET"])
-@login_required
-def view_all_users():
+def _reconciliation_query():
     # Infomation about what each person is owed by the system (aka information
     # about run owners).
     coffee_money_owed = sqlalchemy.sql.select(
@@ -490,6 +490,13 @@ def view_all_users():
                         coffee_money_owed.c.personid,
                         coffee_money_owing.c.personid) == User.id)),
     ).order_by(User.name)
+    return money_by_person
+
+
+@app.route("/user/", methods=["GET"])
+@login_required
+def view_all_users():
+    money_by_person = _reconciliation_query()
 
     user_summary = db.engine.execute(money_by_person)
     return render_template(
@@ -501,12 +508,14 @@ def view_all_users():
 @login_required
 def download_reconcile_csv():
     file = io.StringIO()
-    writer = csv.DictWriter(file, ('Name', 'Balance'))
+    writer = csv.DictWriter(file, ('Name', 'Balance', 'Owed by system', 'Owed to system'))
     writer.writeheader()
-    for addict in User.query.order_by(User.name):
+    for addict_summary in db.engine.execute(_reconciliation_query()):
         row = {
-            'Name': addict.name,
-            'Balance': f'{addict.get_balance():.2f}',
+            'Name': addict_summary.name,
+            'Balance': numbers.format_currency(addict_summary.summary, 'AUD'),
+            'Owed by system': numbers.format_currency(addict_summary.owed_by_system, 'AUD'),
+            'Owed to system': numbers.format_currency(addict_summary.owed_to_system, 'AUD'),
         }
         writer.writerow(row)
 
