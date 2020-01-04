@@ -4,4 +4,4 @@ from application import app
 
 
 logging.basicConfig(level=logging.DEBUG)
-app.run()
+app.run(port=8000, host='0.0.0.0')
