@@ -1,3 +1,5 @@
+# vim: set et nosi ai ts=4 sts=4 sw=4:
+
 import cgi
 import csv
 import datetime
