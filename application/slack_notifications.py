@@ -24,7 +24,7 @@ class SlackNotificationException(Exception):
     pass
 
 
-class SlackDetails(collections.namedtuple('SlackDetails', ['token', 'team_id'])):
+class SlackDetails(collections.namedtuple('SlackDetails', ['token', 'team_id', 'notification_channel'])):
     pass
 
 
@@ -35,8 +35,9 @@ class SlackNotifier:
                 SlackTeamAccessToken.wants_slack_notifications == True,  # noqa: E711. `== True` is needed for SQLAlchemy operator binding magic. `is True` does not work.
                 SlackTeamAccessToken.access_token != None,  # noqa: E711. `!= None` is needed for SQLAlchemy operator binding magic. `is not None` does not work.
         ):
+            slack_channel = workspace.coffee_slack_channel or '#coffee'
             details = SlackDetails(
-                    workspace.access_token, workspace.team_id)
+                    workspace.access_token, workspace.team_id, slack_channel)
             self._workspaces[details.team_id] = details
 
     def get_params_for_workspace(self, team_id: typing.Text):
@@ -46,12 +47,12 @@ class SlackNotifier:
             raise SlackNotificationException(
                     'Access token for team {} is not configured.'.format(team_id))
         params['token'] = details.token
+        params['channel'] = details.notification_channel
         return params
 
     def notify_channel(self, message: typing.Text, team_id: typing.Text):
         params = self.get_params_for_workspace(team_id)
         params['text'] = message.encode('utf-8')
-        params['channel'] = '#coffee'
         resp = requests.get(API_URL, params=params)
         content = json.loads(resp.content.decode('utf-8'))
         logger.info('Posted to channel: response:%s, content:%s', resp.status_code, content)
