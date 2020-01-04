@@ -14,9 +14,6 @@ import coffeespecs
 
 import flask_babel
 
-import sentry_sdk
-from sentry_sdk import capture_exception
-
 from slackclient import SlackClient
 
 import utils
@@ -291,11 +288,10 @@ def _die_on_exception_wrapper(f: typing.Callable):
     def _wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except Exception as e:
+        except Exception:
             logging.exception(
                 'One of the connections had an error, killing the entire '
                 'process to allow heroku to restart it.')
-            capture_exception(e)
             os.kill(os.getpid(), 9)
     return _wrapper
 
@@ -322,7 +318,6 @@ def main():
 
 
 if __name__ == '__main__':
-    sentry_sdk.init("https://a4ba88dce1234b4ea13f5c3111a67efa@sentry.io/1366725")
     logging.basicConfig(level=logging.DEBUG)
 
     # FIXME: This is a hack... But I can't think of anything better.
