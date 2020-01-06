@@ -444,7 +444,7 @@ class WrappedSlackBot:
                         handler(client, event)
             time.sleep(0.1)
 
-    def write_to_events(action, objtype, objid, user=None):
+    def write_to_events(self, action, objtype, objid, user=None):
         if user:
             event = Event(user.id, action, objtype, objid)
         else:
