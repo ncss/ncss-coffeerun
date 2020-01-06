@@ -228,18 +228,12 @@ class WrappedSlackBot:
         if runid and runid.isdigit():
             run = Run.query.filter_by(id=int(runid)).first()
         else:
-            runs = Run.query.filter_by(is_open=True) \
-                .filter(Run.person == person.id) \
-                .order_by('time').all()
-            if len(runs) > 1:
-                channel.send_message(
-                        'More than one open run, please specify by adding run=<id> on the end.')
-                self.list_runs(slackclient, user, channel, match=None)
-                return
-            if len(runs) == 0:
-                channel.send_message('No open runs')
-                return
-            run = runs[0]
+            run = Run.query.filter(Run.person == person.id) \
+                .order_by(Run.time.desc()).first()
+
+        if not run:
+            channel.send_message('No runs to announce.')
+            return
 
         # Notify Slack
         try:
