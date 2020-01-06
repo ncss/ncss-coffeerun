@@ -123,7 +123,7 @@ class WrappedSlackBot:
 
         # Get the person creating the run
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
-        logger.info('User: %s', dbuser)
+        logger.info('User: %s', user)
 
         # Assume valid? Create the run
         run = Run(timestr)
