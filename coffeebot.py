@@ -38,6 +38,8 @@ class WrappedSlackBot:
 
         # Configure the dispatcher regular expressions
         self.ORDERS_DISPATCH[re.compile(r'(?:(?:open|list) )?runs')] = self.list_runs
+        self.ORDERS_DISPATCH[re.compile(r'(?:(?:list) )?cafes')] = self.list_cafes
+        self.ORDERS_DISPATCH[re.compile(r'create run cafe=(?P<cafeid>[0-9]+) time=(?P<time>(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})) pickup=(?P<pickup>.*)')] = self.create_run
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
 
@@ -73,6 +75,77 @@ class WrappedSlackBot:
                     'Run {}: {} is going to {} in {} (at {})'.format(
                         run.id, person.name, run.cafe.name,
                         flask_babel.format_timedelta(time_to_run), run.time))
+
+    def list_cafes(self, slackclient, user, channel, match):
+        """Handle the 'list cafes' command.
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        q = Cafe.query.all()
+        if not q:
+            channel.send_message('No cafes listed')
+        for cafe in q:
+            channel.send_message('Cafe {}: {} at {}'.format(cafe.id, cafe.name, cafe.location))
+
+    def create_run(self, slackclient, user, channel, match):
+        """Create an open run
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        logger = logging.getLogger('create_run')
+        logger.info('Matches: %s', pprint.pformat(match.groupdict()))
+        cafeid = match.groupdict().get('cafeid', None)
+        if cafeid and cafeid.isdigit():
+            cafe = Cafe.query.filter_by(id=int(cafeid)).first()
+        if not cafe:
+            channel.send_message('Cafe does not exist. These are the available cafes:')
+            self.list_cafes(slackclient, user, channel, match=None)
+            return
+        
+        pickup = match.groupdict().get('pickup', None)
+        timestr = match.groupdict().get('time', None)
+        
+        # Get the person creating the run
+        person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
+        logger.info('User: %s', dbuser)
+
+        # Assume valid? Create the run
+        run = Run(timestr)
+        run.person = person
+        run.fetcher = person
+        run.cafeid = cafeid
+        run.pickup = pickup
+        run.modified = sydney_timezone_now()
+        run.is_open = True
+        
+        db.session.add(run)
+        db.session.commit()
+        
+        # Create the event
+        event = Event(run.person, "created", "run", run.id)
+        event.time = sydney_timezone_now()
+        db.session.add(event)
+        db.session.commit()
+        
+        # Notify Slack
+        try:
+            events.run_created(run.id)
+        except Exception as e:
+            logging.exception('Error while trying to send notifications.')
 
     def order_coffee(self, slackclient, user, channel, match):
         """Handle adding coffee to existing orders.
