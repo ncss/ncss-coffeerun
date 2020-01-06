@@ -177,7 +177,7 @@ class WrappedSlackBot:
         if runid and runid.isdigit():
             run = Run.query.filter_by(id=int(runid)).first()
         else:
-            runs = Run.query.filter(is_open=True) \
+            runs = Run.query.filter_by(is_open=True) \
                 .filter(Run.person == person.id) \
                 .order_by('time').all()
             if len(runs) > 1:
@@ -219,12 +219,16 @@ class WrappedSlackBot:
         logger = logging.getLogger('announce_delivery')
         logger.info('Matches: %s', pprint.pformat(match.groupdict()))
 
+        # Find the user that requested this
+        person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
+        logger.info('User: %s', person)
+
         runid = match.groupdict().get('runid', None)
         run = None
         if runid and runid.isdigit():
             run = Run.query.filter_by(id=int(runid)).first()
         else:
-            runs = Run.query.filter(is_open=True) \
+            runs = Run.query.filter_by(is_open=True) \
                 .filter(Run.person == person.id) \
                 .order_by('time').all()
             if len(runs) > 1:
