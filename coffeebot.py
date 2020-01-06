@@ -43,7 +43,7 @@ class WrappedSlackBot:
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))')] = self.close_run
-        self.ORDERS_DISPATCH[re.compile(r'run is here(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
+        self.ORDERS_DISPATCH[re.compile(r'announce run(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
 
         self.DISPATCH['message'] = [self.handle_message]
         self.load_triggers('sass.txt')
@@ -110,7 +110,7 @@ class WrappedSlackBot:
         """
         logger = logging.getLogger('create_run')
         logger.info('Matches: %s', pprint.pformat(match.groupdict()))
-        cafeid = match.groupdict().get('cafeid', None)
+        cafeid = match.group('cafeid')
         if cafeid and cafeid.isdigit():
             cafe = Cafe.query.filter_by(id=int(cafeid)).first()
         if not cafe:
