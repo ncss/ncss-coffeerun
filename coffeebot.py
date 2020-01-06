@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import pprint
@@ -120,13 +121,19 @@ class WrappedSlackBot:
 
         pickup = match.groupdict().get('pickup', None)
         timestr = match.groupdict().get('time', None)
+        try:
+            timeobj = models.sydney_timezone(
+                datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M"))
+        except ValueError:
+            channel.send_message('Could not parse time. Should be %Y-%m-%d %H:%M')
+            return
 
         # Get the person creating the run
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
         logger.info('User: %s', user)
 
-        # Assume valid? Create the run
-        run = Run(timestr)
+        # Create the run
+        run = Run(timeobj)
         run.person = person
         run.fetcher = person
         run.cafeid = cafeid
