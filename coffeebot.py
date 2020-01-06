@@ -8,7 +8,7 @@ import time
 import typing
 
 from application import app, db, events, models
-from application.models import Coffee, Event, Run, User, sydney_timezone_now
+from application.models import Cafe, Coffee, Event, Run, User, sydney_timezone_now
 
 import coffeespecs
 
@@ -80,7 +80,7 @@ class WrappedSlackBot:
 
     def list_cafes(self, slackclient, user, channel, match):
         """Handle the 'list cafes' command.
-        
+
         Args:
             slackclient: the slackclient.SlackClient object for the current
                 connection to Slack.
@@ -98,7 +98,7 @@ class WrappedSlackBot:
 
     def create_run(self, slackclient, user, channel, match):
         """Create an open run
-        
+
         Args:
             slackclient: the slackclient.SlackClient object for the current
                 connection to Slack.
@@ -117,10 +117,10 @@ class WrappedSlackBot:
             channel.send_message('Cafe does not exist. These are the available cafes:')
             self.list_cafes(slackclient, user, channel, match=None)
             return
-        
+
         pickup = match.groupdict().get('pickup', None)
         timestr = match.groupdict().get('time', None)
-        
+
         # Get the person creating the run
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
         logger.info('User: %s', dbuser)
@@ -133,13 +133,13 @@ class WrappedSlackBot:
         run.pickup = pickup
         run.modified = sydney_timezone_now()
         run.is_open = True
-        
+
         db.session.add(run)
         db.session.commit()
-        
+
         # Create the event
         self.write_to_events("created", "run", run.id, run.person)
-        
+
         # Notify Slack
         try:
             events.run_created(run.id)
@@ -148,7 +148,7 @@ class WrappedSlackBot:
 
     def close_run(self, slackclient, user, channel, match):
         """Close a run so that no more coffees may be added.
-        
+
         Args:
             slackclient: the slackclient.SlackClient object for the current
                 connection to Slack.
@@ -160,11 +160,11 @@ class WrappedSlackBot:
         """
         logger = logging.getLogger('close_run')
         logger.info('Matches: %s', pprint.pformat(match.groupdict()))
-        
+
         # Find the user that requested this
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
         logger.info('User: %s', dbuser)
-        
+
         runid = match.groupdict().get('runid', None)
         run = None
         if runid and runid.isdigit():
@@ -182,7 +182,7 @@ class WrappedSlackBot:
                 channel.send_message('No open runs')
                 return
             run = runs[0]
-        
+
         # Change run to closed
         run.is_open = False
         db.session.add(run)
@@ -199,7 +199,7 @@ class WrappedSlackBot:
 
     def announce_delivery(self, slackclient, user, channel, match):
         """Announce the delivery of a run.
-        
+
         Args:
             slackclient: the slackclient.SlackClient object for the current
                 connection to Slack.
@@ -229,7 +229,7 @@ class WrappedSlackBot:
                 channel.send_message('No open runs')
                 return
             run = runs[0]
-        
+
         # Notify Slack
         try:
             events.run_delivered(run.id)
@@ -436,7 +436,7 @@ class WrappedSlackBot:
                     for handler in self.DISPATCH.get(event['type'], []):
                         handler(client, event)
             time.sleep(0.1)
-    
+
     def write_to_events(action, objtype, objid, user=None):
         if user:
             event = Event(user.id, action, objtype, objid)
