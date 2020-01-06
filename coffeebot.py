@@ -9,7 +9,8 @@ import time
 import typing
 
 from application import app, db, events, models
-from application.models import Cafe, Coffee, Event, Run, User, sydney_timezone_now
+from application.models import Cafe, Coffee, Event, Run, User
+from application.models import add_sydney_timezone, sydney_timezone, sydney_timezone_now
 
 import coffeespecs
 
@@ -122,8 +123,7 @@ class WrappedSlackBot:
         pickup = match.groupdict().get('pickup', None)
         timestr = match.groupdict().get('time', None)
         try:
-            timeobj = models.sydney_timezone(
-                datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M"))
+            timeobj = add_sydney_timezone(datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M"))
         except ValueError:
             channel.send_message('Could not parse time. Should be %Y-%m-%d %H:%M')
             return
