@@ -38,8 +38,12 @@ class WrappedSlackBot:
 
         # Configure the dispatcher regular expressions
         self.ORDERS_DISPATCH[re.compile(r'(?:(?:open|list) )?runs')] = self.list_runs
+        self.ORDERS_DISPATCH[re.compile(r'(?:(?:list) )?cafes')] = self.list_cafes
+        self.ORDERS_DISPATCH[re.compile(r'create run cafe=(?P<cafeid>[0-9]+) time=(?P<time>(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})) pickup=(?P<pickup>.*)')] = self.create_run
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
+        self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))')] = self.close_run
+        self.ORDERS_DISPATCH[re.compile(r'announce run(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
 
         self.DISPATCH['message'] = [self.handle_message]
         self.load_triggers('sass.txt')
@@ -73,6 +77,164 @@ class WrappedSlackBot:
                     'Run {}: {} is going to {} in {} (at {})'.format(
                         run.id, person.name, run.cafe.name,
                         flask_babel.format_timedelta(time_to_run), run.time))
+
+    def list_cafes(self, slackclient, user, channel, match):
+        """Handle the 'list cafes' command.
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        q = Cafe.query.all()
+        if not q:
+            channel.send_message('No cafes listed')
+        for cafe in q:
+            channel.send_message('Cafe {}: {} at {}'.format(cafe.id, cafe.name, cafe.location))
+
+    def create_run(self, slackclient, user, channel, match):
+        """Create an open run
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        logger = logging.getLogger('create_run')
+        logger.info('Matches: %s', pprint.pformat(match.groupdict()))
+        cafeid = match.group('cafeid')
+        if cafeid and cafeid.isdigit():
+            cafe = Cafe.query.filter_by(id=int(cafeid)).first()
+        if not cafe:
+            channel.send_message('Cafe does not exist. These are the available cafes:')
+            self.list_cafes(slackclient, user, channel, match=None)
+            return
+        
+        pickup = match.groupdict().get('pickup', None)
+        timestr = match.groupdict().get('time', None)
+        
+        # Get the person creating the run
+        person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
+        logger.info('User: %s', dbuser)
+
+        # Assume valid? Create the run
+        run = Run(timestr)
+        run.person = person
+        run.fetcher = person
+        run.cafeid = cafeid
+        run.pickup = pickup
+        run.modified = sydney_timezone_now()
+        run.is_open = True
+        
+        db.session.add(run)
+        db.session.commit()
+        
+        # Create the event
+        self.write_to_events("created", "run", run.id, run.person)
+        
+        # Notify Slack
+        try:
+            events.run_created(run.id)
+        except Exception as e:
+            logging.exception('Error while trying to send notifications.')
+
+    def close_run(self, slackclient, user, channel, match):
+        """Close a run so that no more coffees may be added.
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        logger = logging.getLogger('close_run')
+        logger.info('Matches: %s', pprint.pformat(match.groupdict()))
+        
+        # Find the user that requested this
+        person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
+        logger.info('User: %s', dbuser)
+        
+        runid = match.groupdict().get('runid', None)
+        run = None
+        if runid and runid.isdigit():
+            run = Run.query.filter_by(id=int(runid)).first()
+        else:
+            runs = Run.query.filter(is_open=True) \
+                .filter(Run.person == person.id) \
+                .order_by('time').all()
+            if len(runs) > 1:
+                channel.send_message(
+                        'More than one open run, please specify by adding run=<id> on the end.')
+                self.list_runs(slackclient, user, channel, match=None)
+                return
+            if len(runs) == 0:
+                channel.send_message('No open runs')
+                return
+            run = runs[0]
+        
+        # Change run to closed
+        run.is_open = False
+        db.session.add(run)
+        db.session.commit()
+
+        # Create event
+        self.write_to_events("updated", "run", run.id, run.person)
+
+        # Notify Slack
+        try:
+            events.run_closed(run.id)
+        except Exception as e:
+            logging.exception('Error while trying to send notifications.')
+
+    def announce_delivery(self, slackclient, user, channel, match):
+        """Announce the delivery of a run.
+        
+        Args:
+            slackclient: the slackclient.SlackClient object for the current
+                connection to Slack.
+            user: the slackclient.User object for the user who send the
+                message to us.
+            channel: the slackclient.Channel object for the channel the
+                message was received on.
+            match: the object returned by re.match (an _sre.SRE_Match object).
+        """
+        logger = logging.getLogger('announce_delivery')
+        logger.info('Matches: %s', pprint.pformat(match.groupdict()))
+
+        runid = match.groupdict().get('runid', None)
+        run = None
+        if runid and runid.isdigit():
+            run = Run.query.filter_by(id=int(runid)).first()
+        else:
+            runs = Run.query.filter(is_open=True) \
+                .filter(Run.person == person.id) \
+                .order_by('time').all()
+            if len(runs) > 1:
+                channel.send_message(
+                        'More than one open run, please specify by adding run=<id> on the end.')
+                self.list_runs(slackclient, user, channel, match=None)
+                return
+            if len(runs) == 0:
+                channel.send_message('No open runs')
+                return
+            run = runs[0]
+        
+        # Notify Slack
+        try:
+            events.run_delivered(run.id)
+        except Exception as e:
+            logging.exception('Error while trying to send notifications.')
 
     def order_coffee(self, slackclient, user, channel, match):
         """Handle adding coffee to existing orders.
@@ -129,10 +291,7 @@ class WrappedSlackBot:
         events.coffee_added(run.id, coffee.id)
 
         # Write the event
-        event = Event(coffee.person, "created", "coffee", coffee.id)
-        event.time = sydney_timezone_now()
-        db.session.add(event)
-        db.session.commit()
+        self.write_to_events("created", "coffee", coffee.id, coffee.person)
         logger.info('Parsed coffee: %s', coffee)
 
         runuser = User.query.filter_by(id=run.person).first()
@@ -277,6 +436,16 @@ class WrappedSlackBot:
                     for handler in self.DISPATCH.get(event['type'], []):
                         handler(client, event)
             time.sleep(0.1)
+    
+    def write_to_events(action, objtype, objid, user=None):
+        if user:
+            event = Event(user.id, action, objtype, objid)
+        else:
+            event = Event(current_user.id, action, objtype, objid)
+        event.time = sydney_timezone_now()
+        db.session.add(event)
+        db.session.commit()
+        return event.id
 
 
 def _die_on_exception_wrapper(f: typing.Callable):
