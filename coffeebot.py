@@ -439,7 +439,10 @@ class WrappedSlackBot:
 
     def write_to_events(self, action, objtype, objid, user=None):
         if user:
-            event = Event(user.id, action, objtype, objid)
+            if isinstance(user, int):
+                event = Event(user, action, objtype, objid)
+            else:
+                event = Event(user.id, action, objtype, objid)
         else:
             event = Event(current_user.id, action, objtype, objid)
         event.time = sydney_timezone_now()
