@@ -41,7 +41,7 @@ class WrappedSlackBot:
         self.ORDERS_DISPATCH[re.compile(r'(?:(?:list) )?cafes')] = self.list_cafes
         self.ORDERS_DISPATCH[re.compile(r'create run cafe=(?P<cafeid>[0-9]+) time=(?P<time>(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})) pickup=(?P<pickup>.*)')] = self.create_run
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
-        self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
+        self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox|plx)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))')] = self.close_run
         self.ORDERS_DISPATCH[re.compile(r'announce run(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
 
