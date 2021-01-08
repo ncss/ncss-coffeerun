@@ -43,7 +43,7 @@ class WrappedSlackBot:
         self.ORDERS_DISPATCH[re.compile(r'(?:(?:list) )?cafes')] = self.list_cafes
         self.ORDERS_DISPATCH[re.compile(r'create run cafe=(?P<cafeid>[0-9]+) time=(?P<time>(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})) pickup=(?P<pickup>.*)')] = self.create_run
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
-        self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
+        self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox|plx)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))?')] = self.close_run
         self.ORDERS_DISPATCH[re.compile(r'announce run(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
 
@@ -228,12 +228,18 @@ class WrappedSlackBot:
         if runid and runid.isdigit():
             run = Run.query.filter_by(id=int(runid)).first()
         else:
-            run = Run.query.filter(Run.person == person.id) \
-                .order_by(Run.time.desc()).first()
-
-        if not run:
-            channel.send_message('No runs to announce.')
-            return
+            runs = Run.query.filter(is_open=True) \
+                .filter(Run.person == person.id) \
+                .order_by('time').all()
+            if len(runs) > 1:
+                channel.send_message(
+                        'More than one open run, please specify by adding run=<id> on the end.')
+                self.list_runs(slackclient, user, channel, match=None)
+                return
+            if len(runs) == 0:
+                channel.send_message('No open runs')
+                return
+            run = runs[0]
 
         # Notify Slack
         try:
@@ -442,9 +448,12 @@ class WrappedSlackBot:
                         handler(client, event)
             time.sleep(0.1)
 
-    def write_to_events(self, action, objtype, objid, userid=None):
-        if userid:
-            event = Event(userid, action, objtype, objid)
+    def write_to_events(self, action, objtype, objid, user=None):
+        if user:
+            if isinstance(user, int):
+                event = Event(user, action, objtype, objid)
+            else:
+                event = Event(user.id, action, objtype, objid) 
         else:
             event = Event(current_user.id, action, objtype, objid)
         event.time = sydney_timezone_now()
