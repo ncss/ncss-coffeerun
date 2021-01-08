@@ -52,6 +52,12 @@ def sydney_timezone(time):
     return localdt
 
 
+def add_sydney_timezone(time):
+    localtz = pytz.timezone("Australia/Sydney")
+    localdt = localtz.localize(time)
+    return localdt
+
+
 class User(db.Model):
     __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)

@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import pprint
@@ -8,7 +9,8 @@ import time
 import typing
 
 from application import app, db, events, models
-from application.models import Coffee, Event, Run, User, sydney_timezone_now
+from application.models import Cafe, Coffee, Event, Run, User
+from application.models import add_sydney_timezone, sydney_timezone, sydney_timezone_now
 
 import coffeespecs
 
@@ -42,7 +44,7 @@ class WrappedSlackBot:
         self.ORDERS_DISPATCH[re.compile(r'create run cafe=(?P<cafeid>[0-9]+) time=(?P<time>(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})) pickup=(?P<pickup>.*)')] = self.create_run
         self.ORDERS_DISPATCH[re.compile(r'order(?: an?)? ([^\=]+)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
         self.ORDERS_DISPATCH[re.compile(r'([^\=]+) (?:plz|pls|please|plox|plx)(?: run=(?P<runid>[0-9]+))?')] = self.order_coffee
-        self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))')] = self.close_run
+        self.ORDERS_DISPATCH[re.compile(r'close run(?: run=(?P<runid>[0-9]+))?')] = self.close_run
         self.ORDERS_DISPATCH[re.compile(r'announce run(?: run=(?P<runid>[0-9]+))?')] = self.announce_delivery
 
         self.DISPATCH['message'] = [self.handle_message]
@@ -120,13 +122,18 @@ class WrappedSlackBot:
 
         pickup = match.groupdict().get('pickup', None)
         timestr = match.groupdict().get('time', None)
+        try:
+            timeobj = add_sydney_timezone(datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M"))
+        except ValueError:
+            channel.send_message('Could not parse time. Should be %Y-%m-%d %H:%M')
+            return
 
         # Get the person creating the run
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
-        logger.info('User: %s', dbuser)
+        logger.info('User: %s', person)
 
-        # Assume valid? Create the run
-        run = Run(timestr)
+        # Create the run
+        run = Run(timeobj)
         run.person = person
         run.fetcher = person
         run.cafeid = cafeid
@@ -163,14 +170,14 @@ class WrappedSlackBot:
 
         # Find the user that requested this
         person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
-        logger.info('User: %s', dbuser)
+        logger.info('User: %s', person)
 
         runid = match.groupdict().get('runid', None)
         run = None
         if runid and runid.isdigit():
             run = Run.query.filter_by(id=int(runid)).first()
         else:
-            runs = Run.query.filter(is_open=True) \
+            runs = Run.query.filter_by(is_open=True) \
                 .filter(Run.person == person.id) \
                 .order_by('time').all()
             if len(runs) > 1:
@@ -211,6 +218,10 @@ class WrappedSlackBot:
         """
         logger = logging.getLogger('announce_delivery')
         logger.info('Matches: %s', pprint.pformat(match.groupdict()))
+
+        # Find the user that requested this
+        person = utils.get_or_create_user(user.id, self.TEAM_ID, user.name)
+        logger.info('User: %s', person)
 
         runid = match.groupdict().get('runid', None)
         run = None
@@ -442,7 +453,7 @@ class WrappedSlackBot:
             if isinstance(user, int):
                 event = Event(user, action, objtype, objid)
             else:
-                event = Event(user.id, action, objtype, objid)
+                event = Event(user.id, action, objtype, objid) 
         else:
             event = Event(current_user.id, action, objtype, objid)
         event.time = sydney_timezone_now()
